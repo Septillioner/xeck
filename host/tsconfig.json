@@ -1,0 +1,23 @@
+{
+  "compilerOptions": {
+    "target": "ES2022",
+    "module": "NodeNext",
+    "moduleResolution": "NodeNext",
+    "resolveJsonModule": true,
+    "strict": true,
+    "skipLibCheck": true,
+    "noEmit": true,
+    "allowImportingTsExtensions": true,
+    "types": ["node"],
+    "paths": {
+      "@@agent/*": ["./src/agent/*"],
+      "@@core/*": ["./src/agent/core/*"],
+      "@@runtime/*": ["./src/agent/runtime/*"],
+      "@@prompts/*": ["./src/agent/catalog/prompts/*"],
+      "@@catalog/*": ["./src/agent/catalog/*"],
+      "@@tools/*": ["./src/agent/tools/*"],
+    }
+  },
+  "include": ["src/**/*.ts", "../shared/**/*.ts"],
+
+}

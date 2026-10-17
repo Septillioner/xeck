@@ -1,0 +1,27 @@
+/* Single style entry. main.tsx imports this file; the parts below are concatenated
+   in the order they appear here, so the cascade matches the historical styles.css.
+
+   Tailwind v4 is split on purpose: `theme.css` first so every `@theme` token
+   exists before the utility layer is generated, `utilities.css` last.
+   Preflight stays off on purpose: `base.css` already owns the reset, and
+   turning both on at once would silently fight over every element. */
+@layer theme, base, components, utilities;
+
+@import 'tailwindcss/theme.css' layer(theme);
+@import './theme.css' layer(theme);
+@import 'tailwindcss/utilities.css' layer(utilities);
+@import './base.css' layer(base);
+@import './components.css' layer(components);
+@import './chat.css' layer(components);
+@import './animations.css' layer(components);
+@import './mood.css' layer(components);
+@import './settings.css' layer(components);
+@import './code.css' layer(components);
+@import './responsive.css' layer(components);
+
+/* Class-based dark mode (`.dark` on <html>) instead of prefers-color-scheme,
+   so the Appearance setting controls it. */
+@custom-variant dark (&:where(.dark, .dark *));
+
+/* Touch devices (`hover: none` or a coarse primary pointer): `:hover` never fires reliably, so rows grow and row actions stay visible. */
+@custom-variant hover-none (@media (hover: none), (pointer: coarse));

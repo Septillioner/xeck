@@ -1,0 +1,80 @@
+{
+  "name": "xeck",
+  "version": "4.3.23",
+  "description": "Xeck desktop application, powered by Poyraz",
+  "author": "Xeck",
+  "private": true,
+  "scripts": {
+    "build:lib": "npm run build --prefix poyraz",
+    "build:host": "npm run build --prefix host",
+    "build:web": "npm run build --prefix web",
+    "build:electron": "tsup electron/main.ts electron/preload.ts --format cjs --out-dir build/dist-electron --target node20 --external electron",
+    "build:desktop": "concurrently -n host,web,electron -c blue,green,yellow \"npm run build:lib && npm run build:host\" \"npm run build:web\" \"npm run build:electron\"",
+    "dev": "concurrently -n host,web -c blue,green \"npm run dev:host\" \"npm run dev:web\"",
+    "start": "npm run build:lib && npm run build:web && concurrently -n host,web -c blue,green \"npm run start --prefix host\" \"npm run preview --prefix web\"",
+    "dev:host": "npm run dev --prefix host",
+    "dev:web": "npm run dev --prefix web",
+    "test": "npm run typecheck --prefix host && npm run test --prefix host",
+    "dev:electron": "npm run build:electron && electron .",
+    "dist": "npm run build:desktop && electron-builder",
+    "build-release": "npm run build:desktop && electron-builder --win nsis --publish never -c.directories.output=build/release-build",
+    "preview:web": "npm run preview --prefix web"
+  },
+  "main": "build/dist-electron/main.js",
+  "build": {
+    "appId": "com.xeck.desktop",
+    "productName": "Xeck",
+    "asar": true,
+    "compression": "normal",
+    "npmRebuild": false,
+    "files": [
+      "build/dist-electron/**/*",
+      "package.json"
+    ],
+    "extraResources": [
+      {
+        "from": "host/dist/index.js",
+        "to": "host/dist/index.js"
+      },
+      {
+        "from": "host/package.json",
+        "to": "host/package.json"
+      },
+      {
+        "from": "model_prices_and_context_window.json",
+        "to": "model_prices_and_context_window.json"
+      },
+      {
+        "from": "web/dist",
+        "to": "web/dist"
+      },
+      {
+        "from": "assets/branding/xeck.png",
+        "to": "assets/branding/xeck.png"
+      }
+    ],
+    "directories": {
+      "output": "build/release"
+    },
+    "win": {
+      "icon": "assets/branding/xeck.ico",
+      "target": "nsis",
+      "signExecutable": false
+    },
+    "mac": {
+      "icon": "assets/branding/xeck.png",
+      "target": "dmg"
+    },
+    "linux": {
+      "icon": "assets/branding/xeck.png",
+      "target": "AppImage"
+    }
+  },
+  "devDependencies": {
+    "concurrently": "^9.2.0",
+    "electron": "^39.0.0",
+    "electron-builder": "^26.0.12",
+    "tsup": "^8.5.0",
+    "typescript": "^5.9.0"
+  }
+}

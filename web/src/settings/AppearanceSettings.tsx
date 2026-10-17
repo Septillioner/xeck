@@ -1,0 +1,159 @@
+import type { AccentColor, TextSizeSetting, ThemeSetting, ToolUsageViewMode } from '../../../shared/types.ts';
+import { ACCENT_COLORS, TEXT_SIZES, THEMES, TOOL_USAGE_VIEW_MODES } from '../../../shared/types.ts';
+import { IconMonitor, IconMoon, IconSun } from '../ui/icons.tsx';
+import { useAppState } from '../state/AppState.tsx';
+import { SettingRow, Switch } from '../ui/SettingRow.tsx';
+
+const THEME_LABELS: Record<ThemeSetting, string> = {
+  system: 'System',
+  light: 'Light',
+  dark: 'Dark',
+};
+
+const TEXT_LABELS: Record<TextSizeSetting, string> = {
+  small: 'Small',
+  default: 'Default',
+  large: 'Large',
+};
+
+const ACCENT_LABELS: Record<AccentColor, string> = {
+  default: 'Deep blue',
+  coral: 'Coral',
+  amber: 'Amber',
+  green: 'Green',
+  blue: 'Blue',
+  violet: 'Violet',
+};
+
+const TOOL_MODE_LABELS: Record<ToolUsageViewMode, string> = {
+  compact: 'Compact', balanced: 'Balanced', detailed: 'Detailed',
+};
+const TOOL_MODE_DETAILS: Record<ToolUsageViewMode, string> = {
+  compact: 'One live summary per reply, with tool counts, files read and lines changed. Expand to see each tool.',
+  balanced: 'Tools flow through the reply. File changes and errors start expanded; routine output starts collapsed.',
+  detailed: 'Every tool and its available details start expanded.',
+};
+
+export function AppearanceSettings() {
+  const { settings, saveSettings } = useAppState();
+
+  return (
+    <div className="stack">
+      <h2>Appearance</h2>
+      <section className="appearance-block">
+        <h3 className="setting-label">Theme</h3>
+        <div className="theme-tiles">
+          {THEMES.map((theme) => (
+            <button
+              key={theme}
+              type="button"
+              className="theme-tile"
+              data-active={settings.theme === theme ? 'true' : 'false'}
+              onClick={() => {
+                void saveSettings({ theme });
+              }}
+            >
+              <ThemeIcon theme={theme} />
+              <span>{THEME_LABELS[theme]}</span>
+            </button>
+          ))}
+        </div>
+      </section>
+      <section className="appearance-block">
+        <h3 className="setting-label">Color</h3>
+        <div className="accent-swatches">
+          {ACCENT_COLORS.map((accent) => (
+            <div key={accent} className={accent === 'default' ? 'default-accent-option' : undefined}>
+              <button
+                type="button"
+                className={`swatch swatch-${accent}`}
+                data-active={settings.accent === accent ? 'true' : 'false'}
+                aria-label={ACCENT_LABELS[accent]}
+                title={ACCENT_LABELS[accent]}
+                onClick={() => {
+                  void saveSettings({ accent });
+                }}
+              />
+              {accent === 'default' && <span className="text-small text-muted">Default</span>}
+            </div>
+          ))}
+        </div>
+      </section>
+      <section className="appearance-block">
+        <h3 className="setting-label">Text size</h3>
+        <div className="segment" role="group" aria-label="Text size">
+          {TEXT_SIZES.map((size) => (
+            <button
+              key={size}
+              type="button"
+              data-active={settings.textSize === size ? 'true' : 'false'}
+              onClick={() => {
+                void saveSettings({ textSize: size });
+              }}
+            >
+              {TEXT_LABELS[size]}
+            </button>
+          ))}
+        </div>
+      </section>
+      <section className="appearance-block">
+        <h3 className="setting-label">Metrics</h3>
+        <div className="setting-card">
+          <SettingRow label="Usage" detail="Shows the last reply and the chat total under the composer.">
+            <Switch
+              checked={settings.showUsage}
+              label="Usage"
+              onChange={(showUsage) => {
+                void saveSettings({ showUsage });
+              }}
+            />
+          </SettingRow>
+          <SettingRow label="Token speed" detail="Shows tokens per second for the last reply.">
+            <Switch
+              checked={settings.showTokenSpeed}
+              label="Token speed"
+              onChange={(showTokenSpeed) => {
+                void saveSettings({ showTokenSpeed });
+              }}
+            />
+          </SettingRow>
+        </div>
+      </section>
+      <section className="appearance-block">
+        <h3 className="setting-label">Tool usage</h3>
+        <div className="setting-card">
+          <SettingRow label="Hide tool usages" detail="Hide tool activity in chats. Xeck’s live status, questions and plans stay visible.">
+            <Switch checked={settings.hideToolUsages} label="Hide tool usages" onChange={(hideToolUsages) => void saveSettings({ hideToolUsages })} />
+          </SettingRow>
+          <div className="tool-mode-setting" data-disabled={settings.hideToolUsages ? 'true' : undefined}>
+            <strong id="tool-mode-label">Tool usage view mode</strong>
+            <div className="segment" role="group" aria-labelledby="tool-mode-label" aria-describedby="tool-mode-detail">
+              {TOOL_USAGE_VIEW_MODES.map((mode) => (
+                <button key={mode} type="button" disabled={settings.hideToolUsages}
+                  aria-pressed={settings.toolUsageViewMode === mode}
+                  data-active={settings.toolUsageViewMode === mode ? 'true' : 'false'}
+                  onClick={() => void saveSettings({ toolUsageViewMode: mode })}>
+                  {TOOL_MODE_LABELS[mode]}
+                </button>
+              ))}
+            </div>
+            <p id="tool-mode-detail">{TOOL_MODE_DETAILS[settings.toolUsageViewMode]}</p>
+          </div>
+        </div>
+      </section>
+      <section className="appearance-block">
+        <h3 className="setting-label">Preview</h3>
+        <div className="setting-card appearance-preview" data-text-size={settings.textSize}>
+          <p className="user-bubble">Hello</p>
+          <p className="preview-reply">This is how replies look.</p>
+        </div>
+      </section>
+    </div>
+  );
+}
+
+function ThemeIcon({ theme }: { theme: ThemeSetting }) {
+  if (theme === 'light') return <IconSun />;
+  if (theme === 'dark') return <IconMoon />;
+  return <IconMonitor />;
+}

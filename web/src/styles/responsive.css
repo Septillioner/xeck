@@ -1,0 +1,310 @@
+/* Responsive layer. Imported LAST from index.css so these rules override the
+   section files without needing higher specificity or `!important`.
+   Everything below 1024px is scoped to a media query; at 1024px and up no rule
+   in this file applies, so the desktop layout is untouched.
+
+   The shell, sidebar and search overlay have already moved to utility variants
+   in their JSX (`max-lg:`, `hover-none:`), so they no longer appear here. This
+   file shrinks as the remaining sections are converted. */
+
+/* --- Touch --------------------------------------------------------------- */
+/* `:hover` never fires reliably on touch, so the per-chat rename/delete
+   buttons would be unreachable. The sidebar shows them for the whole row
+   instead; the title already reserves room for them (padding-right: 4.25rem). */
+@media (hover: none), (pointer: coarse) {
+  /* Compact controls keep their size and gain a larger invisible tap area, so
+     the switch knob geometry above stays intact. */
+  .icon-button,
+  .catalog-row button,
+  .send-orb,
+  .switch {
+    position: relative;
+  }
+
+  .icon-button::after,
+  .catalog-row button::after {
+    content: '';
+    position: absolute;
+    inset: -8px;
+  }
+
+  .send-orb::after {
+    content: '';
+    position: absolute;
+    inset: -6px;
+    border-radius: 999px;
+  }
+
+  /* Height stays 24px; the overlay lifts the tap area to 40px. */
+  .switch::after {
+    content: '';
+    position: absolute;
+    inset: -8px -4px;
+  }
+
+  /* Class-styled labelled buttons and the colour swatches reach a 40px / 36px target. */
+  .text-button,
+  .actions button,
+  .modal-footer button {
+    height: 40px;
+  }
+
+  .accent-swatches {
+    flex-wrap: wrap;
+    gap: 12px;
+  }
+
+  .swatch {
+    width: 36px;
+    height: 36px;
+  }
+
+  .field,
+  .catalog-context .field,
+  .editable-value {
+    height: 40px;
+  }
+
+  .menu-footer {
+    height: 40px;
+  }
+
+  .search-hits button {
+    min-height: 40px;
+  }
+
+  .field-eye {
+    width: 32px;
+    height: 32px;
+  }
+
+  /* List rows can grow: they are the main touch surface. */
+  .menu-item,
+  .command-row,
+  .config-row {
+    min-height: 44px;
+  }
+}
+
+/* --- Phone --------------------------------------------------------------- */
+@media (max-width: 767px) {
+  /* Settings navigation becomes a horizontal strip. The h2 is clipped rather
+     than `display: none` so `aria-labelledby="settings-title"` keeps working. */
+  .settings-nav {
+    display: flex;
+    align-items: center;
+    gap: 8px;
+    width: auto;
+    flex: none;
+    overflow-x: auto;
+    padding: 8px 16px;
+    -webkit-overflow-scrolling: touch;
+    scrollbar-width: none;
+  }
+
+  .settings-nav::-webkit-scrollbar {
+    display: none;
+  }
+
+  .settings-nav h2 {
+    position: absolute;
+    width: 1px;
+    height: 1px;
+    overflow: hidden;
+    clip: rect(0 0 0 0);
+    white-space: nowrap;
+  }
+
+  .settings-nav .nav-heading,
+  .settings-nav .nav-subhead {
+    flex: none;
+    margin: 0;
+    padding: 0 6px;
+    white-space: nowrap;
+  }
+
+  .settings-body {
+    padding: 20px 16px 32px;
+  }
+
+  /* Long model ids and provider hosts must wrap instead of pushing the
+     control off the row. */
+  .setting-row {
+    flex-wrap: wrap;
+    gap: 8px 12px;
+  }
+
+  /* Label above field on a phone. */
+  .setting-row:has(> .field, > .menu, > .field-password-wrap, > .token-field, > .editable) {
+    grid-template-columns: minmax(0, 1fr);
+    gap: 6px;
+  }
+
+  .setting-row:has(> .field, > .menu, > .field-password-wrap, > .token-field, > .editable) > :last-child {
+    max-width: none;
+  }
+
+  /* Model rows: name on its own line, context field and remove button below it. */
+  .catalog-row {
+    flex-wrap: wrap;
+    row-gap: 4px;
+  }
+
+  .catalog-row > :first-child {
+    flex: 1 1 100%;
+  }
+
+  .catalog-context {
+    flex: 1;
+    flex-wrap: wrap;
+  }
+
+  .catalog-context small {
+    flex: 1 1 100%;
+  }
+
+  /* A select inside a row (its label can be a long model id) fills the row and truncates. */
+  .setting-row > .menu {
+    width: 100%;
+    min-width: 0;
+    max-width: 100%;
+  }
+
+  /* Five customize tabs do not fit one line at 320px: they wrap into a second row. */
+  .customize-tabs {
+    flex-wrap: wrap;
+  }
+
+  .customize-tabs button {
+    flex: 1 1 auto;
+    height: 36px;
+    padding: 0 12px;
+  }
+
+  .field-wide {
+    width: 100%;
+  }
+
+  .env-row {
+    flex-wrap: wrap;
+  }
+
+  /* iOS zooms the page when a focused input is under 16px. */
+  .field,
+  .composer textarea,
+  .search-field input,
+  .field-area {
+    font-size: 16px;
+  }
+
+  .transcript-scroll {
+    padding: 16px 12px;
+  }
+
+  .messages {
+    gap: 18px;
+  }
+
+  .hero-stage h2 {
+    font-size: 24px;
+  }
+
+  /* Popovers can never be wider than the screen. */
+  .menu-list {
+    max-width: calc(100vw - 24px);
+  }
+
+  .menu.model .menu-list {
+    width: min(18rem, calc(100vw - 24px));
+  }
+
+  /* Modal as a bottom sheet, scrollable so the skill editor never overflows. */
+  .modal-layer {
+    align-items: flex-end;
+    padding: 12px;
+  }
+
+  .modal-panel {
+    max-height: calc(100dvh - 24px);
+    overflow-y: auto;
+  }
+
+  .search-layer {
+    padding-top: 6vh;
+  }
+
+  /* The debug pane would squeeze the chat off a phone screen, so the OPEN pane
+     becomes a full-surface overlay over the chat column. `.chat-column` needs a
+     containing block here: it is `static`, so `inset: 0` would otherwise
+     resolve against `.app` and cover the whole window. The CLOSED pane is
+     hidden: the top bar carries the toggle, so a strip would only duplicate it. */
+  .chat-column {
+    position: relative;
+  }
+
+  .context-sidebar[data-open='true'] {
+    position: absolute;
+    inset: 0;
+    z-index: 15;
+    width: auto;
+  }
+
+  .context-sidebar[data-open='false'] {
+    /* The top bar owns the toggle on a phone, so the collapsed strip would only
+       duplicate it. Hide it instead of giving it a corner of the screen. */
+    display: none;
+  }
+
+  .context-resize {
+    display: none;
+  }
+
+  /* The plan pane would squeeze the chat off a phone screen too, so the OPEN
+     pane covers the chat column the same way the debug pane does. The collapsed
+     strip is hidden: the plan is reachable from the plan card instead. */
+  .plan-pane[data-open='true'] {
+    position: absolute;
+    inset: 0;
+    z-index: 15;
+    width: auto;
+  }
+
+  .plan-pane[data-open='false'] {
+    display: none;
+  }
+
+  .plan-resize {
+    display: none;
+  }
+}
+
+/* --- Safe areas and dynamic viewport ------------------------------------ */
+/* The mobile browser URL bar changes the viewport height as you scroll; dvh
+   tracks it where supported so the shell never ends up taller than the screen. */
+@supports (height: 100dvh) {
+  html,
+  body,
+  #root {
+    height: 100dvh;
+  }
+}
+
+/* Notch and gesture-bar insets. viewport-fit=cover in index.html opts in. */
+@supports (padding: env(safe-area-inset-bottom)) {
+  .composer-dock {
+    padding-bottom: calc(20px + env(safe-area-inset-bottom));
+  }
+
+  .transcript-scroll {
+    padding-left: calc(12px + env(safe-area-inset-left));
+    padding-right: calc(12px + env(safe-area-inset-right));
+  }
+
+  /* Phones only: on desktop `.settings-body` keeps its own 32px padding. */
+  @media (max-width: 767px) {
+    .settings-body {
+      padding-left: calc(16px + env(safe-area-inset-left));
+      padding-right: calc(16px + env(safe-area-inset-right));
+    }
+  }
+}

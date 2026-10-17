@@ -1,0 +1,29 @@
+node_modules/
+dist/
+dist-electron/
+release*/
+xeck-release/
+*.local
+.DS_Store
+.DS_Store?
+Thumbs.db
+Desktop.ini
+*.log
+coverage/
+.nyc_output/
+.env
+.env.*
+!.env.example
+.idea/
+.vscode/
+.playwright-mcp/
+.cursor/
+
+# Tunnel credentials and generated config. The named tunnel's credentials.json
+# grants full access to this machine's host; the hostname in cloudflared.yml is
+# the only barrier on an unauthenticated endpoint.
+.cloudflared/
+cloudflared.local.yml
+build/
+work/
+xeck-work/

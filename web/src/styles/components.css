@@ -1,0 +1,126 @@
+/* Shared component rules.
+ *
+ * The bar for anything in this file: a utility must not be able to say it.
+ * That covers engine specific properties, pseudo-elements and rules that group
+ * many class-named controls under one set of tokens. Anything that is a plain
+ * box is a utility in the JSX instead. Surfaces are flat: solid token tones,
+ * no borders, gradients, shadows, blur or glow. */
+
+/* Buttons. One height, radius, tone fill and type size for every labelled button
+   that is styled by class. Rules elsewhere only add a tone (danger text, an
+   icon gap) and never restate the geometry. Buttons written in JSX get the same
+   tokens from `ui/button-styles.ts`. */
+.text-button,
+.actions button,
+.modal-footer button,
+.error-banner button,
+.interaction-btn-primary,
+.interaction-btn-secondary {
+  height: var(--spacing-control);
+  border-radius: var(--radius-control);
+  background: var(--color-field);
+  padding: 0 var(--spacing-control-pad);
+  font-size: var(--text-ui);
+  font-weight: 500;
+  transition: background-color 0.12s ease, color 0.12s ease;
+}
+
+.text-button:hover:not(:disabled),
+.actions button:hover:not(:disabled),
+.modal-footer button:hover:not(:disabled),
+.interaction-btn-secondary:hover:not(:disabled) {
+  background: var(--color-chat-active);
+}
+
+.text-button:disabled,
+.actions button:disabled,
+.modal-footer button:disabled,
+.error-banner button:disabled,
+.interaction-btn-primary:disabled,
+.interaction-btn-secondary:disabled {
+  opacity: 0.5;
+  cursor: default;
+}
+
+/* The one filled action: ink, not the accent. */
+.interaction-btn-primary {
+  background: var(--color-primary);
+  color: var(--color-on-primary);
+  font-weight: 500;
+}
+
+.interaction-btn-primary:hover:not(:disabled) {
+  background: var(--color-primary-hover);
+}
+
+/* The panels fill the window edge to edge: no frame, no radius, no gap. The
+   sidebar and Settings declare `panel-shell` in JSX; the chat column is a
+   selector rule. They are told apart by background tone only. */
+.panel-shell,
+.chat-column {
+  overflow: clip;
+}
+
+/* Settings keeps its own background tone. */
+.settings {
+  background: var(--color-main);
+}
+
+/* The frameless Electron window drags by its titlebar. */
+.window-drag {
+  user-select: none;
+  -webkit-app-region: drag;
+}
+
+.window-no-drag {
+  -webkit-app-region: no-drag;
+}
+
+/* Windows draws its own close-button red; it is a fixed token, not a theme color. */
+.window-close:hover {
+  background: var(--color-window-close);
+  color: var(--color-on-window-close);
+}
+
+/* Overlay depth. `z-scrim` sits one step under `z-drawer`. Plain CSS (not
+   `@utility`) because Tailwind v4 does not emit `@utility` bodies under
+   stacked variants like `max-lg:z-drawer`; the sidebar and scrim both need
+   exactly that. Values stay semantic: never write a bare `z-24` in JSX. */
+.z-scrim { z-index: 24; }
+.z-drawer { z-index: 25; }
+
+/* A status screen always follows the titlebar in the DOM, so it yields the same
+   38px the shell gives up above it. Without this the layout leaves dead space. */
+.status-under-titlebar {
+  height: calc(100% - 38px);
+}
+
+/* A scroll surface keeps its gutter reserved so content never shifts sideways
+   when the bar appears. Declared once for every scroll surface because the
+   effect is a property of the surface, not of any one component. */
+.chat-scroll,
+.context-scroll,
+.context-block,
+.transcript-scroll,
+.command-menu,
+.menu-scroll,
+.search-hits,
+.settings-body {
+  scrollbar-gutter: stable;
+}
+
+/* The busy spinner takes the mood color from the row it sits in. The attribute
+   carries the mood name (`thinking`, `working`, …), never the string 'true',
+   so the selector matches on presence: matching a value would never fire. */
+.chat-row[data-mood] [data-mood-busy] {
+  color: var(--color-mood);
+  animation: chat-spin 1s linear infinite;
+}
+
+/* Working dots breathe; a failure breathes faster. */
+.chat-row[data-mood='thinking'] .chat-mood-dot {
+  animation: mood-pulse 2.4s ease-in-out infinite;
+}
+.chat-row[data-mood='error'] .chat-mood-dot {
+  animation: mood-pulse 1.6s ease-in-out infinite;
+}

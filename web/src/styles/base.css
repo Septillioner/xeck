@@ -1,0 +1,35 @@
+/* Reset, scrollbars and shared element defaults. */
+
+/* One scrollbar mechanism: the standard properties. In current Chrome they disable every
+   ::-webkit-scrollbar* rule, so mixing the two only left dead CSS. A thin thumb on a transparent
+   track also leaves a transparent corner. */
+* { box-sizing: border-box; scrollbar-width: thin; scrollbar-color: var(--color-scrollbar) transparent; }
+html, body, #root { height: 100%; margin: 0; overflow: hidden; background-image: none; }
+/* Inter is loaded via @fontsource in main.tsx; --font-sans is the @theme token
+   so `font-sans` utilities and the body share one source. Without this the
+   token exists but nothing reads it and the UI falls back to system fonts. */
+body { background: var(--color-bg); color: var(--color-ink); font-family: var(--font-sans); }
+h2, h3, p, ul { margin: 0; }
+ul { padding: 0; list-style: none; }
+button, input, textarea { font: inherit; color: inherit; }
+/* No native resize grip on any textarea: they grow with their text instead. */
+/* Textareas grow with their text, so they never show a resize grip, scrollbar or corner
+   (a 1px rounding overflow used to draw a short line at the bottom right). They still scroll
+   with wheel, touch and keys once they reach max rows. */
+textarea { resize: none; scrollbar-width: none; }
+textarea::-webkit-resizer { display: none; }
+textarea::-webkit-scrollbar { display: none; }
+button { cursor: pointer; background: none; border: 0; padding: 0; }
+/* Soft state changes: hover and selection fade in 160ms instead of snapping. */
+button, input, textarea, summary { transition: background-color 0.16s ease, color 0.16s ease; }
+button:focus-visible, input:focus-visible, textarea:focus-visible { outline: 2px solid var(--color-ink); outline-offset: 2px; }
+
+/* Read out to screen readers, hidden visually. Kept in CSS because the clipping
+   recipe is not expressible as a utility without four separate declarations. */
+.sr-only {
+  position: absolute;
+  width: 1px;
+  height: 1px;
+  overflow: hidden;
+  clip: rect(0 0 0 0);
+}

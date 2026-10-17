@@ -1,0 +1,82 @@
+/* Cursor, pulse and mood animations plus reduced motion. */
+
+@keyframes cursor-blink {
+  0%, 45% { opacity: 1; }
+  50%, 100% { opacity: 0; }
+}
+@keyframes chat-spin {
+  to { transform: rotate(360deg); }
+}
+@keyframes xeck-arrive {
+  from { opacity: 0; transform: translateY(6px) scale(0.98); }
+  to { opacity: 1; transform: translateY(0) scale(1); }
+}
+@keyframes xeck-wave {
+  0%, 8%, 40%, 100% { opacity: 0.8; transform: translateY(0); }
+  24% { opacity: 1; transform: translateY(var(--xeck-wave-lift, -3px)); }
+}
+@keyframes xeck-status-in {
+  from { opacity: 0; transform: translateY(110%); }
+  to { opacity: 1; transform: translateY(0); }
+}
+@keyframes xeck-status-out {
+  from { opacity: 1; transform: translateY(0); }
+  to { opacity: 0; transform: translateY(-110%); }
+}
+@keyframes xeck-fade-out {
+  to { opacity: 0; transform: translateY(6px) scale(0.98); }
+}
+@media (prefers-reduced-motion: reduce) {
+  .assistant.streaming .transcript > :last-child::after,
+  .reasoning summary .chevron,
+  .file-change-card summary::before,
+  .shimmer-text, .chat-busy, .control-spinner, .xeck-pulse, .xeck-pulse-copy, .xeck-pulse-line, .xeck-pulse-mark, .xeck-pulse-letter, .tool-running-dot, .tool-chevron, [data-typing='true']::after { animation: none; transition: none; }
+  .xeck-pulse-line[data-leaving='true'] { display: none; }
+  .sidebar, .chat-column { transition: none; }
+  .control-spinner { border-top-color: currentColor; }
+  .chat-mood-dot { animation: none; }
+  .xeck-pulse[data-exiting='true'] { animation: none; opacity: 0; }
+}
+
+/* The caret of a title that is being written out. `data-typing` is set by
+   `ui/TypingText.tsx`; the bar matches the streaming answer cursor in
+   `chat.css`, so the two read as one animation. */
+[data-typing='true']::after {
+  content: '';
+  display: inline-block;
+  width: 2px;
+  height: 0.95em;
+  margin-left: 3px;
+  background: currentColor;
+  vertical-align: text-bottom;
+  animation: cursor-blink 1s steps(2) infinite;
+}
+
+.lede { margin: 4px 0 0; font-size: var(--text-ui); color: var(--color-muted); }
+.settings-nav h2 { margin: 0; padding: 8px; font-size: var(--text-body); font-weight: 500; }
+.error-banner { margin-top: 16px; display: flex; align-items: center; justify-content: space-between; gap: 12px; border-radius: var(--radius-card); background: var(--color-danger-bg); padding: 12px 16px; color: var(--color-danger); }
+.error-banner strong { display: block; font-size: var(--text-body); }
+.error-banner p { margin: 2px 0 0; font-size: var(--text-ui); }
+.error-banner button { background: var(--color-danger); color: var(--color-on-danger); }
+
+.composer-form { position: relative; }
+.command-menu { position: absolute; z-index: 20; left: 0; right: 0; bottom: calc(100% + 8px); max-height: 240px; overflow: auto; border-radius: var(--radius-card); background: var(--color-chip); padding: 4px; }
+.command-row { display: flex; width: 100%; align-items: center; gap: 8px; height: 32px; border-radius: var(--radius-control); padding: 0 8px; text-align: left; font-size: var(--text-body); }
+.command-row[data-active='true'], .command-row:hover { background: var(--color-hover); }
+.command-row span:first-child { flex: none; }
+.command-row span:last-child { min-width: 0; overflow: hidden; text-overflow: ellipsis; white-space: nowrap; color: var(--color-muted); font-size: var(--text-ui); }
+.composer { display: flex; align-items: flex-end; gap: 8px; border-radius: var(--radius-card); background: var(--color-chip); padding: 8px 8px 8px 18px; }
+.composer-main { display: flex; min-width: 0; flex: 1; flex-direction: column; }
+.composer textarea { display: block; width: 100%; max-height: var(--spacing-composer-max); resize: none; overflow: auto; background: transparent; border: 0; padding: 6px 0; font-size: var(--text-lead); line-height: 1.5; }
+.composer textarea:focus { outline: none; }
+.composer:has(textarea:focus-visible) { outline: 2px solid var(--color-ink); outline-offset: 2px; }
+.composer-foot { display: flex; align-items: center; min-width: 0; }
+.send-orb { display: flex; height: 32px; width: 32px; flex: none; align-items: center; justify-content: center; border-radius: var(--radius-control); background: var(--accent); color: var(--color-on-accent); transition: --accent 220ms ease, background 0.15s ease, color 0.15s ease, filter 0.15s ease; }
+.send-orb:disabled { opacity: 1; background: var(--color-track); color: var(--color-muted); }
+.send-orb:not(:disabled):hover { filter: brightness(1.08); }
+.send-orb svg { width: 18px; height: 18px; }
+
+@keyframes mood-pulse {
+  0%, 100% { opacity: 0.55; }
+  50% { opacity: 1; }
+}

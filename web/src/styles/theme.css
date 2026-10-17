@@ -1,0 +1,266 @@
+/* Design tokens: palettes, accent, type, radius and control sizes.
+ *
+ * This is the bridge to Tailwind. Every value is declared in `@theme`, so
+ * Tailwind generates the `--color-*`, `--spacing-*`, `--radius-*` and
+ * `--text-*` scales from this one file and no other file is allowed to invent
+ * a color. Rules: docs/rules/frontend.md.
+ *
+ * Dark mode works by re-declaring the same variables on `.dark`. Utilities
+ * compile to `var(--color-ink)`, so the override reaches every utility without
+ * regenerating anything. That is why the palettes are written as variable
+ * blocks and not as generated utility classes.
+ */
+
+@property --accent {
+  syntax: '<color>';
+  inherits: true;
+  initial-value: #294575;
+}
+
+@theme {
+  --font-sans: Inter, ui-sans-serif, system-ui, sans-serif;
+
+  /* Type scale. Every size in the UI is one of these; no `text-[13px]`. */
+  --text-nano: 10px;
+  --text-micro: 11px;
+  --text-small: 12px;
+  --text-ui: 13px;
+  --text-body: 14px;
+  --text-lead: 15px;
+  --text-brand: 16px;
+  --text-large: 17px;
+  --text-heading: 22px;
+
+  /* Radius scale. */
+  --radius-tile: 8px;
+  --radius-control: 10px;
+  --radius-row: 12px;
+  --radius-card: 14px;
+
+  /* Surfaces. */
+  --color-bg: #eeece6;
+  --color-sidebar: #eeece6;
+  --color-main: #f6f5f1;
+  --color-ink: #34383f;
+  --color-muted: #585c63;
+  --color-icon: #585c63;
+  --color-logo: #3556a0;
+  --color-track: #dad6cf;
+  --color-hover: color-mix(in srgb, var(--color-ink) 5%, transparent);
+  --color-chip: #fdfcfa;
+  --color-popover: var(--color-chip);
+  --color-control: #86847f;
+  --color-field: #e9e6e0;
+  --color-field-hover: #e2ded7;
+  --color-field-border: #c9c5bd;
+  --color-focus: #3556a0;
+  --color-code: #eeece6;
+  --color-user: #eeece6;
+
+  /* The accent: the only chromatic color. docs/rules/frontend.md lists where it may appear.
+     `--accent` is the switchable variable the `data-accent` rules write, and
+     `--color-accent` is the one utilities read. `@theme` does not emit a token
+     whose value is another variable, so this alias is declared by hand. */
+  --accent: #294575;
+  --color-accent: #294575;
+  /* Text on the accent. The default accent is deep blue; the
+     `data-accent` rules below set it per option so every pair stays >= 4.5:1. */
+  --color-on-accent: #fdfcfa;
+
+  /* Primary action: a solid ink fill, never the accent (see docs/rules/frontend.md). Buttons read these through `bg-primary`. */
+  --color-primary: #34383f;
+  --color-primary-hover: #454a52;
+  --color-on-primary: #fdfcfa;
+  --color-swatch-coral: #9e3f23;
+  --color-swatch-default: #294575;
+  --color-swatch-amber: #815006;
+  --color-swatch-green: #246a3f;
+  --color-swatch-blue: #3556b0;
+  --color-swatch-violet: #6446ba;
+
+
+  /* Semantic states. These never use the accent. */
+  --color-danger: #a3271d;
+  --color-danger-hover: #8a2018;
+  --color-danger-bg: #fbe9e6;
+  --color-on-danger: #fdfcfa;
+  --color-scrim: rgba(30, 28, 24, 0.34);
+  --color-pressure-warn: #8a4108;
+  --color-pressure-alert: #a3271d;
+  /* Chat row and meter surfaces. */
+  --color-chat-hover: color-mix(in srgb, var(--color-ink) 5%, transparent);
+  --color-chat-active: color-mix(in srgb, var(--accent) 12%, transparent);
+  --color-mood: #d4d4d8;
+
+  /* Fixed-purpose palettes. These do not follow the theme: a terminal, a diff
+     and a context-meter segment read the same on both. */
+  --color-window-close: #c42b1c;
+  --color-on-window-close: #fdfcfa;
+  --color-knob: #fdfcfa;
+  --color-diff-add: #2f9e62;
+  --color-diff-del: #d45757;
+  --color-diff-add-ink: #166534;
+  --color-diff-del-ink: #b42318;
+  --color-syntax-comment: #6e7781;
+  --color-syntax-keyword: #8250df;
+  --color-syntax-string: #0a3069;
+  --color-syntax-number: #953800;
+  --color-syntax-title: #0550ae;
+  --color-syntax-variable: #953800;
+  --color-terminal-bg: #09090b;
+  --color-terminal-ink: #d6d6dc;
+  --color-ansi-black: #777780;
+  --color-ansi-red: #f2aaaa;
+  --color-ansi-green: #9be5b7;
+  --color-ansi-yellow: #f0d58a;
+  --color-ansi-blue: #9ebeff;
+  --color-ansi-magenta: #e1a9f2;
+  --color-ansi-cyan: #8ddde5;
+  --color-ansi-white: #f7f7f8;
+  --color-ansi-bright-black: #a5a5ae;
+  --color-ansi-bright-red: #ffb8b8;
+  --color-ansi-bright-green: #b4f3c8;
+  --color-ansi-bright-yellow: #ffe7a8;
+  --color-ansi-bright-blue: #b4cbff;
+  --color-ansi-bright-magenta: #efc0ff;
+  --color-ansi-bright-cyan: #b3f2f7;
+  --color-ansi-bright-white: #ffffff;
+  --color-meter-system: #8a8a93;
+  --color-meter-tools: #8b7cf6;
+  --color-meter-rules: #3d9a6a;
+  --color-meter-skills: #c9a227;
+  --color-meter-mcp: #c45c8a;
+  --color-meter-summary: #d4654a;
+  --color-meter-conversation: #d4893a;
+  --color-meter-toolCalls: #4f9bd6;
+  --color-meter-toolResults: #3fb5b0;
+  --color-meter-providerMeta: #a78a6d;
+
+  /* Scrollbar. */
+  --color-scrollbar: #d3cfc8;
+  --color-scrollbar-hover: #b0aca4;
+
+  /* Nav icon tints. Soft chips behind settings nav icons: the icon itself
+     stays text-colored; the chip carries the hue. Both themes readable. */
+  --color-tint-general-bg: #e4e4e7;
+  --color-tint-general-ink: #52525b;
+  --color-tint-customize-bg: #ddd6f3;
+  --color-tint-customize-ink: #6d28d9;
+  --color-tint-remote-bg: #cde3f5;
+  --color-tint-remote-ink: #1d4ed8;
+  --color-tint-star-bg: #f6d6e0;
+  --color-tint-star-ink: #a11d5c;
+  /* Provider brand marks (the one decorative-colour exception; see provider-icons.tsx). */
+  --color-brand-openai: #0e8a6a;
+  --color-brand-groq: #e0442b;
+  --color-brand-ollama: #1a1a1a;
+  --color-brand-gemini: #7b61a3;
+  --color-brand-openrouter: #2e8540;
+
+  /* Layout and control metrics. `--spacing-*` keys must be bare names so
+     utilities read them as `w-sidebar`, `h-control`, `px-control-pad`. */
+  --spacing-control: 34px;
+  --spacing-field: 36px;
+  --spacing-group: 16px;
+  --spacing-control-sm: 28px;
+  --spacing-control-pad: 12px;
+  --spacing-row: 40px;
+  --spacing-sidebar: 260px;
+  --spacing-gutter: 24px;
+  --spacing-section: 32px;
+  --spacing-transcript-max: 48rem;
+  --spacing-settings-nav: 220px;
+  --spacing-scrollbar-size: 8px;
+  --spacing-composer-max: 40dvh;
+
+  /* Flat surfaces: no shadow or border tokens exist. Tone separates a popover. */
+}
+
+/* Dark palette. Same variable names, so every light-palette utility follows. */
+.dark {
+  color-scheme: dark;
+  --color-bg: #0b0b0b;
+  --color-sidebar: #0b0b0b;
+  --color-main: #101010;
+  --color-ink: #d6d8db;
+  --color-muted: #a0a3a8;
+  --color-icon: #a0a3a8;
+  --color-logo: #4f7bce;
+  --color-track: #333333;
+  --color-chip: #191919;
+  --color-field: #202020;
+  --color-control: #76767a;
+  --color-knob: #17181a;
+  --color-code: #0b0b0b;
+  --color-field-hover: #282828;
+  --color-field-border: #383838;
+  --color-focus: #6c8fd2;
+  --color-swatch-coral: #e8785a;
+  --color-swatch-default: #4f7bce;
+  --color-swatch-amber: #e0a944;
+  --color-swatch-green: #5bbd84;
+  --color-swatch-blue: #6c93e8;
+  --color-swatch-violet: #a08ae8;
+
+  --color-user: #242424;
+  --color-diff-add-ink: #9be5b7;
+  --color-diff-del-ink: #f2aaaa;
+  --color-syntax-comment: #8b949e;
+  --color-syntax-keyword: #c792ea;
+  --color-syntax-string: #a5d6ff;
+  --color-syntax-number: #f2cc60;
+  --color-syntax-title: #79c0ff;
+  --color-syntax-variable: #ffa657;
+  --color-primary: #d6d8db;
+  --color-primary-hover: #c4c7cb;
+  --color-on-primary: #17181a;
+  --color-danger: #ff8f93;
+  --color-danger-bg: #2a1415;
+  --color-danger-hover: #ffa3a6;
+  --color-on-danger: #17181a;
+  --color-on-accent: #17181a;
+
+  --color-pressure-warn: #f0a020;
+  --color-pressure-alert: #ff8f93;
+  --color-scrollbar: #363636;
+  --color-scrollbar-hover: #505050;
+  --color-tint-general-bg: #2a2a30;
+  --color-tint-general-ink: #d4d4d8;
+  --color-tint-customize-bg: #2c2350;
+  --color-tint-customize-ink: #b7a6f5;
+  --color-tint-remote-bg: #16294d;
+  --color-tint-remote-ink: #8fb5f5;
+  --color-tint-star-bg: #3a1626;
+  --color-tint-star-ink: #f2a2c6;
+  --color-brand-openai: #10a37f;
+  --color-brand-groq: #f55036;
+  --color-brand-ollama: #f2f2f2;
+  --color-brand-gemini: #a58bcf;
+  --color-brand-openrouter: #4cc26a;
+  --color-mood: #8e8e96;
+}
+
+/* Accent selection. Applied after the dark palette so a dark theme does not keep
+   a fixed accent (see PMAP.md). */
+html { --color-accent: var(--accent); }
+html[data-accent='default'] { --accent: #294575; --color-on-accent: #fdfcfa; }
+html[data-accent='coral'] { --accent: #9e3f23; --color-on-accent: #fdfcfa; }
+html[data-accent='amber'] { --accent: #815006; --color-on-accent: #fdfcfa; }
+html[data-accent='green'] { --accent: #246a3f; --color-on-accent: #fdfcfa; }
+html[data-accent='blue'] { --accent: #3556b0; --color-on-accent: #fdfcfa; }
+html[data-accent='violet'] { --accent: #6446ba; --color-on-accent: #fdfcfa; }
+html.dark[data-accent='default'] { --accent: #4f7bce; --color-on-accent: #080808; }
+html.dark[data-accent='coral'] { --accent: #e8785a; --color-on-accent: #17181a; }
+html.dark[data-accent='amber'] { --accent: #e0a944; --color-on-accent: #17181a; }
+html.dark[data-accent='green'] { --accent: #5bbd84; --color-on-accent: #17181a; }
+html.dark[data-accent='blue'] { --accent: #6c93e8; --color-on-accent: #17181a; }
+html.dark[data-accent='violet'] { --accent: #a08ae8; --color-on-accent: #17181a; }
+
+[data-mood='idle'] { --color-mood: #d4d4d8; }
+[data-mood='thinking'] { --color-mood: #8b5cf6; }
+[data-mood='working'] { --color-mood: #38bdf8; }
+[data-mood='waiting'] { --color-mood: #f59e0b; }
+[data-mood='completed'] { --color-mood: #22c55e; }
+[data-mood='error'] { --color-mood: #ef4444; }
+[data-mood='cancelled'] { --color-mood: #71717a; }
+.dark [data-mood='idle'] { --color-mood: #8e8e96; }

@@ -1,0 +1,16 @@
+/* Transcript typography, code cards and diff lines. */
+
+[data-text-size='small'] .transcript { font-size: var(--text-body); }
+[data-text-size='large'] .transcript { font-size: var(--text-large); }
+.transcript p { margin: 0.6em 0; }
+.transcript p:first-child { margin-top: 0; }
+.transcript pre { margin: 0.75em 0; }
+.transcript :not(pre) > code { border-radius: 4px; background: var(--color-hover); padding: 0.1em 0.35em; font-size: 0.9em; }
+.code-card { overflow: hidden; border-radius: var(--radius-card); background: var(--color-code); }
+.code-card header { background: var(--color-field); display: flex; align-items: center; justify-content: space-between; padding: 6px 12px; font-size: var(--text-small); color: var(--color-muted); }
+.code-card header button { color: var(--color-muted); font-size: var(--text-small); }
+.code-card header button[data-copied='true'] { color: var(--color-ink); }
+.code-card pre { max-width: 100%; margin: 0; overflow-x: auto; }
+.code-line { display: flex; align-items: flex-start; gap: 16px; padding: 0 16px; font-family: ui-monospace, SFMono-Regular, Menlo, monospace; font-size: var(--text-ui); line-height: 1.6; }
+.code-line > span:last-child { min-width: 0; white-space: pre-wrap; overflow-wrap: anywhere; }
+.code-gutter { width: 1.5rem; flex: none; text-align: right; color: var(--color-muted); user-select: none; }

@@ -1,0 +1,11 @@
+{
+  "defaultThreshold": 250000,
+  "overrides": [
+    { "pattern": "^gpt-6(?:$|[-.])", "threshold": 272000 },
+    { "pattern": "^gpt-5[.-]6(?:$|[-.])", "threshold": 272000 },
+    { "pattern": "^gpt-5[.-][45](?:$|[-.])", "threshold": 250000 },
+    { "pattern": "^gemini-.*-pro(?:$|[-.])", "threshold": 200000 },
+    { "pattern": "^claude-haiku-5-5(?:$|[-.])", "threshold": 100000 },
+    { "pattern": "^claude-sonnet-4(?:[.-]5)?(?:$|[-.])", "threshold": 200000 }
+  ]
+}

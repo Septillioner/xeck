@@ -1,0 +1,48 @@
+name: Bug report
+description: Report a reproducible problem in Xeck
+title: "bug: "
+labels: ["bug"]
+body:
+  - type: markdown
+    attributes:
+      value: Before submitting, search existing issues. Remove secrets and personal data from all examples and logs.
+  - type: input
+    id: version
+    attributes:
+      label: Xeck version
+      placeholder: "e.g. 4.3.23"
+    validations:
+      required: true
+  - type: input
+    id: platform
+    attributes:
+      label: Operating system
+      placeholder: "e.g. Windows 11, macOS, Ubuntu"
+    validations:
+      required: true
+  - type: textarea
+    id: steps
+    attributes:
+      label: Steps to reproduce
+      description: List the smallest set of steps that reproduces the problem.
+    validations:
+      required: true
+  - type: textarea
+    id: expected
+    attributes:
+      label: Expected behavior
+    validations:
+      required: true
+  - type: textarea
+    id: actual
+    attributes:
+      label: Actual behavior
+    validations:
+      required: true
+  - type: textarea
+    id: logs
+    attributes:
+      label: Relevant logs or screenshots
+      description: Remove API keys, tokens, credentials, and personal data before sharing.
+    validations:
+      required: false
