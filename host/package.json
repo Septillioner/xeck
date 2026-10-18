@@ -7,7 +7,7 @@
     "start": "tsx src/index.ts",
     "build": "tsup",
     "typecheck": "node --max-old-space-size=8192 node_modules/typescript/bin/tsc -p tsconfig.json",
-    "test": "tsx --test \"src/**/*.test.ts\""
+    "test": "node scripts/test.mjs"
   },
   "dependencies": {
     "@hono/node-server": "^1.19.0",
