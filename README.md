@@ -132,3 +132,7 @@ npm run test:i18n
 ## Contributing and security
 
 Read [CONTRIBUTING.md](CONTRIBUTING.md) and [SECURITY.md](SECURITY.md). Never commit API keys, `.env` files, user data, logs, or build outputs.
+
+## Credits
+
+Model pricing and context-window metadata includes data from [LiteLLM](https://github.com/BerriAI/litellm) by [BerriAI](https://github.com/BerriAI) (@BerriAI), used under the MIT license. Thank you to its maintainers and contributors. See [third-party notices](THIRD_PARTY_NOTICES.md) for the source and license.
