@@ -2,6 +2,7 @@ import { app, BrowserWindow, ipcMain, shell } from 'electron';
 import { spawn, type ChildProcess } from 'node:child_process';
 import { existsSync } from 'node:fs';
 import { dirname, join } from 'node:path';
+import { installContextMenu } from './context-menu';
 
 const HOST_NAME = '127.0.0.1';
 /** Host port for `npm run dev`, which is already running when Electron opens. */
@@ -84,6 +85,8 @@ function createMainWindow(): BrowserWindow {
       sandbox: true,
     },
   });
+
+  installContextMenu(window);
 
   // Links must never turn the app window into a browser tab: `target="_blank"`
   // and `window.open` are denied here and routed to the system browser.

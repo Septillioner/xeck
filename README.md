@@ -13,19 +13,20 @@ A local-first desktop app with personal XeckBots, connected tools, and your choi
 [![License: Apache 2.0](https://img.shields.io/badge/license-Apache%202.0-blue?style=flat-square)](LICENSE)
 ![Platforms: Windows, macOS, Linux](https://img.shields.io/badge/platforms-Windows%20%C2%B7%20macOS%20%C2%B7%20Linux-52525b?style=flat-square)
 
-**[Download beta](https://github.com/Septillioner/xeck/releases/tag/v4.4.0-beta.1)** · **[Installation](#desktop-installation)** · **[Development](#development)** · **[Credits](#credits)**
+**[Download beta](https://github.com/Septillioner/xeck/releases/tag/v4.4.0-beta.2)** · **[Features](#features)** · **[Installation](#desktop-installation)** · **[Development](#development)** · **[Credits](#credits)**
 
 </div>
 
 ---
 
-## Make it your workspace
+## Features
 
 - **Chat with your preferred models.** Configure model providers and organize conversations by project.
 - **Create your own XeckBots.** Give each bot a name, color, and purpose, with its own generated instructions.
 - **Let bots collaborate.** XeckBots exchange messages in dedicated bot conversations.
 - **Connect your tools.** Extend agents through MCP servers, skills, rules, and project tools.
 - **Keep your workspace local.** Conversations and settings are stored on your device. Model and MCP requests use the providers and services you configure.
+- **Edit naturally.** Native desktop right-click menus support cut, copy, paste, undo, redo, select all, and copying link addresses.
 - **Choose your language.** Turkish and English interfaces, with a system-language option.
 
 Built with **React**, **Electron**, and a local **Node.js** host. Agent execution is powered by [Poyraz](https://github.com/Septillioner/poyraz).
