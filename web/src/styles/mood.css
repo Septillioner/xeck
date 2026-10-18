@@ -57,6 +57,8 @@
 .modal-panel { width: min(32rem, 100%); border-radius: var(--radius-card); background: var(--color-chip); }
 .modal-header { display: flex; align-items: center; justify-content: space-between; gap: 12px; padding: 12px 16px; }
 .modal-header h3 { margin: 0; font-size: var(--text-lead); font-weight: 600; }
+.modal-panel:has(.bot-create-form) { width: min(28rem, 100%); max-height: calc(100dvh - 48px); overflow-y: auto; }
+.modal-panel:has(.bot-create-form) .modal-header { padding: 20px var(--spacing-gutter) 0; }
 .modal-footer { display: flex; align-items: center; justify-content: flex-end; gap: 8px; padding: 10px 16px 12px; }
 .modal-footer .status-line { margin-right: auto; }
 .customize-tabs { display: flex; gap: 4px; padding: 4px; border-radius: var(--radius-card); background: var(--color-field); }

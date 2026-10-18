@@ -128,7 +128,7 @@ export async function startSessionTurn(session: StoredSession, content: string, 
     try {
       emit('meta', { id: session.id, title: session.title });
       publishChild('Thinking');
-      if (firstTurn && !contextSummary && !childOrigin && !messageSource) startChatTitle({
+      if (firstTurn && !session.bot && !contextSummary && !childOrigin && !messageSource) startChatTitle({
         sessionId: session.id, question: content,
         onTitle: (title) => { if (!liveChat.closed) emit('meta', { id: session.id, title }); },
       });

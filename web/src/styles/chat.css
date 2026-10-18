@@ -205,7 +205,7 @@
 .column { width: 100%; max-width: var(--spacing-transcript-max); margin: 0 auto; }
 .transcript-area { position: relative; flex: 1; min-height: 0; }
 .transcript-scroll { position: absolute; inset: 0; overflow: auto; padding: 24px 16px; }
-.chat-stage[data-agent-header='true'] .transcript-scroll { padding-top: calc(var(--spacing) * 16); }
+.chat-stage[data-agent-header='true'] .transcript-scroll { padding-top: calc(var(--spacing) * 20); }
 .composer-dock { flex: none; padding: 0 0 20px; }
 .messages { display: flex; flex-direction: column; gap: 28px; }
 .user-row { display: flex; justify-content: flex-end; }

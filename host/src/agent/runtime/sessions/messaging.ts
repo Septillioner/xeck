@@ -6,7 +6,7 @@ import { selectedBuiltinNames } from '../../workspaces/definitions.ts';
 import { policyRejection } from '../../tools/policy-context.ts';
 import { LIST_MESSAGE_TARGETS_TOOL, SEND_CHAT_MESSAGE_TOOL } from '../../tools/builtin/messaging.ts';
 import { BUILTIN_TOOL_PREFIX } from '../../tools/builtin/identity.ts';
-import { listChildSessions, listSessions, readSession } from '../../../stores/sessions.ts';
+import { listSessions, readSession } from '../../../stores/sessions.ts';
 import { getActiveTurn, recordSubagentUsage, type AgentTurn } from '../agents/pool.ts';
 import { requestUserApproval } from '../events/dialogs.ts';
 import { startSessionTurn } from './turn.ts';
@@ -17,6 +17,7 @@ async function sender(sessionId: string, tool: string) {
   const turn = getActiveTurn(sessionId);
   const session = await readSession(sessionId);
   if (!turn || !session || session.origin?.by === 'agent') throw new Error('Messaging requires an active user-owned chat.');
+  if (!session.bot) throw new Error('Chat messaging is available only in XeckBot.');
   turn.signal.throwIfAborted();
   if (turn.messageSource) throw new Error('An incoming agent message cannot be relayed to another chat.');
   const workspace = session.workspace ? WORKSPACE_BY_REF[session.workspace] : undefined;
@@ -30,7 +31,7 @@ async function sender(sessionId: string, tool: string) {
 
 export async function listMessageTargets(sourceId: string) {
   await sender(sourceId, LIST_MESSAGE_TARGETS_TOOL);
-  const candidates = [...(await listSessions()).slice(0, 40), ...await listChildSessions(sourceId)];
+  const candidates = (await listSessions()).filter((session) => session.bot).slice(0, 40);
   return candidates.filter((item) => item.id !== sourceId).map((item) => ({
     sessionId: item.id, title: item.title, busy: Boolean(getActiveTurn(item.id)),
     ...(item.parentId ? { parentId: item.parentId } : {}),
@@ -42,6 +43,7 @@ async function recipient(sourceId: string, targetId: string): Promise<StoredSess
   const target = await readSession(targetId);
   if (!target) throw new Error('Target chat was not found.');
   if (target.origin?.by === 'agent' && target.origin.parent !== sourceId) throw new Error('Another chat\'s child is not a message target.');
+  if (!target.bot) throw new Error('Messages can only be sent to a XeckBot.');
   if (!target.agentId || !AGENT_BY_ID[target.agentId]) throw new Error('Target agent is unavailable.');
   if (getActiveTurn(targetId)) throw new Error('Target chat is busy. Retry after its turn finishes.');
   return target;

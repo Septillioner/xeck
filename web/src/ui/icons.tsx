@@ -51,9 +51,9 @@ function icon(Glyph: LucideIcon) {
 
 const LOGO_PATH = 'M12 18H25L34 30L46 12H58L35 50H24L29 41Z M20 35L26 43L21 50H9Z';
 
-export function IconXeck({ size = 18 }: { size?: number }) {
+export function IconXeck({ size = 18, className }: { size?: number; className?: string }) {
   return (
-    <svg width={size} height={size} viewBox="0 0 64 64" fill="none" aria-hidden="true">
+    <svg width={size} height={size} className={className} viewBox="0 0 64 64" fill="none" aria-hidden="true">
       <path
         d={LOGO_PATH}
         fill="currentColor"

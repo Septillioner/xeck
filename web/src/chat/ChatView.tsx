@@ -4,12 +4,13 @@ import { maxContextThreshold } from '../../../shared/model-context.ts';
 import { getSessionContext } from '../api/client.ts';
 import { useAppState } from '../state/AppState.tsx';
 import { cn } from '../lib/cn.ts';
-import { IconChat, IconCheck, IconChevron, IconCode, IconFolder, IconPlus, IconStar } from '../ui/icons.tsx';
+import { IconChat, IconCheck, IconChevron, IconCode, IconFolder, IconPlus, IconStar, IconXeck } from '../ui/icons.tsx';
 import { useStreamRevealLength } from '../ui/use-typed-text.ts';
 import { callsForMessages, type ActivityCall } from './activity-calls.ts';
 import { Composer } from './Composer.tsx';
 import { ContextSidebar } from './ContextSidebar.tsx';
 import { MessageList } from './MessageList.tsx';
+import { BotAvatar } from '../ui/BotAvatar.tsx';
 import { XeckPulse } from './XeckPulse.tsx';
 import { ContextMeter } from './ContextMeter.tsx';
 import { ModelMenu, modelOptions } from './ModelMenu.tsx';
@@ -51,7 +52,7 @@ export function ChatView() {
   const parentId = active?.origin?.by === 'agent' ? active.origin.parent : null;
   const isSubagent = parentId !== null;
   const activeAgent = agents.find((agent) => agent.id === active?.agentId);
-  const AgentIcon = AGENT_ICONS[activeAgent?.icon ?? ''] ?? IconChat;
+  const AgentIcon = AGENT_ICONS[activeAgent?.id ?? ''] ?? AGENT_ICONS[activeAgent?.icon ?? ''] ?? IconChat;
   const scrollRef = useRef<HTMLDivElement>(null);
   const surfaceRef = useRef<HTMLElement>(null);
   usePolicyCycle(surfaceRef);
@@ -193,10 +194,18 @@ export function ChatView() {
     <section className="chat-column" data-mood={activeMood} ref={surfaceRef}>
       <div className="chat-stage relative" data-agent-header={active && !isSubagent ? 'true' : undefined}>
       {active && !isSubagent && (
-        <header className="pointer-events-none absolute inset-x-0 top-3 z-10 flex justify-center px-4" aria-label="Chat agent">
-          <div className="flex max-w-full items-center gap-2 rounded-full bg-chat-active px-control-pad py-2 text-ui text-accent">
-            <AgentIcon className="shrink-0" />
-            <span className="truncate font-medium">{activeAgent?.label ?? active.agentId ?? 'Agent'}</span>
+        <header className="pointer-events-none absolute inset-x-0 top-4 z-10 flex justify-center px-4" aria-label="Chat agent">
+          <div className="flex h-10 min-w-0 max-w-xs items-center gap-2.5 rounded-full bg-chip py-1.5 pl-1.5 pr-4 text-ui text-ink">
+            {active.bot ? (
+              <BotAvatar name={active.title} color={active.bot.color} />
+            ) : (
+              <span className="flex size-7 shrink-0 items-center justify-center rounded-full bg-field text-accent" aria-hidden="true">
+                <AgentIcon />
+              </span>
+            )}
+            <span className="min-w-0 truncate font-medium leading-tight" title={active.bot ? active.title : activeAgent?.label ?? active.agentId ?? 'Agent'}>
+              {active.bot ? active.title : activeAgent?.label ?? active.agentId ?? 'Agent'}
+            </span>
           </div>
         </header>
       )}
@@ -225,7 +234,7 @@ export function ChatView() {
       {empty && !isSubagent ? (
         <div className="center-stage">
           <div className="column">
-            <AgentPicker />
+            {!active?.bot && <AgentPicker />}
             <div data-mood={activeMood}>
               <Composer modelMenu={modelMenu} />
             </div>
@@ -316,6 +325,7 @@ function visibleMessages(messages: TranscriptMessage[], pendingUser: string | nu
 
 
 const AGENT_ICONS: Record<string, ComponentType<{ className?: string }>> = {
+  xeck: IconXeck,
   code: IconCode,
   chat: IconChat,
   star: IconStar,
@@ -341,7 +351,7 @@ function AgentPicker() {
   return (
     <div className="agent-picker" role="radiogroup" aria-label="Agent">
       {agents.map((agent) => {
-        const Icon = AGENT_ICONS[agent.icon] ?? IconChat;
+        const Icon = AGENT_ICONS[agent.id] ?? AGENT_ICONS[agent.icon] ?? IconChat;
         const selected = draftAgentId === agent.id;
         return (
           <button
@@ -353,7 +363,7 @@ function AgentPicker() {
             className="agent-card"
             onClick={() => setDraftAgentId(agent.id)}
           >
-            <span className={cn('agent-chip', AGENT_TINT[agent.icon] ?? 'bg-tint-general-bg text-tint-general-ink')}>
+            <span className={cn('agent-chip', AGENT_TINT[agent.id] ?? AGENT_TINT[agent.icon] ?? 'bg-tint-general-bg text-tint-general-ink')}>
               <Icon />
             </span>
             <span className="agent-card-copy">

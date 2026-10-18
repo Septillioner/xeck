@@ -3,7 +3,7 @@ import { mkdtemp, rm } from 'node:fs/promises';
 import os from 'node:os';
 import path from 'node:path';
 import test from 'node:test';
-import { createSession, createSubagentSession, deleteSession, listChildSessions, listSessions, readSession, saveSession } from './sessions.ts';
+import { createSession, createSubagentSession, deleteSession, listChildSessions, listSessions, readSession, saveSession, applyUserTurn, setSessionTitle, patchSession } from './sessions.ts';
 import { writeSettings } from './settings-store.ts';
 import { updateProvider } from './provider-store.ts';
 import { policyRejection } from '../agent/tools/policy-context.ts';
@@ -122,6 +122,33 @@ test('startup recovery finalizes interrupted children and repairs parent cards o
     assert.equal(await recoverInterruptedSubagents(), 0);
     assert.equal((await readSession(child.id))?.messages.length, recovered?.messages.length);
     assert.deepEqual((await listSessions()).map((session) => session.id), [parent.id]);
+  } finally {
+    if (previousAppData === undefined) delete process.env.APPDATA;
+    else process.env.APPDATA = previousAppData;
+    await rm(directory, { recursive: true, force: true });
+  }
+});
+
+
+test('XeckBot creation persists its color, fixed name and conversation across reloads', async () => {
+  const previousAppData = process.env.APPDATA;
+  const directory = await mkdtemp(path.join(os.tmpdir(), 'xeck-bot-session-'));
+  process.env.APPDATA = directory;
+  try {
+    const bot = await createSession(null, undefined, undefined, undefined, undefined, undefined, { name: 'New chat', color: 'violet' });
+    assert.deepEqual((await listSessions()).find((item) => item.id === bot.id)?.bot, { color: 'violet' });
+    applyUserTurn(bot, 'Keep this conversation');
+    await saveSession(bot);
+    await setSessionTitle(bot.id, 'Generated title');
+    const restored = await readSession(bot.id);
+    assert.equal(restored?.title, 'New chat');
+    assert.equal(restored?.messages[0].content, 'Keep this conversation');
+    assert.deepEqual(restored?.bot, { color: 'violet' });
+    await patchSession(bot.id, { title: 'Renamed bot' });
+    assert.equal((await readSession(bot.id))?.title, 'Renamed bot');
+    assert.deepEqual((await listSessions()).find((item) => item.id === bot.id)?.bot, { color: 'violet' });
+    await deleteSession(bot.id);
+    assert.equal(await readSession(bot.id), null);
   } finally {
     if (previousAppData === undefined) delete process.env.APPDATA;
     else process.env.APPDATA = previousAppData;

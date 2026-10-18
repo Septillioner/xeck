@@ -2,6 +2,9 @@ import { Hono } from 'hono';
 import { scaleCategoriesToTotal } from 'poyraz';
 import {
   isSessionPolicyId,
+  BOT_COLORS,
+  MAX_BOT_PURPOSE_CHARS,
+  type BotColor,
   type ContextParts,
   type StoredSession,
   type ReasoningEffort,
@@ -35,6 +38,7 @@ import { getProject } from '../../stores/projects.ts';
 import { postMessage } from '../chat-turn.ts';
 import { streamSessionTurn } from '../session-stream.ts';
 import { readBody, readEffort, readServiceTier } from '../request.ts';
+import { BotIdentityError, createBotIdentity } from '../../agent/runtime/agents/create-bot-identity.ts';
 
 /** Session lifecycle plus the SSE endpoints a turn streams through. */
 export const sessionRoutes = new Hono();
@@ -75,6 +79,26 @@ sessionRoutes.post('/api/sessions', async (c) => {
     }
     projectId = body.projectId;
   }
+  let bot: { name: string; color: BotColor; purpose: string; systemPrompt: string } | undefined;
+  if (body?.bot !== undefined) {
+    const value = body.bot as { name?: unknown; color?: unknown; purpose?: unknown } | null;
+    if (!value || typeof value.name !== 'string' || !value.name.trim() || value.name.trim().length > 80 || !BOT_COLORS.includes(value.color as BotColor)) {
+      return c.json({ error: 'Enter a name (up to 80 characters) and a valid color' }, 400);
+    }
+    if (projectId) return c.json({ error: 'XeckBots cannot belong to a project' }, 400);
+    if (typeof value.purpose !== 'string' || !value.purpose.trim() || value.purpose.trim().length > MAX_BOT_PURPOSE_CHARS) {
+      return c.json({ error: `XeckBot'un ne yapacağını yaz (en fazla ${MAX_BOT_PURPOSE_CHARS} karakter).` }, 400);
+    }
+    const name = value.name.trim();
+    const purpose = value.purpose.trim();
+    try {
+      const systemPrompt = await createBotIdentity(name, purpose, c.req.raw.signal);
+      bot = { name, color: value.color as BotColor, purpose, systemPrompt };
+    } catch (error) {
+      if (error instanceof BotIdentityError) return c.json({ error: error.message }, error.status);
+      throw error;
+    }
+  }
   const session = await createSession(
     profile,
     effort || undefined,
@@ -82,6 +106,7 @@ sessionRoutes.post('/api/sessions', async (c) => {
     agentId || undefined,
     policyId,
     projectId,
+    bot,
   );
   return c.json(session, 201);
 });
@@ -183,6 +208,8 @@ sessionRoutes.patch('/api/sessions/:id', async (c) => {
   }
   let projectId: string | null | undefined;
   if ('projectId' in body) {
+    const existing = await readSession(id);
+    if (existing?.bot && body.projectId !== null) return c.json({ error: 'XeckBots cannot belong to a project' }, 400);
     if (body.projectId === null) projectId = null;
     else if (typeof body.projectId !== 'string' || !(await getProject(body.projectId))) {
       return c.json({ error: 'Unknown project' }, 400);

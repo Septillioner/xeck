@@ -2,6 +2,7 @@ import { useEffect, type ReactNode } from 'react';
 import { ChatView } from '../chat/ChatView.tsx';
 import { SettingsPage } from '../settings/SettingsDialog.tsx';
 import { useAppState } from '../state/AppState.tsx';
+import { XeckBotsPage } from './XeckBotsPage.tsx';
 import { Sidebar } from './Sidebar.tsx';
 import { ProjectChatsPage } from './ProjectChatsPage.tsx';
 import { IconClose, IconMaximize, IconMenu, IconMinimize } from '../ui/icons.tsx';
@@ -14,6 +15,7 @@ export function AppShell() {
     loadError,
     settingsOpen,
     migrationOpen,
+    botsOpen,
     projectPageId,
     sidebarOpen,
     setSidebarOpen,
@@ -103,6 +105,8 @@ export function AppShell() {
           <MigrationPage />
         ) : settingsOpen ? (
           <SettingsPage />
+        ) : botsOpen ? (
+          <XeckBotsPage />
         ) : projectPageId ? (
           <ProjectChatsPage projectId={projectPageId} />
         ) : (

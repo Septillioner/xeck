@@ -132,8 +132,9 @@ export async function listAgents(startableBy: 'user' | 'agent' = 'user'): Promis
 }
 
 export async function createSession(input?: {
-  provider: string;
-  model: string;
+  bot?: import('../../../shared/types.ts').XeckBotCreateInput;
+  provider?: string;
+  model?: string;
   reasoningEffort?: ReasoningEffort;
   serviceTier?: ServiceTier;
   agentId?: string;
@@ -141,6 +142,7 @@ export async function createSession(input?: {
   projectId?: string;
 }): Promise<StoredSession> {
   const body: {
+    bot?: import('../../../shared/types.ts').XeckBotCreateInput;
     profile?: { provider: string; model: string };
     reasoningEffort?: ReasoningEffort;
     serviceTier?: ServiceTier;
@@ -149,7 +151,8 @@ export async function createSession(input?: {
     projectId?: string;
   } = {};
   if (input) {
-    body.profile = { provider: input.provider, model: input.model };
+    if (input.provider && input.model) body.profile = { provider: input.provider, model: input.model };
+    if (input.bot) body.bot = input.bot;
     if (input.reasoningEffort) body.reasoningEffort = input.reasoningEffort;
     if (input.serviceTier) body.serviceTier = input.serviceTier;
     if (input.agentId) body.agentId = input.agentId;

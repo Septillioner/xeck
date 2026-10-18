@@ -23,6 +23,7 @@ import { staticContextLength, SUMMARY_THRESHOLD_RATIO } from '../../../domain/mo
 import { listProviders } from '../../../stores/provider-store.ts';
 import { AGENT_BY_ID } from '../../catalog/agents.ts';
 import { policyIdFor, selectedBuiltinNames } from '../../workspaces/definitions.ts';
+import { LIST_MESSAGE_TARGETS_TOOL, SEND_CHAT_MESSAGE_TOOL } from '../../tools/builtin/messaging.ts';
 import { filterToolsForPolicy } from '../../tools/policy-context.ts';
 import { agentWorkspaceRef, chatIdentityFromSession } from '../../workspaces/resolve.ts';
 import { CODING_WORKSPACE, WORKSPACE_BY_REF } from '../../catalog/workspaces.ts';
@@ -65,11 +66,15 @@ export async function prepareSessionAgent(sessionId: string, input: AgentSetupIn
   // Workspace toolset: `general` sohbet çekirdeğine düşer, dosya/terminal/plan
   // tool'ları hiç sunulmaz. Harici MCP'ler ve (toolset.skills ise) load_skill korunur.
   const toolset = new Set<string>(selectedBuiltinNames(workspaceDef.toolset.builtin));
+  if (!storedSession?.bot) {
+    toolset.delete(LIST_MESSAGE_TARGETS_TOOL);
+    toolset.delete(SEND_CHAT_MESSAGE_TOOL);
+  }
   const policyId = policyIdFor(workspaceRef, storedSession?.policyId ?? workspaceDef.defaultPolicy);
   const [skills, mcp, systemPrompt] = await Promise.all([
     includeTools ? readSkills() : [],
     includeTools ? refreshMcp() : { tools: {} },
-    buildHostSystemPrompt(agentDef.id),
+    buildHostSystemPrompt(agentDef.id, storedSession?.bot ? { name: storedSession.title, systemPrompt: storedSession.bot.systemPrompt } : undefined),
   ]);
   const availableTools = includeTools
     ? [
@@ -90,7 +95,7 @@ export async function prepareSessionAgent(sessionId: string, input: AgentSetupIn
   const create = async (): Promise<SessionAgent> => {
     const continuedReplies: string[] = [];
     let builder = new AgentBuilder()
-      .Name(AGENT_NAME)
+      .Name(storedSession?.bot ? storedSession.title : AGENT_NAME)
       .WithModelProfile(libraryProfile)
       .Provider(createLLMProvider(libraryProfile, apiKey))
       .ApiKey(apiKey)

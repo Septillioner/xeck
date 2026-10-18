@@ -5,6 +5,7 @@ import { isActiveMood, moodLabel, type BotMood } from '../state/mood.ts';
 import { groupSessions } from '../lib/group-sessions.ts';
 import { cn } from '../lib/cn.ts';
 import { IconBusy, IconChat, IconChevron, IconEdit, IconFolder, IconMoreVertical, IconPlus, IconXeck, IconSearch, IconSettings, IconTrash } from '../ui/icons.tsx';
+import { BotAvatar } from '../ui/BotAvatar.tsx';
 import { Dialog } from '../ui/Dialog.tsx';
 import { BUTTON, ICON_BUTTON, ICON_BUTTON_DANGER, ICON_BUTTON_ROW } from '../ui/button-styles.ts';
 import type { MenuOption } from '../ui/Menu.tsx';
@@ -31,6 +32,8 @@ const PROJECT_CHAT_PREVIEW_COUNT = 3;
 
 export function Sidebar() {
   const {
+    botsOpen,
+    openBots,
     sessions,
     projects,
     active,
@@ -70,7 +73,9 @@ export function Sidebar() {
   const actionsMenuRef = useRef<HTMLDivElement>(null);
   const projectSubmenuTriggerRef = useRef<HTMLButtonElement>(null);
   const projectSubmenuRef = useRef<HTMLDivElement>(null);
-  const groups = groupSessions(sessions.filter((session) => !session.projectId));
+  const botWorkspace = botsOpen || (Boolean(active?.bot) && !projectPageId);
+  const bots = sessions.filter((session) => session.bot);
+  const groups = groupSessions(sessions.filter((session) => !session.projectId && !session.bot));
   const projectOptions: MenuOption[] = [
     { value: '', label: 'No project' },
     ...projects.map((project) => ({ value: project.id, label: project.name, icon: <IconFolder /> })),
@@ -205,7 +210,7 @@ export function Sidebar() {
 
   /** `nested` rows sit under a project: one step smaller (`text-ui`, same as the project name) and muted. */
   const renderSession = (session: SessionSummary, nested = false) => {
-    const selected = !settingsOpen && !projectPageId && session.id === active?.id;
+    const selected = !botsOpen && !settingsOpen && !projectPageId && session.id === active?.id;
     const mood = sessionMoods[session.id] ?? 'idle';
     const busy = isActiveMood(mood);
     const hasMood = mood !== 'idle';
@@ -241,7 +246,7 @@ export function Sidebar() {
               void openChat(session.id);
             }}
           >
-            {busy && <IconBusy mood={mood} />}
+            {busy ? <IconBusy mood={mood} /> : session.bot ? <BotAvatar name={session.title} color={session.bot.color} /> : null}
             <TypingText text={session.title} className="min-w-0 flex-1 truncate" />
             {hasMood && <span className="chat-mood-dot h-1.5 w-1.5 flex-none rounded-full bg-mood" aria-hidden="true" />}
             <span className="w-7 flex-none hover-none:w-8" aria-hidden="true" />
@@ -281,7 +286,7 @@ export function Sidebar() {
                 className={cn('absolute right-0 w-44 overflow-y-auto rounded-control bg-chip p-1', menuUp ? 'bottom-full mb-1' : 'top-full mt-1')}
                 style={{ maxHeight: `calc(100vh - ${MENU_VIEWPORT_GUTTER_PX * 2}px)` }}
               >
-                <div className="relative">
+                <div className="relative" hidden={Boolean(session.bot)}>
 
                     <button
                       ref={actionsOpen ? projectSubmenuTriggerRef : null}
@@ -419,6 +424,18 @@ export function Sidebar() {
         </button>
       </nav>
       <div className="min-h-0 flex-1 overflow-auto pt-5 pr-2.5 pb-6 pl-2.5 [scrollbar-gutter:stable]">
+        <nav aria-label="Workspaces" className="mb-4 flex flex-col gap-1">
+          <button type="button" className={cn(NAV_ROW, !botsOpen && !active?.bot && !settingsOpen && !projectPageId && ACTIVE_ROW)} onClick={() => {
+            const chat = sessions.find((session) => !session.bot && !session.projectId);
+            if (chat) void openChat(chat.id);
+            else createChat();
+          }}>
+            <IconChat />Chat
+          </button>
+          <button type="button" className={cn(NAV_ROW, (botsOpen || Boolean(active?.bot)) && !settingsOpen && !projectPageId && ACTIVE_ROW)} onClick={openBots}>
+            <IconXeck />XeckBot
+          </button>
+        </nav>
         <section className="mb-4">
           <div className="mx-2.5 mb-2 flex items-center justify-between">
             <h2 className="text-micro font-semibold tracking-[0.06em] text-muted uppercase">Projects</h2>
@@ -544,8 +561,16 @@ export function Sidebar() {
             })}
           </ul>
         </section>
-        <h2 className="mx-2.5 mb-2 text-micro font-semibold tracking-[0.06em] text-muted uppercase">Chats</h2>
-        {[...groups.entries()].map(([label, items]) =>
+        <h2 className="mx-2.5 mb-2 text-micro font-semibold tracking-[0.06em] text-muted uppercase">{botWorkspace ? 'XeckBots' : 'Chats'}</h2>
+        {botWorkspace ? (
+          bots.length > 0 ? (
+            <ul className="flex flex-col gap-1">
+              {bots.map((session) => renderSession(session))}
+            </ul>
+          ) : (
+            <p className="mx-2.5 py-1.5 text-small text-muted">Henüz XeckBot yok</p>
+          )
+        ) : [...groups.entries()].map(([label, items]) =>
           items.length === 0 ? null : (
             <section key={label} className="mb-1.5">
               <h3 className="mx-2.5 mt-5 mb-2 text-micro font-semibold tracking-[0.04em] text-muted uppercase">{label}</h3>

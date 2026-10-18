@@ -44,6 +44,9 @@ export interface AppStateValue {
   openMigration: () => void;
   settingsTab: SettingsTab;
   /** Project whose chat list page fills the main pane. Null on chats, draft and settings. */
+  botsOpen: boolean;
+  openBots: () => void;
+  createBot: (bot: import('../../../shared/types.ts').XeckBotCreateInput) => Promise<void>;
   projectPageId: string | null;
   openProjectPage: (id: string) => void;
   /** Mobile drawer only. The sidebar is always visible at 1024px and up. */

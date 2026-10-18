@@ -140,6 +140,7 @@ export async function createSession(
   agentId?: string,
   policyId?: string,
   projectId?: string,
+  bot?: { name: string } & import('../../../shared/types.ts').XeckBotProfile,
 ): Promise<StoredSession> {
   const resolvedAgentId = resolveAgentId(agentId);
   if (!AGENT_BY_ID[resolvedAgentId]?.startableBy.includes('user')) {
@@ -155,7 +156,8 @@ export async function createSession(
     const session: StoredSession = {
       id: randomUUID(),
       origin: { by: 'user' },
-      title: DEFAULT_SESSION_TITLE,
+      title: bot?.name ?? DEFAULT_SESSION_TITLE,
+      ...(bot ? { bot: { color: bot.color, ...(bot.purpose ? { purpose: bot.purpose } : {}), ...(bot.systemPrompt ? { systemPrompt: bot.systemPrompt } : {}) }, titleSource: 'user' as const } : {}),
       createdAt: now,
       updatedAt: now,
       ...(projectId ? { projectId } : {}),
@@ -296,7 +298,7 @@ export async function setSessionTitle(id: string, title: string): Promise<void> 
   if (!next) return;
   await exclusive(async () => {
     const session = await readSessionFile(id);
-    if (!session || session.titleSource === 'user') return;
+    if (!session || session.bot || session.titleSource === 'user') return;
     session.title = next;
     session.titleSource = 'auto';
     await writeSessionFile(session);
@@ -467,7 +469,7 @@ export function applyUserTurn(session: StoredSession, content: string, source?: 
     createdAt: new Date().toISOString(),
   };
   session.messages.push(message);
-  if (session.title === DEFAULT_SESSION_TITLE) {
+  if (!session.bot && session.title === DEFAULT_SESSION_TITLE) {
     session.title = titleFromContent(content);
     session.titleSource = 'auto';
   }
@@ -594,6 +596,7 @@ function toSummary(session: StoredSession): SessionSummary {
     updatedAt: session.updatedAt,
     profile: session.profile,
     ...(session.projectId ? { projectId: session.projectId } : {}),
+    ...(session.bot ? { bot: { color: session.bot.color } } : {}),
     ...(session.origin?.by === 'agent' ? { parentId: session.origin.parent } : {}),
     ...(session.subagentStatus ? { subagentStatus: session.subagentStatus } : {}),
   };

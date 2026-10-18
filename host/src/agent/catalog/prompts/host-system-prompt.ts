@@ -9,11 +9,15 @@ import { readSettings } from '../../../stores/settings-store.ts';
  * the agent identity. Its content is host-specific, so it stays here while the
  * library measures whatever this returns.
  */
-export async function buildHostSystemPrompt(agentId?: string): Promise<string> {
+export async function buildHostSystemPrompt(agentId?: string, bot?: { name: string; systemPrompt?: string }): Promise<string> {
   const settings = await readSettings();
   const agentDef = (agentId ? AGENT_BY_ID[agentId] : undefined) ?? CODER_AGENT;
-  const identityText = buildAgentIdentityText(agentDef.instructions, settings.xeckInstructionsEnabled);
-  return [buildXeckSystemInstructions(settings.systemInstructions, settings.xeckInstructionsEnabled), identityText,
+  const customIdentity = bot?.systemPrompt?.trim();
+  const instructions = customIdentity ? agentDef.instructions.filter((id) => !id.endsWith('.identity')) : agentDef.instructions;
+  const identityText = buildAgentIdentityText(instructions, settings.xeckInstructionsEnabled);
+  const base = customIdentity ? settings.systemInstructions.trim() : buildXeckSystemInstructions(settings.systemInstructions, settings.xeckInstructionsEnabled);
+  return [base, identityText, customIdentity,
+    customIdentity ? `Your current name is ${JSON.stringify(bot!.name)}. Use this name if it differs from an earlier name in your identity.` : '',
     'File scope: ' + JSON.stringify({ workspaceRoot: path.resolve(settings.workspaceRoot.trim() || process.cwd()), fullFileAccess: settings.fullFileAccess }),
   ]
     .filter(Boolean)

@@ -87,6 +87,17 @@ export interface Project {
   updatedAt: string;
 }
 
+export const BOT_COLORS = ['blue', 'violet', 'pink', 'gray'] as const;
+export type BotColor = (typeof BOT_COLORS)[number];
+export const MAX_BOT_PURPOSE_CHARS = 4000;
+export interface XeckBotCreateInput { name: string; color: BotColor; purpose: string }
+export interface XeckBotProfile {
+  color: BotColor;
+  /** Optional on XeckBots created before custom identities were supported. */
+  purpose?: string;
+  systemPrompt?: string;
+}
+
 export interface SessionSummary {
   id: string;
   title: string;
@@ -94,6 +105,7 @@ export interface SessionSummary {
   updatedAt: string;
   profile: ModelProfile;
   projectId?: string;
+  bot?: XeckBotProfile;
   /** Present only for a session created by another agent. */
   parentId?: string;
   subagentStatus?: SubagentStatus;
@@ -332,6 +344,7 @@ export interface StoredSession {
   createdAt: string;
   updatedAt: string;
   projectId?: string;
+  bot?: XeckBotProfile;
   /** Missing on older sessions means a user-created root session. */
   origin?: SessionOrigin;
   subagentStatus?: SubagentStatus;

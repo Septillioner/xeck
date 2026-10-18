@@ -91,6 +91,7 @@ export function AppStateProvider({ children }: { children: ReactNode }) {
   const [settingsOpen, setSettingsOpen] = useState(false);
   const [migrationOpen, setMigrationOpen] = useState(() => readLocation().kind === 'migration');
   const [settingsTab, setSettingsTab] = useState<SettingsTab>('general');
+  const [botsOpen, setBotsOpen] = useState(false);
   const [projectPageId, setProjectPageId] = useState<string | null>(null);
   const [sidebarOpen, setSidebarOpen] = useState(false);
   const [debugOpen, setDebugOpen] = useState(true);
@@ -392,6 +393,7 @@ export function AppStateProvider({ children }: { children: ReactNode }) {
     activeId.current = null;
     setActive(null);
     setDraft('');
+    setBotsOpen(false);
     setDraftProjectId(projectId);
     setDraftProfile(null);
     setDraftEffort(null);
@@ -403,11 +405,20 @@ export function AppStateProvider({ children }: { children: ReactNode }) {
 
   const showSettings = useCallback((tab: SettingsTab) => {
     setMigrationOpen(false);
+    setBotsOpen(false);
     setSettingsTab(tab);
     setSettingsOpen(true);
   }, []);
 
   const applyLocation = useCallback(async (place: AppLocation) => {
+    setBotsOpen(place.kind === 'bots');
+    if (place.kind === 'bots') {
+      setSettingsOpen(false);
+      setMigrationOpen(false);
+      setProjectPageId(null);
+      setSidebarOpen(false);
+      return;
+    }
     setMigrationOpen(place.kind === 'migration');
     if (place.kind === 'migration') {
       setSettingsOpen(false);
@@ -538,6 +549,17 @@ export function AppStateProvider({ children }: { children: ReactNode }) {
       window.removeEventListener('hashchange', onPop);
     };
   }, [applyLocation]);
+
+  const openBots = useCallback(() => {
+    writeLocation({ kind: 'bots' }, 'push');
+    void applyLocation({ kind: 'bots' });
+  }, [applyLocation]);
+
+  const createBot = useCallback(async (bot: import('../../../shared/types.ts').XeckBotCreateInput) => {
+    const session = await createSession({ bot, agentId: agentsRef.current[0]?.id });
+    rememberSummary(session);
+    await openChat(session.id);
+  }, [rememberSummary, openChat]);
 
   const createProject = useCallback(async (name: string) => {
     const project = await createProjectRequest(name);
@@ -1144,6 +1166,9 @@ export function AppStateProvider({ children }: { children: ReactNode }) {
     openMigration,
     settingsTab,
     openSettings,
+    botsOpen,
+    openBots,
+    createBot,
     projectPageId,
     openProjectPage,
     closeSettings,

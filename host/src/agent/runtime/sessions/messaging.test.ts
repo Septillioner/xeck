@@ -52,8 +52,8 @@ async function fixture(options: { hold?: boolean; sendFromSource?: boolean } = {
   const profile = { provider: 'llamacpp' as const, model: 'messaging-test', host: `http://127.0.0.1:${address.port}` };
   await updateProvider('llamacpp', { enabled: true, host: profile.host, model: profile.model });
   await writeSettings({ autocompleteProfile: null });
-  const source = await createSession(profile, undefined, undefined, 'coder', 'coder-agent');
-  const target = await createSession(profile, undefined, undefined, 'xeck', 'xeck-agent');
+  const source = await createSession(profile, undefined, undefined, 'coder', 'coder-agent', undefined, { name: 'Sender', color: 'blue' });
+  const target = await createSession(profile, undefined, undefined, 'xeck', 'xeck-agent', undefined, { name: 'Receiver', color: 'violet' });
   targetId = target.id;
   const turn = acquireAgentTurn(source.id);
   return {
@@ -143,6 +143,19 @@ test('self, busy, unrelated-child, child-sender and read-only sends are rejected
   } finally { await f.dispose(); }
 });
 
+test('ordinary chats cannot send or receive XeckBot messages', async () => {
+  const f = await fixture();
+  const chat = await createSession(f.source.profile);
+  const turn = acquireAgentTurn(chat.id);
+  try {
+    await assert.rejects(listMessageTargets(chat.id), /only in XeckBot/);
+    await assert.rejects(sendChatMessage(chat.id, f.target.id, 'Hello'), /only in XeckBot/);
+    await assert.rejects(sendChatMessage(f.source.id, chat.id, 'Hello'), /only be sent to a XeckBot/);
+    assert.ok(!(await listMessageTargets(f.source.id)).some((target) => target.sessionId === chat.id));
+    assert.equal(f.requests.length, 0);
+  } finally { turn.release(true); await f.dispose(); }
+});
+
 test('incoming message turns cannot relay to another chat', async () => {
   const f = await fixture();
   const receiver = acquireAgentTurn(f.target.id, undefined, { messageId: 'incoming', sessionId: f.source.id, agentId: 'coder', title: 'Sender' });
@@ -185,17 +198,17 @@ test('a real master tool call approves and delivers a message using both ordinar
   } finally { unsubscribe(); await f.dispose(); }
 });
 
-test('an owner can follow up on its completed child while retaining the child tool grant', async () => {
+test('XeckBot messaging excludes child sessions', async () => {
   const f = await fixture();
   const unsubscribe = f.approve();
   try {
     const child = await createSubagentSession({ parentId: f.source.id, agentId: 'subagent-general', task: 'First task', toolGrant: [] });
     await (await startSessionTurn(child, 'First task')).completion;
-    assert.equal((await sendChatMessage(f.source.id, child.id, 'Follow up')).status, 'done');
+    await assert.rejects(sendChatMessage(f.source.id, child.id, 'Follow up'), /only be sent to a XeckBot/);
     const saved = await readSession(child.id);
     assert.equal(saved?.subagentStatus, 'done');
     assert.deepEqual(saved?.origin?.by === 'agent' && saved.origin.grant.tools, []);
-    assert.equal(saved?.messages.filter((message) => message.source).length, 1);
+    assert.equal(saved?.messages.filter((message) => message.source).length, 0);
   } finally { unsubscribe(); await f.dispose(); }
 });
 
