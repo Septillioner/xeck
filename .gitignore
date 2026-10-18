@@ -27,3 +27,6 @@ cloudflared.local.yml
 build/
 work/
 xeck-work/
+
+# Local repository map
+PMAP.md
