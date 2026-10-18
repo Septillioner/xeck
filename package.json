@@ -100,7 +100,8 @@
           ]
         }
       ],
-      "category": "Utility"
+      "category": "Utility",
+      "maintainer": "Septillioner"
     },
     "artifactName": "${productName}-${version}-${os}-${arch}.${ext}"
   },
@@ -111,5 +112,6 @@
     "tsup": "^8.5.0",
     "typescript": "^5.9.0"
   },
-  "license": "Apache-2.0"
+  "license": "Apache-2.0",
+  "homepage": "https://github.com/Septillioner/xeck"
 }
