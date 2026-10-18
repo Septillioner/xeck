@@ -28,6 +28,7 @@ import {
   deleteSession,
   isSessionId,
   listChildSessions,
+  listBotConversations,
   listSessions,
   patchSession,
   readSession,
@@ -43,7 +44,7 @@ import { BotIdentityError, createBotIdentity } from '../../agent/runtime/agents/
 /** Session lifecycle plus the SSE endpoints a turn streams through. */
 export const sessionRoutes = new Hono();
 
-sessionRoutes.get('/api/sessions', async (c) => c.json(await listSessions()));
+sessionRoutes.get('/api/sessions', async (c) => c.json(await listSessions(c.req.query('includeBotConversations') === 'true')));
 
 sessionRoutes.post('/api/sessions', async (c) => {
   const body = await readBody(c);
@@ -119,6 +120,7 @@ sessionRoutes.put('/api/sessions/:id/policy', async (c) => {
   if (!isSessionPolicyId(policyId)) return c.json({ error: 'Policy must be a policy id' }, 400);
   const existing = await readSession(id);
   if (!existing) return c.json({ error: 'Session not found' }, 404);
+  if (existing.botConversation) return c.json({ error: 'Bot conversations are managed by XeckBots' }, 403);
   if (existing.origin?.by === 'agent') return c.json({ error: 'Subagent sessions are read-only' }, 403);
   const workspace = existing.workspace ? WORKSPACE_BY_REF[existing.workspace] : undefined;
   if (!workspace?.policies.includes(policyId)) {
@@ -181,6 +183,7 @@ sessionRoutes.patch('/api/sessions/:id', async (c) => {
   if (!isSessionId(id)) return c.json({ error: 'Session not found' }, 404);
   const existing = await readSession(id);
   if (!existing) return c.json({ error: 'Session not found' }, 404);
+  if (existing.botConversation) return c.json({ error: 'Bot conversations are managed by XeckBots' }, 403);
   if (existing.origin?.by === 'agent') return c.json({ error: 'Subagent sessions are read-only' }, 403);
   const body = await readBody(c);
   if (!body) return c.json({ error: 'Invalid JSON' }, 400);
@@ -224,7 +227,7 @@ sessionRoutes.patch('/api/sessions/:id', async (c) => {
 
 sessionRoutes.delete('/api/sessions/:id', async (c) => {
   const id = c.req.param('id');
-  const children = await listChildSessions(id);
+  const children = [...await listChildSessions(id), ...await listBotConversations(id)];
   for (const child of children) {
     dropAgent(child.id);
     abortDialogsForSession(child.id);

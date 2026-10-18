@@ -1,3 +1,4 @@
+import { t } from '../i18n/index.ts';
 import { useEffect, useRef, useState, type ComponentProps, type ReactNode } from 'react';
 import ReactMarkdown from 'react-markdown';
 import remarkGfm from 'remark-gfm';
@@ -57,7 +58,7 @@ function CodeBlock({ children }: { children?: ReactNode }) {
       <header>
         <span>{language}</span>
         <button type="button" data-copied={copied ? 'true' : 'false'} aria-live="polite" onClick={onCopy}>
-          {copied ? COPIED_LABEL : COPY_LABEL}
+          {t(copied ? COPIED_LABEL : COPY_LABEL)}
         </button>
       </header>
       <pre>

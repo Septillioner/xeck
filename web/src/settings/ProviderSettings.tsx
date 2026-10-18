@@ -1,3 +1,4 @@
+import { t, getLocale } from '../i18n/index.ts';
 import { useEffect, useRef, useState } from 'react';
 import { isLocalProvider, MAX_CONTEXT_LENGTH, type CatalogEntry, type ListedModel, type ProviderKind, type ProviderPublic, type ProviderUpdate } from '../../../shared/types.ts';
 import { Menu } from '../ui/Menu.tsx';
@@ -28,11 +29,11 @@ export function ProviderPage({ kind }: { kind: ProviderKind }) {
             <ProviderMark kind={provider.slug} />
             {provider.label}
           </h2>
-          <p className="lede">{isLocalProvider(provider.kind) ? 'On this computer' : 'Remote API'}</p>
+          <p className="lede">{isLocalProvider(provider.kind) ? t("On this computer") : t("Remote API")}</p>
         </div>
         <Switch
           checked={enabled}
-          label={`${provider.label} enabled`}
+          label={t("{0} enabled", { "0": provider.label })}
           onChange={(next) => {
             setEnabled(next);
             void saveProvider(provider.kind, { enabled: next });
@@ -75,9 +76,9 @@ function ProviderCard({ provider }: { provider: ProviderPublic }) {
   return (
     <SettingCard>
       {showsApiKey && (
-        <SettingRow label="API key">
+        <SettingRow label={t("API key")}>
           <EditableField
-            label="API key"
+            label={t("API key")}
             type="password"
             value=""
             display={keySaved ? `•••• ${provider.last4}` : ''}
@@ -90,20 +91,20 @@ function ProviderCard({ provider }: { provider: ProviderPublic }) {
         </SettingRow>
       )}
       {local && (
-        <SettingRow label="Host">
-          <EditableField label="Host" value={host} disabled={busy} onCommit={(next) => save({ host: next }, () => setHost(next))} />
+        <SettingRow label={t("Host")}>
+          <EditableField label={t("Host")} value={host} disabled={busy} onCommit={(next) => save({ host: next }, () => setHost(next))} />
         </SettingRow>
       )}
       {local && (
-        <SettingRow label="Model">
-          <EditableField label="Model" value={model} disabled={busy} onCommit={(next) => save({ model: next }, () => setModel(next))} />
+        <SettingRow label={t("Model")}>
+          <EditableField label={t("Model")} value={model} disabled={busy} onCommit={(next) => save({ model: next }, () => setModel(next))} />
         </SettingRow>
       )}
       {local && models.length > 0 && (
-        <SettingRow label="Listed models">
+        <SettingRow label={t("Listed models")}>
           <Menu
-            label="Listed models"
-            placeholder="Listed models"
+            label={t("Listed models")}
+            placeholder={t("Listed models")}
             value={listedValue}
             options={models.map((item) => ({ value: item.id, label: item.name }))}
             onChange={(next) => save({ model: next }, () => setModel(next))}
@@ -111,7 +112,7 @@ function ProviderCard({ provider }: { provider: ProviderPublic }) {
         </SettingRow>
       )}
       {(local || canClearKey || status) && (
-        <SettingRow label="Actions" detail={status ?? undefined}>
+        <SettingRow label={t("Actions")} detail={status ?? undefined}>
           <span className="actions">
             {local && (
               <button
@@ -122,17 +123,15 @@ function ProviderCard({ provider }: { provider: ProviderPublic }) {
                   void refreshModels(provider.kind, { host })
                     .then(setModels)
                     .catch((error: unknown) => {
-                      setStatus(error instanceof Error ? error.message : 'Could not list models');
+                      setStatus(error instanceof Error ? error.message : t("Could not list models"));
                     });
                 }}
               >
-                Refresh models
-              </button>
+                {t("Refresh models")}</button>
             )}
             {canClearKey && (
               <button type="button" className="danger" disabled={busy} onClick={() => save({ clearApiKey: true })}>
-                Clear key
-              </button>
+                {t("Clear key")}</button>
             )}
           </span>
         </SettingRow>
@@ -149,19 +148,18 @@ function CatalogEditor({ provider }: { provider: ProviderPublic }) {
   return (
     <section className="catalog">
       <div className="catalog-header">
-        <h2>Models</h2>
+        <h2>{t("Models")}</h2>
         <button
           type="button"
           className="text-button"
           disabled={!provider.configured}
           onClick={() => setSearchOpen(true)}
         >
-          Add model
-        </button>
+          {t("Add model")}</button>
       </div>
       <SettingCard>
         {owned.length === 0 ? (
-          <p className="catalog-empty">{provider.configured ? 'No models yet' : 'Save an API key to add models'}</p>
+          <p className="catalog-empty">{provider.configured ? t("No models yet") : t("Save an API key to add models")}</p>
         ) : (
           owned.map((entry) => (
             <CatalogRow key={entry.slug} entry={entry} onRemove={() => void removeCatalogModel(entry.slug)} />
@@ -201,7 +199,7 @@ function CatalogSearchModal({
     void refreshModels(provider.kind)
       .then(setListed)
       .catch((error: unknown) => {
-        setNotice(error instanceof Error ? error.message : 'Could not list models');
+        setNotice(error instanceof Error ? error.message : t("Could not list models"));
       });
     const onPointer = (event: MouseEvent) => {
       if (panelRef.current?.contains(event.target as Node)) return;
@@ -228,19 +226,19 @@ function CatalogSearchModal({
           <TextField bare
             ref={inputRef}
             value={query}
-            placeholder="Search models"
-            aria-label="Search models"
+            placeholder={t("Search models")}
+            aria-label={t("Search models")}
             onChange={(event) => setQuery(event.target.value)}
           />
-          <kbd>Esc</kbd>
+          <kbd>{t("Esc")}</kbd>
         </div>
         <div className="search-hits">
           {notice ? (
-            <p className="search-empty">{notice}</p>
+            <p className="search-empty">{t(notice)}</p>
           ) : !listed ? (
-            <p className="search-empty">Loading</p>
+            <p className="search-empty">{t("Loading")}</p>
           ) : hits.length === 0 ? (
-            <p className="search-empty">No models</p>
+            <p className="search-empty">{t("No models")}</p>
           ) : (
             hits.map((item) => (
               <button
@@ -251,7 +249,7 @@ function CatalogSearchModal({
                   void addCatalogModel(provider.slug, item.id, item.name, item.contextLength, item.supportsReasoningEffort)
                     .then(() => setQuery(''))
                     .catch((error: unknown) => {
-                      setNotice(error instanceof Error ? error.message : 'Could not add model');
+                      setNotice(error instanceof Error ? error.message : t("Could not add model"));
                     });
                 }}
               >
@@ -280,7 +278,7 @@ function CatalogRow({ entry, onRemove }: { entry: CatalogEntry; onRemove: () => 
     const trimmed = next.trim();
     const parsed = trimmed ? Number(trimmed) : null;
     if (parsed !== null && (!Number.isInteger(parsed) || parsed <= 0 || parsed > MAX_CONTEXT_LENGTH)) {
-      setStatus(`Enter a whole number from 1 to ${MAX_CONTEXT_LENGTH.toLocaleString()}.`);
+      setStatus(t("Enter a whole number from 1 to {max}.", { max: MAX_CONTEXT_LENGTH.toLocaleString(getLocale()) }));
       return;
     }
     if (parsed === entry.contextLength && (!entry.contextLengthManual || parsed !== null)) return;
@@ -288,7 +286,7 @@ function CatalogRow({ entry, onRemove }: { entry: CatalogEntry; onRemove: () => 
     setStatus(null);
     void updateCatalogContextLength(entry.slug, parsed)
       .then(() => setStatus('Saved'))
-      .catch((error: unknown) => setStatus(error instanceof Error ? error.message : 'Could not save context limit'))
+      .catch((error: unknown) => setStatus(error instanceof Error ? error.message : t("Could not save context limit")))
       .finally(() => setBusy(false));
   };
 
@@ -297,22 +295,22 @@ function CatalogRow({ entry, onRemove }: { entry: CatalogEntry; onRemove: () => 
       <span>{entry.name}</span>
       <span className="catalog-context">
         <EditableField
-          label={`Context limit for ${entry.name}`}
+          label={t("Context limit for {0}", { "0": entry.name })}
           type="number"
           inputMode="numeric"
           min={1}
           max={MAX_CONTEXT_LENGTH}
           step={1}
           value={entry.contextLength?.toString() ?? ''}
-          display={entry.contextLength ? `${entry.contextLength.toLocaleString()} ctx` : ''}
-          placeholder="Context"
+          display={entry.contextLength ? t("{count} ctx", { count: entry.contextLength.toLocaleString(getLocale()) }) : ''}
+          placeholder={t("Context")}
           disabled={busy}
           onCommit={saveContextLength}
         />
-        {entry.contextLengthManual && <small>Manual</small>}
-        {status && <small>{status}</small>}
+        {entry.contextLengthManual && <small>{t("Manual")}</small>}
+        {status && <small>{t(status)}</small>}
       </span>
-      <button type="button" aria-label={`Remove ${entry.name}`} onClick={onRemove}>
+      <button type="button" aria-label={t("Remove {0}", { "0": entry.name })} onClick={onRemove}>
         <IconTrash />
       </button>
     </div>

@@ -1,3 +1,5 @@
+import { t } from '../i18n/core.ts';
+
 export type BotMood =
   | 'idle'
   | 'thinking'
@@ -71,11 +73,11 @@ export function isActiveMood(mood: BotMood): boolean {
 
 /** Row label for a mood. The dot alone is enough in a narrow row, not in text. */
 export function moodLabel(mood: BotMood): string {
-  if (mood === 'thinking') return 'Thinking';
-  if (mood === 'working') return 'Working';
-  if (mood === 'waiting') return 'Waiting for input';
-  if (mood === 'completed') return 'Completed';
-  if (mood === 'error') return 'Failed';
-  if (mood === 'cancelled') return 'Stopped';
-  return 'Generating';
+  if (mood === 'thinking') return t("Thinking");
+  if (mood === 'working') return t("Working");
+  if (mood === 'waiting') return t("Waiting for input");
+  if (mood === 'completed') return t("Completed");
+  if (mood === 'error') return t("Failed");
+  if (mood === 'cancelled') return t("Stopped");
+  return t("Generating");
 }

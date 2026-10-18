@@ -1,3 +1,4 @@
+import { t } from '../i18n/index.ts';
 import { useEffect, useState } from 'react';
 import { useAppState } from '../state/AppState.tsx';
 import { SettingCard, SettingRow, Switch } from '../ui/SettingRow.tsx';
@@ -23,7 +24,7 @@ export function AgentSettings() {
     try {
       await saveSettings({ systemInstructions });
     } catch (error: unknown) {
-      setNotice(error instanceof Error ? error.message : 'Could not save agent instructions');
+      setNotice(error instanceof Error ? error.message : t("Could not save agent instructions"));
     } finally {
       setSaving(false);
     }
@@ -36,7 +37,7 @@ export function AgentSettings() {
     try {
       await saveSettings({ workspaceRoot });
     } catch (error: unknown) {
-      setNotice(error instanceof Error ? error.message : 'Could not save workspace root');
+      setNotice(error instanceof Error ? error.message : t("Could not save workspace root"));
     } finally {
       setSaving(false);
     }
@@ -44,63 +45,63 @@ export function AgentSettings() {
 
   return (
     <div className="stack">
-      <h2>Agent</h2>
+      <h2>{t("Agent")}</h2>
       <SettingCard>
         <div className="form-pad">
           <div>
-            <p className="setting-label">System Instructions</p>
-            <p className="lede">Applied to every chat agent.</p>
+            <p className="setting-label">{t("System Instructions")}</p>
+            <p className="lede">{t("Applied to every chat agent.")}</p>
           </div>
           <Textarea
             value={systemInstructions}
-            aria-label="System Instructions"
+            aria-label={t("System Instructions")}
             disabled={saving}
             onChange={(event) => setSystemInstructions(event.target.value)}
             onBlur={() => void saveInstructions()}
-            placeholder="Add instructions for how Xeck should work."
+            placeholder={t("Add instructions for how Xeck should work.")}
           />
-          {saving && <p className="status-line"><span className="shimmer-text">Saving</span></p>}
-          {notice && <p className="error-banner">{notice}</p>}
+          {saving && <p className="status-line"><span className="shimmer-text">{t("Saving")}</span></p>}
+          {notice && <p className="error-banner">{t(notice)}</p>}
         </div>
         <SettingRow
-          label="Xeck Built-in instructions"
-          detail="Explains the purpose and safe use of Xeck's built-in MCP tools and the current environment."
+          label={t("Xeck Built-in instructions")}
+          detail={t("Explains the purpose and safe use of Xeck's built-in MCP tools and the current environment.")}
         >
           <Switch
             checked={settings.xeckInstructionsEnabled}
-            label="Xeck Built-in instructions"
+            label={t("Xeck Built-in instructions")}
             onChange={(xeckInstructionsEnabled) => {
               void saveSettings({ xeckInstructionsEnabled }).catch((error: unknown) => {
-                setNotice(error instanceof Error ? error.message : 'Could not save agent instructions');
+                setNotice(error instanceof Error ? error.message : t("Could not save agent instructions"));
               });
             }}
           />
         </SettingRow>
         <SettingRow
-          label="Workspace root"
-          detail="Relative file tool paths resolve here. Leave blank to use the host working directory."
+          label={t("Workspace root")}
+          detail={t("Relative file tool paths resolve here. Leave blank to use the host working directory.")}
         >
           <TextField
             width="wide"
             value={workspaceRoot}
             disabled={saving}
-            aria-label="Workspace root"
+            aria-label={t("Workspace root")}
             onChange={(event) => setWorkspaceRoot(event.target.value)}
             onBlur={() => void saveWorkspaceRoot()}
-            placeholder="Host working directory"
+            placeholder={t("Host working directory")}
           />
         </SettingRow>
         <SettingRow
-          label="Full file access"
-          detail="Allow built-in file tools to read and write paths outside the workspace root."
+          label={t("Full file access")}
+          detail={t("Allow built-in file tools to read and write paths outside the workspace root.")}
         >
           <Switch
             checked={settings.fullFileAccess}
             disabled={saving}
-            label="Full file access"
+            label={t("Full file access")}
             onChange={(fullFileAccess) => {
               void saveSettings({ fullFileAccess }).catch((error: unknown) => {
-                setNotice(error instanceof Error ? error.message : 'Could not save file access setting');
+                setNotice(error instanceof Error ? error.message : t("Could not save file access setting"));
               });
             }}
           />

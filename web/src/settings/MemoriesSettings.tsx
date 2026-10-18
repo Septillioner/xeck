@@ -1,3 +1,4 @@
+import { t, getLocale } from '../i18n/index.ts';
 import { useEffect, useState } from 'react';
 import { MEMORY_TYPES, type MemoryRecord, type MemoryType, type MemoryWrite } from '../../../shared/types.ts';
 import { listMemories, putMemories } from '../api/client.ts';
@@ -37,7 +38,7 @@ export function MemoriesSettings() {
   useEffect(() => {
     void listMemories()
       .then(setMemories)
-      .catch((error: unknown) => setNotice(error instanceof Error ? error.message : 'Could not load memories'))
+      .catch((error: unknown) => setNotice(error instanceof Error ? error.message : t("Could not load memories")))
       .finally(() => setLoading(false));
   }, []);
 
@@ -45,7 +46,7 @@ export function MemoriesSettings() {
     setNotice(null);
     void putMemories(next)
       .then(setMemories)
-      .catch((error: unknown) => setNotice(error instanceof Error ? error.message : 'Could not save memories'));
+      .catch((error: unknown) => setNotice(error instanceof Error ? error.message : t("Could not save memories")));
   };
 
   const openEditor = (memory: MemoryRecord | null) => {
@@ -57,22 +58,21 @@ export function MemoriesSettings() {
     <div className="stack">
       <div className="section-header">
         <div>
-          <h2>Memories</h2>
-          <p className="lede">Saved notes stay out of the prompt until a tool reads them.</p>
+          <h2>{t("Memories")}</h2>
+          <p className="lede">{t("Saved notes stay out of the prompt until a tool reads them.")}</p>
         </div>
         <button type="button" className="text-button with-icon" onClick={() => openEditor(null)}>
           <IconPlus />
-          New memory
-        </button>
+          {t("New memory")}</button>
       </div>
       <SettingCard>
         {loading ? (
           <div className="flex min-h-20 items-center justify-center gap-2 py-4 text-ui text-muted" role="status" aria-live="polite">
             <IconSpinner />
-            <span>Loading memories…</span>
+            <span>{t("Loading memories…")}</span>
           </div>
         ) : memories.length === 0 ? (
-          <p className="catalog-empty">No memories yet</p>
+          <p className="catalog-empty">{t("No memories yet")}</p>
         ) : (
           memories.map((memory) => (
             <div className="rule-item" key={memory.id}>
@@ -88,15 +88,15 @@ export function MemoriesSettings() {
                     aria-expanded={expanded.has(memory.id)}
                     onClick={() => setExpanded((current) => toggleExpanded(current, memory.id))}
                   >
-                    {expanded.has(memory.id) ? 'Hide' : 'View'}
+                    {expanded.has(memory.id) ? t("Hide") : t("View")}
                   </button>
-                  <button type="button" className="icon-button" aria-label={`Edit ${memory.title}`} onClick={() => openEditor(memory)}>
+                  <button type="button" className="icon-button" aria-label={t("Edit {0}", { "0": memory.title })} onClick={() => openEditor(memory)}>
                     <IconEdit />
                   </button>
                   <button
                     type="button"
                     className="icon-button danger"
-                    aria-label={`Remove ${memory.title}`}
+                    aria-label={t("Remove {0}", { "0": memory.title })}
                     onClick={() => {
                       setExpanded((current) => {
                         const next = new Set(current);
@@ -129,7 +129,7 @@ export function MemoriesSettings() {
           }}
         />
       )}
-      {notice && <p className="lede">{notice}</p>}
+      {notice && <p className="lede">{t(notice)}</p>}
     </div>
   );
 }
@@ -149,47 +149,46 @@ function MemoryModal({
 }) {
   const ready = draft.title.trim().length > 0 && draft.content.trim().length > 0;
   return (
-    <Dialog title={editing ? 'Edit memory' : 'New memory'} onClose={onClose}>
-      <SettingRow label="Title">
+    <Dialog title={editing ? t("Edit memory") : t("New memory")} onClose={onClose}>
+      <SettingRow label={t("Title")}>
         <TextField
           autoFocus
           width="wide"
           value={draft.title}
-          aria-label="Memory title"
+          aria-label={t("Memory title")}
           onChange={(event) => onChange({ ...draft, title: event.target.value })}
         />
       </SettingRow>
-      <SettingRow label="Type">
+      <SettingRow label={t("Type")}>
         <Menu
-          label="Memory type"
+          label={t("Memory type")}
           value={draft.type}
           options={TYPE_OPTIONS}
           onChange={(type) => onChange({ ...draft, type: type as MemoryType })}
         />
       </SettingRow>
-      <SettingRow label="Tags">
+      <SettingRow label={t("Tags")}>
         <TextField
           width="wide"
           value={draft.tags}
-          aria-label="Memory tags"
-          placeholder="Comma separated"
+          aria-label={t("Memory tags")}
+          placeholder={t("Comma separated")}
           onChange={(event) => onChange({ ...draft, tags: event.target.value })}
         />
       </SettingRow>
       <div className="form-pad">
-        <p className="setting-label">Content</p>
+        <p className="setting-label">{t("Content")}</p>
         <Textarea
           value={draft.content}
-          aria-label="Memory content"
+          aria-label={t("Memory content")}
           onChange={(event) => onChange({ ...draft, content: event.target.value })}
         />
       </div>
       <footer className="modal-footer">
         <button type="button" onClick={onClose}>
-          Cancel
-        </button>
+          {t("Cancel")}</button>
         <button type="button" disabled={!ready} onClick={onSave}>
-          {editing ? 'Save memory' : 'Add memory'}
+          {editing ? t("Save memory") : t("Add memory")}
         </button>
       </footer>
     </Dialog>
@@ -227,13 +226,13 @@ function splitTags(value: string): string[] {
 }
 
 function memoryMeta(memory: MemoryRecord): string {
-  const tags = memory.tags.length > 0 ? memory.tags.join(', ') : 'No tags';
+  const tags = memory.tags.length > 0 ? memory.tags.join(', ') : t('No tags');
   const source = memory.source === 'xeck' ? 'Xeck' : 'User';
-  return `${TYPE_LABELS[memory.type]} · ${source} · ${tags} · ${formatUpdated(memory.updatedAt)}`;
+  return `${t(TYPE_LABELS[memory.type])} · ${t(source)} · ${tags} · ${formatUpdated(memory.updatedAt)}`;
 }
 
 function formatUpdated(value: number): string {
-  return new Intl.DateTimeFormat(undefined, { month: 'short', day: 'numeric', year: 'numeric' }).format(value);
+  return new Intl.DateTimeFormat(getLocale(), { month: 'short', day: 'numeric', year: 'numeric' }).format(value);
 }
 
 function toggleExpanded(current: Set<string>, id: string): Set<string> {

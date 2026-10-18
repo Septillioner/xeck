@@ -1,3 +1,4 @@
+import { t, useI18n } from '../i18n/index.ts';
 import { useEffect, type ReactNode } from 'react';
 import { ChatView } from '../chat/ChatView.tsx';
 import { SettingsPage } from '../settings/SettingsDialog.tsx';
@@ -10,6 +11,7 @@ import { cn } from '../lib/cn.ts';
 import { MigrationPage } from '../migration/MigrationPage.tsx';
 
 export function AppShell() {
+  useI18n();
   const {
     ready,
     loadError,
@@ -40,9 +42,9 @@ export function AppShell() {
     <>
       <WindowTitlebar controls={windowControls} />
       {loadError && !migrationOpen ? (
-        <main className="status-under-titlebar flex items-center justify-center text-danger">{loadError}</main>
+        <main className="status-under-titlebar flex items-center justify-center text-danger">{t(loadError)}</main>
       ) : !ready && !migrationOpen ? (
-        <main className="status-under-titlebar flex items-center justify-center text-muted">Loading</main>
+        <main className="status-under-titlebar flex items-center justify-center text-muted">{t("Loading")}</main>
       ) : (
         <div
         className={cn(
@@ -59,7 +61,7 @@ export function AppShell() {
         data-sidebar-open={sidebarOpen ? 'true' : 'false'}
       >
         <nav
-          aria-label="Chat list and debug"
+          aria-label={t("Chat list and debug")}
           className={cn(
             // The bar is fixed so it takes no flex space; the shell reserves only
             // its height via padding-top. Hidden outright on wide screens.
@@ -70,14 +72,14 @@ export function AppShell() {
           <button
             type="button"
             className="flex h-10 w-10 flex-none items-center justify-center rounded-row text-ink active:bg-hover max-lg:flex"
-            aria-label="Toggle chat list"
+            aria-label={t("Toggle chat list")}
             aria-expanded={sidebarOpen}
             aria-controls="sidebar"
             onClick={() => setSidebarOpen(!sidebarOpen)}
           >
             <IconMenu />
           </button>
-          <span className="flex-1 min-w-0 truncate text-lead font-semibold tracking-tight">Xeck</span>
+          <span className="flex-1 min-w-0 truncate text-lead font-semibold tracking-tight">{t("Xeck")}</span>
           {settings.debugMode && active && (
             <button
               type="button"
@@ -85,19 +87,18 @@ export function AppShell() {
                 'h-8 flex-none items-center rounded-full bg-field px-3 text-ui text-muted max-lg:flex',
                 debugOpen && 'bg-chat-active text-ink',
               )}
-              aria-label="Toggle debug panel"
+              aria-label={t("Toggle debug panel")}
               aria-pressed={debugOpen}
               onClick={() => setDebugOpen(!debugOpen)}
             >
-              Debug
-            </button>
+              {t("Debug")}</button>
           )}
         </nav>
         <Sidebar />
         <button
           type="button"
           className="fixed inset-x-0 bottom-0 top-[48px] z-scrim hidden bg-scrim max-lg:block group-data-[sidebar-open='false']/shell:hidden"
-          aria-label="Close chat list"
+          aria-label={t("Close chat list")}
           tabIndex={-1}
           onClick={() => setSidebarOpen(false)}
         />
@@ -125,7 +126,7 @@ export function WindowTitlebar({ controls }: { controls?: ElectronWindowControls
       <div className="flex h-full window-no-drag">
         <button
           type="button"
-          aria-label="Minimize"
+          aria-label={t("Minimize")}
           onClick={controls.minimize}
           className="flex h-full w-[46px] items-center justify-center text-muted hover:bg-hover hover:text-ink [&_svg]:h-[18px] [&_svg]:w-[18px]"
         >
@@ -133,7 +134,7 @@ export function WindowTitlebar({ controls }: { controls?: ElectronWindowControls
         </button>
         <button
           type="button"
-          aria-label="Maximize"
+          aria-label={t("Maximize")}
           onClick={controls.toggleMaximize}
           className="flex h-full w-[46px] items-center justify-center text-muted hover:bg-hover hover:text-ink [&_svg]:h-[18px] [&_svg]:w-[18px]"
         >
@@ -142,7 +143,7 @@ export function WindowTitlebar({ controls }: { controls?: ElectronWindowControls
         <button
           type="button"
           className="window-close flex h-full w-[46px] items-center justify-center text-muted [&_svg]:h-[18px] [&_svg]:w-[18px]"
-          aria-label="Close"
+          aria-label={t("Close")}
           onClick={controls.close}
         >
           <IconClose />

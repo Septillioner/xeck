@@ -1,3 +1,4 @@
+import { t } from '../../i18n/index.ts';
 import type { ToolUsageViewMode, TranscriptBlock, TranscriptMessage, TranscriptToolBlock } from '../../../../shared/types.ts';
 import { messageBlocks } from '../../../../shared/transcript.ts';
 import { Markdown } from '../Markdown.tsx';
@@ -42,7 +43,7 @@ export function MessageView({
         <div className="user-bubble">
           {source && (
             <button type="button" className="mb-2 block max-w-full truncate text-small text-muted hover:text-ink" onClick={() => onOpenSubagent(source.sessionId)}>
-              From {source.agentId} · {source.title}
+              {t("From")} {source.title}
             </button>
           )}
           <p>{message.content}</p>
@@ -53,6 +54,7 @@ export function MessageView({
 
   return (
     <article className="assistant">
+      {message.source && <button type="button" className="mb-2 text-small font-medium text-muted hover:text-ink" onClick={() => onOpenSubagent(message.source!.sessionId)}>{message.source.title}</button>}
       <TimelineBlocks
         blocks={messageBlocks(message)}
         showReasoning={showReasoning}

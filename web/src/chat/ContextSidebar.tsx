@@ -1,3 +1,4 @@
+import { t } from '../i18n/index.ts';
 import { useEffect, useRef, useState, type CSSProperties, type PointerEvent as ReactPointerEvent, type ReactNode } from 'react';
 import { useAppState } from '../state/AppState.tsx';
 import type { ContextPartKey, ContextParts, ContextTree } from '../../../shared/types.ts';
@@ -84,35 +85,34 @@ export function ContextSidebar({
 
   if (!open) {
     return (
-      <aside ref={paneRef} className="context-sidebar" data-open="false" style={{ '--pane-width': `${DEBUG_PANE_COLLAPSED_WIDTH}px` } as CSSProperties} aria-label="Debug">
+      <aside ref={paneRef} className="context-sidebar" data-open="false" style={{ '--pane-width': `${DEBUG_PANE_COLLAPSED_WIDTH}px` } as CSSProperties} aria-label={t("Debug")}>
         <button type="button" className="context-reopen" onClick={() => changeOpen(true)}>
-          Debug
-        </button>
+          {t("Debug")}</button>
       </aside>
     );
   }
 
   return (
-    <aside ref={paneRef} className="context-sidebar" data-open="true" style={{ '--pane-width': `${width}px` } as CSSProperties} aria-label="Debug">
+    <aside ref={paneRef} className="context-sidebar" data-open="true" style={{ '--pane-width': `${width}px` } as CSSProperties} aria-label={t("Debug")}>
       <button
         type="button"
         className="context-resize"
-        aria-label="Resize debug pane"
+        aria-label={t("Resize debug pane")}
         data-active={dragging ? 'true' : 'false'}
         onPointerDown={onResizePointerDown}
         onPointerMove={onResizePointerMove}
         onPointerUp={onResizePointerUp}
       />
       <div className="context-head">
-        <h2>Debug</h2>
-        <button type="button" className="context-close" aria-label="Close debug pane" onClick={() => changeOpen(false)}>
+        <h2>{t("Debug")}</h2>
+        <button type="button" className="context-close" aria-label={t("Close debug pane")} onClick={() => changeOpen(false)}>
           <IconClose />
         </button>
       </div>
       {active && <p className="context-identity">{identityLine(active)}</p>}
       <div className="context-scroll">
         {selection && <CallDetail call={selection} />}
-        {error && <p className="context-empty">{error}</p>}
+        {error && <p className="context-empty">{t(error)}</p>}
         {tree && <ContextTreeView tree={tree} parts={parts} />}
       </div>
       <div className="context-dock">
@@ -141,14 +141,14 @@ function identityLine(session: { agentId?: string; workspace?: string }): string
 }
 
 function CallDetail({ call }: { call: ActivityCall }) {
-  const result = call.pending ? 'Waiting' : (call.result ?? '');
+  const result = call.pending ? t('Waiting') : (call.result ?? '');
   return (
     <div className="context-detail">
       <h3>{call.label}</h3>
-      <p className="section-label">Arguments</p>
-      <TextBlock title={`${call.label} arguments`} text={formatValue(call.args)} />
-      <p className="section-label">Result</p>
-      <TextBlock title={`${call.label} result`} text={result} />
+      <p className="section-label">{t("Arguments")}</p>
+      <TextBlock title={t("{0} arguments", { "0": call.label })} text={formatValue(call.args)} />
+      <p className="section-label">{t("Result")}</p>
+      <TextBlock title={t("{0} result", { "0": call.label })} text={result} />
     </div>
   );
 }
@@ -156,43 +156,43 @@ function CallDetail({ call }: { call: ActivityCall }) {
 function ContextTreeView({ tree, parts }: { tree: ContextTree; parts: ContextParts | null }) {
   return (
     <div className="context-tree">
-      <Section title="System prompt" tone="system" count={tree.system.length} tokens={parts?.system}>
-        <TextBlock title="System prompt" text={tree.system} />
+      <Section title={t("System prompt")} tone="system" count={tree.system.length} tokens={parts?.system}>
+        <TextBlock title={t("System prompt")} text={tree.system} />
       </Section>
-      <Section title="Tool definitions" tone="tools" count={tree.tools.length} tokens={parts?.tools}>
-        <TextBlock title="Tool definitions" text={tree.tools} />
+      <Section title={t("Tool definitions")} tone="tools" count={tree.tools.length} tokens={parts?.tools}>
+        <TextBlock title={t("Tool definitions")} text={tree.tools} />
       </Section>
-      <Section title="Rules" tone="rules" count={tree.rules.length} tokens={parts?.rules}>
+      <Section title={t("Rules")} tone="rules" count={tree.rules.length} tokens={parts?.rules}>
         {tree.rules.map((rule, index) => (
           <Leaf key={`${index}-${rule.slice(0, EXCERPT_LENGTH)}`} title={excerpt(rule)}>
             <TextBlock title={excerpt(rule)} text={rule} />
           </Leaf>
         ))}
       </Section>
-      <Section title="Skills" tone="skills" count={tree.skills.length} tokens={parts?.skills}>
+      <Section title={t("Skills")} tone="skills" count={tree.skills.length} tokens={parts?.skills}>
         {tree.skills.map((skill) => (
           <Leaf key={skill.name} title={skill.name} hint={excerpt(skill.description || skill.content)}>
-            <TextBlock title={`${skill.name} description`} text={skill.description} />
+            <TextBlock title={t("{0} description", { "0": skill.name })} text={skill.description} />
             {skill.loaded && <TextBlock title={skill.name} text={skill.content} />}
           </Leaf>
         ))}
       </Section>
-      <Section title="MCP" tone="mcp" count={tree.mcp.length} tokens={parts?.mcp}>
+      <Section title={t("MCP")} tone="mcp" count={tree.mcp.length} tokens={parts?.mcp}>
         {tree.mcp.map((tool) => (
           <Leaf key={tool.name} title={tool.name} hint={excerpt(tool.description)}>
-            <TextBlock title={`${tool.name} description`} text={tool.description} />
-            <TextBlock title={`${tool.name} schema`} text={tool.schema} />
+            <TextBlock title={t("{0} description", { "0": tool.name })} text={tool.description} />
+            <TextBlock title={t("{0} schema", { "0": tool.name })} text={tool.schema} />
           </Leaf>
         ))}
       </Section>
-      <Section title="Summarized conversation" tone="summary" count={tree.summary.length} tokens={parts?.summary}>
+      <Section title={t("Summarized conversation")} tone="summary" count={tree.summary.length} tokens={parts?.summary}>
         {tree.summary.map((text, index) => (
           <Leaf key={`${index}-${text.slice(0, EXCERPT_LENGTH)}`} title={excerpt(text)}>
             <TextBlock title={excerpt(text)} text={text} />
           </Leaf>
         ))}
       </Section>
-      <Section title="Conversation" tone="conversation" count={tree.conversation.length} tokens={parts?.conversation}>
+      <Section title={t("Conversation")} tone="conversation" count={tree.conversation.length} tokens={parts?.conversation}>
         {tree.conversation.map((message, index) => (
           <Leaf key={`${index}-${message.role}`} title={message.role} hint={excerpt(message.content)}>
             <TextBlock title={message.role} text={message.content} />
@@ -230,7 +230,7 @@ function Section({
       <div className="context-node" data-empty="true">
         <div className="context-summary">
           {mark}
-          <span className="context-label">{title}</span>
+          <span className="context-label">{t(title)}</span>
           {tokenLabel && (
             <span className="context-meta">
               <span className="context-tokens">{tokenLabel}</span>
@@ -244,7 +244,7 @@ function Section({
     <details className="context-node">
       <summary>
         {mark}
-        <span className="context-label">{title}</span>
+        <span className="context-label">{t(title)}</span>
         <span className="context-meta">
           {tokenLabel && <span className="context-tokens">{tokenLabel}</span>}
           <span className="context-count">{count}</span>
@@ -268,8 +268,7 @@ function TextBlock({ title, text }: { title: string; text: string }) {
       <div className="context-preview">
         <span className="context-excerpt">{excerpt(text)}</span>
         <button type="button" className="text-button" onClick={() => setOpen(true)}>
-          View
-        </button>
+          {t("View")}</button>
       </div>
       {open && (
         <Dialog title={title} onClose={() => setOpen(false)}>
@@ -284,7 +283,7 @@ function Leaf({ title, hint, children }: { title: string; hint?: string; childre
   return (
     <details className="context-node">
       <summary>
-        <span className={hint ? 'context-label' : 'context-label context-label-fill'}>{title}</span>
+        <span className={hint ? 'context-label' : 'context-label context-label-fill'}>{t(title)}</span>
         {hint && <span className="context-excerpt">{hint}</span>}
         <i className="chevron" />
       </summary>

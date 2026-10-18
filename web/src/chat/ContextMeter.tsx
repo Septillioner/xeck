@@ -1,3 +1,4 @@
+import { t } from '../i18n/index.ts';
 import { useEffect, useId, useRef, useState, type CSSProperties } from 'react';
 import { type ContextPartKey } from '../../../shared/types.ts';
 import { effectiveContextLength } from '../../../shared/model-context.ts';
@@ -102,7 +103,7 @@ function useContextMeter() {
   const values = contextMeterValues(context, limit, streaming?.contextParts ?? active.contextParts);
   const label = values.maximum
     ? `${formatTokenCount(values.current)} / ${formatTokenCount(values.maximum)}`
-    : `${formatTokenCount(values.current)} · Limit unknown`;
+    : `${formatTokenCount(values.current)} · ${t('Limit unknown')}`;
   const speed = settings.showTokenSpeed ? formatTokenSpeed(last.completionTokens, active.lastDurationMs ?? 0) : null;
   const perRequest = Boolean(live) || Boolean(active.contextUsage);
   return {
@@ -130,8 +131,8 @@ function ContextBreakdown({
   return (
     <div className="meter-panel" data-level={meter.level ?? undefined}>
       <div className="meter-head">
-        <p id={titleId}>Context</p>
-        <span>{meter.percent !== null ? `${meter.percent}%` : 'Limit unknown'}</span>
+        <p id={titleId}>{t("Context")}</p>
+        <span>{meter.percent !== null ? `${meter.percent}%` : t("Limit unknown")}</span>
       </div>
       <div
         className="meter-bar"
@@ -150,23 +151,23 @@ function ContextBreakdown({
         ))}
       </div>
       <p className="meter-caption">{meter.label}</p>
-      <p className="meter-caption">{meter.inputCaption}</p>
+      <p className="meter-caption">{t(meter.inputCaption)}</p>
       <dl className="meter-legend">
         {meter.parts.map((part) => (
           <div key={part.key}>
             <dt>
               <span className={`meter-swatch meter-${part.key}`} />
-              {PART_LABELS[part.key]}
+              {t(PART_LABELS[part.key])}
             </dt>
             <dd>{formatTokenCount(part.tokens)}</dd>
           </div>
         ))}
       </dl>
       <dl className="meter-stats">
-        <MeterStat label={meter.outputLabel} value={formatTokenCount(meter.context.completionTokens)} />
-        {meter.context.cachedTokens ? <MeterStat label="Cached input" value={formatTokenCount(meter.context.cachedTokens)} /> : null}
-        {typeof meter.cumulative === 'number' ? <MeterStat label="Cumulative usage" value={formatTokenCount(meter.cumulative)} /> : null}
-        {meter.speed ? <MeterStat label="Speed" value={meter.speed} /> : null}
+        <MeterStat label={t(meter.outputLabel)} value={formatTokenCount(meter.context.completionTokens)} />
+        {meter.context.cachedTokens ? <MeterStat label={t("Cached input")} value={formatTokenCount(meter.context.cachedTokens)} /> : null}
+        {typeof meter.cumulative === 'number' ? <MeterStat label={t("Cumulative usage")} value={formatTokenCount(meter.cumulative)} /> : null}
+        {meter.speed ? <MeterStat label={t("Speed")} value={meter.speed} /> : null}
       </dl>
     </div>
   );

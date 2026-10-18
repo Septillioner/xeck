@@ -71,10 +71,55 @@ export function isSessionId(value: string): boolean {
   return SESSION_ID_PATTERN.test(value);
 }
 
-export async function listSessions(): Promise<SessionSummary[]> {
+export async function listSessions(includeBotConversations = false): Promise<SessionSummary[]> {
   return exclusive(async () => {
     const index = await readIndex();
-    return sortByUpdated(index.sessions.filter((session) => !session.parentId));
+    return sortByUpdated(index.sessions.filter((session) => !session.parentId && (includeBotConversations || !session.botConversation)));
+  });
+}
+
+export async function listBotConversations(botId?: string): Promise<SessionSummary[]> {
+  return (await listSessions(true)).filter((session) => session.botConversation && (!botId || session.botConversation.participants.includes(botId)));
+}
+
+/** A shared pair has its own history; personal user/bot histories are never copied. */
+export async function botConversationFor(sourceId: string, targetId: string): Promise<StoredSession> {
+  return exclusive(async () => {
+    const source = await readSessionFile(sourceId);
+    const target = await readSessionFile(targetId);
+    if (!source?.bot || !target?.bot || source.origin?.by === 'agent' || target.origin?.by === 'agent' || source.botConversation || target.botConversation || sourceId === targetId) throw new Error('Messaging participants must be distinct XeckBots.');
+    const participants = [sourceId, targetId].sort() as [string, string];
+    const index = await readIndex();
+    const summary = index.sessions.find((item) => item.botConversation?.participants[0] === participants[0] && item.botConversation.participants[1] === participants[1]);
+    const existing = summary ? await readSessionFile(summary.id) : null;
+    const now = new Date().toISOString();
+    const session: StoredSession = existing ?? {
+      id: randomUUID(), origin: { by: 'user' },
+      title: `${source.title} ↔ ${target.title}`, titleSource: 'user',
+      createdAt: now, updatedAt: now,
+      profile: target.profile, messages: [], libraryMessages: [],
+    };
+    if (existing && existing.botConversation?.responderId !== targetId) {
+      // When the direction changes, each bot's own prior messages are assistant turns.
+      session.libraryMessages = session.messages.filter((message) => message.content.trim()).map((message) => ({
+        role: message.source?.sessionId === targetId ? 'assistant' : 'user',
+        content: message.content,
+      }));
+    }
+    session.botConversation = { participants, responderId: targetId, responderTitle: target.title };
+    session.bot = { ...target.bot };
+    session.agentId = target.agentId;
+    session.workspace = target.workspace;
+    session.policyId = target.policyId;
+    session.profile = { ...target.profile };
+    session.reasoningEffort = target.reasoningEffort;
+    session.serviceTier = target.serviceTier;
+    await writeSessionFile(session);
+    const position = index.sessions.findIndex((item) => item.id === session.id);
+    if (position < 0) index.sessions.push(toSummary(session));
+    else index.sessions[position] = toSummary(session);
+    await writeIndex(index);
+    return session;
   });
 }
 
@@ -444,7 +489,14 @@ export async function deleteSession(id: string): Promise<boolean> {
     const session = await readSessionFile(id);
     if (!session) return false;
     const index = await readIndex();
-    const ids = new Set([id, ...index.sessions.filter((item) => item.parentId === id).map((item) => item.id)]);
+    const ids = new Set([id, ...index.sessions.filter((item) => item.botConversation?.participants.includes(id)).map((item) => item.id)]);
+    let added = true;
+    while (added) {
+      added = false;
+      for (const item of index.sessions) {
+        if (item.parentId && ids.has(item.parentId) && !ids.has(item.id)) { ids.add(item.id); added = true; }
+      }
+    }
     for (const sessionId of ids) {
       removedSessionIds.add(sessionId);
       policyCache.delete(sessionId);
@@ -597,6 +649,7 @@ function toSummary(session: StoredSession): SessionSummary {
     profile: session.profile,
     ...(session.projectId ? { projectId: session.projectId } : {}),
     ...(session.bot ? { bot: { color: session.bot.color } } : {}),
+    ...(session.botConversation ? { botConversation: session.botConversation } : {}),
     ...(session.origin?.by === 'agent' ? { parentId: session.origin.parent } : {}),
     ...(session.subagentStatus ? { subagentStatus: session.subagentStatus } : {}),
   };

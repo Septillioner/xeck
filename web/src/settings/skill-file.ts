@@ -1,3 +1,4 @@
+import { t } from '../i18n/index.ts';
 import type { SkillRecord } from '../../../shared/types.ts';
 
 const FRONT_MATTER_FENCE = /^-{3,}$/;
@@ -7,8 +8,8 @@ const NAME_FIELD = 'name';
 const DESCRIPTION_FIELD = 'description';
 const MISSING_FENCE = 'Skill file needs a front matter fence';
 const MISSING_CLOSE = 'Skill file needs a closing front matter fence';
-const MISSING_FIELDS = 'Name and description are required';
-const MISSING_BODY = 'Instructions are required';
+const MISSING_FIELDS = "Name and description are required";
+const MISSING_BODY = "Instructions are required";
 
 export function parseSkillFile(source: string): { skill: SkillRecord } | { error: string } {
   const lines = source.replace(/^\uFEFF/, '').replace(/\r\n/g, '\n').split('\n');

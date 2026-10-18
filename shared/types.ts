@@ -98,6 +98,12 @@ export interface XeckBotProfile {
   systemPrompt?: string;
 }
 
+export interface BotConversation {
+  participants: [string, string];
+  responderId: string;
+  responderTitle: string;
+}
+
 export interface SessionSummary {
   id: string;
   title: string;
@@ -106,6 +112,7 @@ export interface SessionSummary {
   profile: ModelProfile;
   projectId?: string;
   bot?: XeckBotProfile;
+  botConversation?: BotConversation;
   /** Present only for a session created by another agent. */
   parentId?: string;
   subagentStatus?: SubagentStatus;
@@ -345,6 +352,7 @@ export interface StoredSession {
   updatedAt: string;
   projectId?: string;
   bot?: XeckBotProfile;
+  botConversation?: BotConversation;
   /** Missing on older sessions means a user-created root session. */
   origin?: SessionOrigin;
   subagentStatus?: SubagentStatus;
@@ -371,7 +379,11 @@ export interface StoredSession {
   lastDurationMs?: number;
 }
 
+export const LANGUAGES = ['system', 'tr', 'en'] as const;
+export type LanguageSetting = (typeof LANGUAGES)[number];
+
 export interface Settings {
+  language: LanguageSetting;
   defaultProfile: ModelProfile | null;
   /** Per-subagent model selection. Null or missing inherits the parent profile. */
   agentProfiles: Record<string, ModelProfile | null>;
@@ -394,6 +406,7 @@ export interface Settings {
 }
 
 export const DEFAULT_SETTINGS: Settings = {
+  language: 'system',
   defaultProfile: null,
   agentProfiles: {},
   autocompleteProfile: null,

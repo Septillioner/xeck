@@ -1,3 +1,4 @@
+import { t } from '../i18n/index.ts';
 import { useEffect, useId, useRef, useLayoutEffect, type ReactNode } from 'react';
 import { IconClose } from './icons.tsx';
 import { hasOpenMenu } from './open-menu.ts';
@@ -54,8 +55,8 @@ export function Dialog({
     <div className="modal-layer">
       <div className="modal-panel" role="dialog" aria-modal="true" aria-labelledby={titleId} ref={panelRef}>
         <header className="modal-header">
-          <h3 id={titleId}>{title}</h3>
-          <button type="button" className="icon-button" aria-label="Close" onClick={onClose}>
+          <h3 id={titleId}>{t(title)}</h3>
+          <button type="button" className="icon-button" aria-label={t("Close")} onClick={onClose}>
             <IconClose />
           </button>
         </header>

@@ -1,3 +1,4 @@
+import { t, useI18n } from '../i18n/index.ts';
 import { useEffect, useId, useMemo, useRef, useState, type KeyboardEvent as ReactKeyboardEvent, type ReactNode } from 'react';
 import { IconCheck, IconSearch } from './icons.tsx';
 import { MENU_MARKER } from './open-menu.ts';
@@ -59,6 +60,7 @@ export function Menu({
   searchPlaceholder = 'Search',
   footerAction,
 }: MenuProps) {
+  const { locale } = useI18n();
   const [open, setOpen] = useState(false);
   const [query, setQuery] = useState('');
   const [focusIndex, setFocusIndex] = useState(0);
@@ -68,7 +70,7 @@ export function Menu({
   const listId = useId();
   onOpenChangeRef.current = onOpenChange;
   const current = options.find((option) => option.value === value);
-  const filtered = useMemo(() => filterOptions(options, query), [options, query]);
+  const filtered = useMemo(() => filterOptions(options, query), [options, query, locale]);
 
   useEffect(() => {
     onOpenChangeRef.current?.(open);
@@ -127,22 +129,22 @@ export function Menu({
   const menuClass = variant === 'model' ? 'menu model' : 'menu';
   const triggerClass = buttonClass ?? (variant === 'model' ? 'model-pill' : 'field field-wide');
   const list = (
-        <div className="menu-list bg-popover" id={listId} role="listbox" aria-label={label}>
+        <div className="menu-list bg-popover" id={listId} role="listbox" aria-label={t(label)}>
           {searchable && (
             <div className="menu-search">
               <IconSearch />
               <TextField bare
                 ref={inputRef}
                 value={query}
-                placeholder={searchPlaceholder}
-                aria-label={searchPlaceholder}
+                placeholder={t(searchPlaceholder)}
+                aria-label={t(searchPlaceholder)}
                 onChange={(event) => setQuery(event.target.value)}
                 onKeyDown={onSearchKey}
               />
             </div>
           )}
           <div className={searchable ? 'menu-scroll' : undefined}>
-            {filtered.length === 0 && options.length > 0 && <p className="menu-empty">No models found</p>}
+            {filtered.length === 0 && options.length > 0 && <p className="menu-empty">{t("No models found")}</p>}
             {renderGroups(filtered, value, focusIndex, choose, setFocusIndex)}
             {options.length === 0 && emptyLabel && (
               <button
@@ -153,7 +155,7 @@ export function Menu({
                   onEmpty?.();
                 }}
               >
-                {emptyLabel}
+                {t(emptyLabel)}
               </button>
             )}
           </div>
@@ -167,7 +169,7 @@ export function Menu({
               }}
             >
               {footerAction.icon}
-              <span>{footerAction.label}</span>
+              <span>{t(footerAction.label)}</span>
             </button>
           )}
         </div>
@@ -177,14 +179,14 @@ export function Menu({
       <button
         type="button"
         className={triggerClass}
-        aria-label={label}
+        aria-label={t(label)}
         aria-expanded={open}
         aria-controls={listId}
         disabled={disabled}
         onClick={() => setOpen((currentOpen) => !currentOpen)}
       >
         {variant !== 'model' && current?.icon}
-        <span>{current?.label ?? placeholder ?? label}</span>
+        <span>{t(current?.label ?? placeholder ?? label)}</span>
         {detail && <span className="model-effort">{detail}</span>}
         <i className="chevron" />
       </button>
@@ -205,7 +207,7 @@ function filterOptions(options: MenuOption[], query: string) {
   const needle = query.trim().toLowerCase();
   if (!needle) return options;
   return options.filter((option) =>
-    [option.label, option.subtitle, option.group].some((part) => part?.toLowerCase().includes(needle)),
+    [option.label, option.subtitle, option.group].some((part) => part && t(part).toLocaleLowerCase().includes(needle)),
   );
 }
 
@@ -227,7 +229,7 @@ function renderGroups(
   let flat = 0;
   return [...groups.entries()].map(([title, items]) => (
     <div key={title || 'ungrouped'}>
-      {title && <p className="menu-group-title">{title}</p>}
+      {title && <p className="menu-group-title">{t(title)}</p>}
       {items.map((option) => {
         const index = flat;
         flat += 1;
@@ -245,9 +247,9 @@ function renderGroups(
           >
             {option.icon}
             <span className="menu-item-copy">
-              <span className="menu-item-title">{option.label}</span>
+              <span className="menu-item-title">{t(option.label)}</span>
               {option.subtitle && option.subtitle !== option.label && (
-                <span className="menu-item-subtitle">{option.subtitle}</span>
+                <span className="menu-item-subtitle">{t(option.subtitle)}</span>
               )}
             </span>
             {option.value === value && (

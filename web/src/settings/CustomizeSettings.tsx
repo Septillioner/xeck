@@ -1,3 +1,4 @@
+import { t } from '../i18n/index.ts';
 import { type ReactNode } from 'react';
 import type { CustomizeTab } from '../../../shared/types.ts';
 import { IconFileText, IconMemory, IconServer, IconSpark } from '../ui/icons.tsx';
@@ -22,8 +23,8 @@ export function CustomizeSettings({ initialTab = 'skills' }: { initialTab?: Cust
   return (
     <div className="stack">
       <AgentSettings />
-      <section className="stack" aria-label="Customize sections">
-        <div className="customize-tabs" role="tablist" aria-label="Customize sections">
+      <section className="stack" aria-label={t("Customize sections")}>
+        <div className="customize-tabs" role="tablist" aria-label={t("Customize sections")}>
           <TabButton tab="skills" active={tab} onSelect={openSettings} icon={<IconSpark />} />
           <TabButton tab="rules" active={tab} onSelect={openSettings} icon={<IconFileText />} />
           <TabButton tab="memories" active={tab} onSelect={openSettings} icon={<IconMemory />} />
@@ -52,7 +53,7 @@ function TabButton({
   return (
     <button type="button" role="tab" aria-selected={active === tab} data-active={active === tab ? 'true' : 'false'} onClick={() => onSelect(tab)}>
       {icon}
-      {TAB_LABELS[tab]}
+      {t(TAB_LABELS[tab])}
     </button>
   );
 }

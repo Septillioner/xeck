@@ -138,11 +138,12 @@ export function finalizeBlocks(blocks: TranscriptBlock[], finalContent: string):
   return cleaned;
 }
 
-export function assistantMessage(blocks: TranscriptBlock[]): TranscriptMessage {
+export function assistantMessage(blocks: TranscriptBlock[], session?: StoredSession): TranscriptMessage {
   const { content, reasoning, activity, changes } = blocksToLegacy(blocks);
   return {
     id: randomUUID(),
     role: 'assistant',
+    ...(session?.botConversation ? { source: { messageId: randomUUID(), sessionId: session.botConversation.responderId, agentId: session.agentId ?? '', title: session.botConversation.responderTitle } } : {}),
     content,
     reasoning: reasoning.trim() ? reasoning : undefined,
     activity: activity.length > 0 ? activity : undefined,
@@ -165,6 +166,6 @@ export async function persistPartial(
     nextLibrary.push({ role: 'assistant', content });
   }
   session.libraryMessages = nextLibrary;
-  if (visible) session.messages.push(assistantMessage(blocks));
+  if (visible) session.messages.push(assistantMessage(blocks, session));
   return saveSession(session);
 }

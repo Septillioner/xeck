@@ -1,3 +1,4 @@
+import { t } from '../i18n/index.ts';
 import { useState } from 'react';
 import type { PlanSnapshot, PlanStatus, PlanTodo } from '../../../shared/types.ts';
 import { useAppState } from '../state/AppState.tsx';
@@ -36,8 +37,8 @@ export function PlanTodoList({ plan, readOnly = false }: { plan: PlanSnapshot; r
             data-checked={todo.status === 'completed' ? 'true' : 'false'}
             data-busy={busyId === todo.id ? 'true' : 'false'}
             disabled={readOnly || busyId !== null}
-            aria-label={readOnly ? `Step ${index + 1}: ${todo.status}` : todo.status === 'completed' ? `Reopen step ${index + 1}` : `Complete step ${index + 1}`}
-            title={readOnly ? undefined : todo.status === 'completed' ? 'Reopen this step' : 'Mark this step done'}
+            aria-label={readOnly ? t("Step {0}: {1}", { "0": index + 1, "1": todo.status }) : todo.status === 'completed' ? t("Reopen step {0}", { "0": index + 1 }) : t("Complete step {0}", { "0": index + 1 })}
+            title={readOnly ? undefined : todo.status === 'completed' ? t("Reopen this step") : t("Mark this step done")}
             onClick={() => void toggle(todo)}
           >
             <StatusGlyph status={todo.status} />

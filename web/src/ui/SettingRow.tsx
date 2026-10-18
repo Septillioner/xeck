@@ -1,3 +1,4 @@
+import { t } from '../i18n/index.ts';
 import type { ReactNode } from 'react';
 
 export function SettingCard({ children }: { children: ReactNode }) {
@@ -16,8 +17,8 @@ export function SettingRow({
   return (
     <div className="setting-row">
       <div>
-        <strong>{label}</strong>
-        {detail && <p>{detail}</p>}
+        <strong>{t(label)}</strong>
+        {detail && <p>{t(detail)}</p>}
       </div>
       {children}
     </div>
@@ -42,7 +43,7 @@ export function Switch({
       type="button"
       className="switch"
       role="switch"
-      aria-label={label}
+      aria-label={t(label)}
       aria-checked={checked}
       aria-busy={pending}
       disabled={disabled || pending}

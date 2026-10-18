@@ -1,3 +1,4 @@
+import { t } from '../i18n/index.ts';
 import type { AccentColor, TextSizeSetting, ThemeSetting, ToolUsageViewMode } from '../../../shared/types.ts';
 import { ACCENT_COLORS, TEXT_SIZES, THEMES, TOOL_USAGE_VIEW_MODES } from '../../../shared/types.ts';
 import { IconMonitor, IconMoon, IconSun } from '../ui/icons.tsx';
@@ -39,9 +40,9 @@ export function AppearanceSettings() {
 
   return (
     <div className="stack">
-      <h2>Appearance</h2>
+      <h2>{t("Appearance")}</h2>
       <section className="appearance-block">
-        <h3 className="setting-label">Theme</h3>
+        <h3 className="setting-label">{t("Theme")}</h3>
         <div className="theme-tiles">
           {THEMES.map((theme) => (
             <button
@@ -54,13 +55,13 @@ export function AppearanceSettings() {
               }}
             >
               <ThemeIcon theme={theme} />
-              <span>{THEME_LABELS[theme]}</span>
+              <span>{t(THEME_LABELS[theme])}</span>
             </button>
           ))}
         </div>
       </section>
       <section className="appearance-block">
-        <h3 className="setting-label">Color</h3>
+        <h3 className="setting-label">{t("Color")}</h3>
         <div className="accent-swatches">
           {ACCENT_COLORS.map((accent) => (
             <div key={accent} className={accent === 'default' ? 'default-accent-option' : undefined}>
@@ -68,20 +69,20 @@ export function AppearanceSettings() {
                 type="button"
                 className={`swatch swatch-${accent}`}
                 data-active={settings.accent === accent ? 'true' : 'false'}
-                aria-label={ACCENT_LABELS[accent]}
-                title={ACCENT_LABELS[accent]}
+                aria-label={t(ACCENT_LABELS[accent])}
+                title={t(ACCENT_LABELS[accent])}
                 onClick={() => {
                   void saveSettings({ accent });
                 }}
               />
-              {accent === 'default' && <span className="text-small text-muted">Default</span>}
+              {accent === 'default' && <span className="text-small text-muted">{t("Default")}</span>}
             </div>
           ))}
         </div>
       </section>
       <section className="appearance-block">
-        <h3 className="setting-label">Text size</h3>
-        <div className="segment" role="group" aria-label="Text size">
+        <h3 className="setting-label">{t("Text size")}</h3>
+        <div className="segment" role="group" aria-label={t("Text size")}>
           {TEXT_SIZES.map((size) => (
             <button
               key={size}
@@ -91,27 +92,27 @@ export function AppearanceSettings() {
                 void saveSettings({ textSize: size });
               }}
             >
-              {TEXT_LABELS[size]}
+              {t(TEXT_LABELS[size])}
             </button>
           ))}
         </div>
       </section>
       <section className="appearance-block">
-        <h3 className="setting-label">Metrics</h3>
+        <h3 className="setting-label">{t("Metrics")}</h3>
         <div className="setting-card">
-          <SettingRow label="Usage" detail="Shows the last reply and the chat total under the composer.">
+          <SettingRow label={t("Usage")} detail={t("Shows the last reply and the chat total under the composer.")}>
             <Switch
               checked={settings.showUsage}
-              label="Usage"
+              label={t("Usage")}
               onChange={(showUsage) => {
                 void saveSettings({ showUsage });
               }}
             />
           </SettingRow>
-          <SettingRow label="Token speed" detail="Shows tokens per second for the last reply.">
+          <SettingRow label={t("Token speed")} detail={t("Shows tokens per second for the last reply.")}>
             <Switch
               checked={settings.showTokenSpeed}
-              label="Token speed"
+              label={t("Token speed")}
               onChange={(showTokenSpeed) => {
                 void saveSettings({ showTokenSpeed });
               }}
@@ -120,32 +121,32 @@ export function AppearanceSettings() {
         </div>
       </section>
       <section className="appearance-block">
-        <h3 className="setting-label">Tool usage</h3>
+        <h3 className="setting-label">{t("Tool usage")}</h3>
         <div className="setting-card">
-          <SettingRow label="Hide tool usages" detail="Hide tool activity in chats. Xeck’s live status, questions and plans stay visible.">
-            <Switch checked={settings.hideToolUsages} label="Hide tool usages" onChange={(hideToolUsages) => void saveSettings({ hideToolUsages })} />
+          <SettingRow label={t("Hide tool usages")} detail={t("Hide tool activity in chats. Xeck’s live status, questions and plans stay visible.")}>
+            <Switch checked={settings.hideToolUsages} label={t("Hide tool usages")} onChange={(hideToolUsages) => void saveSettings({ hideToolUsages })} />
           </SettingRow>
           <div className="tool-mode-setting" data-disabled={settings.hideToolUsages ? 'true' : undefined}>
-            <strong id="tool-mode-label">Tool usage view mode</strong>
+            <strong id="tool-mode-label">{t("Tool usage view mode")}</strong>
             <div className="segment" role="group" aria-labelledby="tool-mode-label" aria-describedby="tool-mode-detail">
               {TOOL_USAGE_VIEW_MODES.map((mode) => (
                 <button key={mode} type="button" disabled={settings.hideToolUsages}
                   aria-pressed={settings.toolUsageViewMode === mode}
                   data-active={settings.toolUsageViewMode === mode ? 'true' : 'false'}
                   onClick={() => void saveSettings({ toolUsageViewMode: mode })}>
-                  {TOOL_MODE_LABELS[mode]}
+                  {t(TOOL_MODE_LABELS[mode])}
                 </button>
               ))}
             </div>
-            <p id="tool-mode-detail">{TOOL_MODE_DETAILS[settings.toolUsageViewMode]}</p>
+            <p id="tool-mode-detail">{t(TOOL_MODE_DETAILS[settings.toolUsageViewMode])}</p>
           </div>
         </div>
       </section>
       <section className="appearance-block">
-        <h3 className="setting-label">Preview</h3>
+        <h3 className="setting-label">{t("Preview")}</h3>
         <div className="setting-card appearance-preview" data-text-size={settings.textSize}>
-          <p className="user-bubble">Hello</p>
-          <p className="preview-reply">This is how replies look.</p>
+          <p className="user-bubble">{t("Hello")}</p>
+          <p className="preview-reply">{t("This is how replies look.")}</p>
         </div>
       </section>
     </div>

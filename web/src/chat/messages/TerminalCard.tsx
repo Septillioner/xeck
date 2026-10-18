@@ -1,3 +1,4 @@
+import { t } from '../../i18n/index.ts';
 import type { TerminalResult } from '../../../../shared/types.ts';
 
 export function TerminalCard({ terminal, pending }: { terminal: TerminalResult; pending?: boolean }) {
@@ -5,21 +6,21 @@ export function TerminalCard({ terminal, pending }: { terminal: TerminalResult; 
   return (
     <details className="terminal-card" open>
       <summary>
-        <span>Terminal</span>
+        <span>{t("Terminal")}</span>
         <code>{terminal.cwd}</code>
-        <small>{pending ? 'running' : `${terminal.durationMs} ms`}</small>
+        <small>{pending ? t('Running') : `${terminal.durationMs} ms`}</small>
       </summary>
       <div className="terminal-command">
         <span className="terminal-prompt">$</span>
         <code>{terminal.command}</code>
       </div>
       <pre className={terminal.ok ? 'terminal-output' : 'terminal-output terminal-error'}>
-        {output ? <AnsiOutput value={output} /> : (pending ? 'Running…' : '(no output)')}
+        {output ? <AnsiOutput value={output} /> : (pending ? t("Running…") : t('(no output)'))}
       </pre>
       {!pending && (
         <p className="terminal-status">
-          {terminal.ok ? 'Exited 0' : terminal.timedOut ? 'Timed out' : `Exited ${terminal.exitCode ?? terminal.signal ?? 'with error'}`}
-          {terminal.truncated ? ' · output truncated' : ''}
+          {terminal.ok ? t("Exited 0") : terminal.timedOut ? t("Timed out") : t("Exited {0}", { "0": terminal.exitCode ?? terminal.signal ?? t('with error') })}
+          {terminal.truncated ? ' · ' + t('output truncated') : ''}
         </p>
       )}
     </details>

@@ -1,3 +1,4 @@
+import { t } from '../../i18n/index.ts';
 import { useState, type Dispatch, type SetStateAction } from 'react';
 import {
   MCP_TRANSPORTS,
@@ -43,19 +44,19 @@ export function McpServerModal({
   const ready = draftServer(draft) !== null;
 
   return (
-    <Dialog title={editing ? 'Edit MCP server' : 'New MCP server'} onClose={onClose}>
-      <SettingRow label="Name">
+    <Dialog title={editing ? t("Edit MCP server") : t("New MCP server")} onClose={onClose}>
+      <SettingRow label={t("Name")}>
         <TextField
           autoFocus
           width="wide"
           value={draft.id}
-          aria-label="Server name"
+          aria-label={t("Server name")}
           onChange={(event) => onChange({ ...draft, id: event.target.value })}
         />
       </SettingRow>
-      <SettingRow label="Transport">
+      <SettingRow label={t("Transport")}>
         <Menu
-          label="Transport"
+          label={t("Transport")}
           value={draft.transport}
           options={MCP_TRANSPORTS.map((transport) => ({ value: transport, label: TRANSPORT_LABELS[transport] }))}
           onChange={(transport) => onChange({ ...draft, transport: transport as McpTransport })}
@@ -63,15 +64,15 @@ export function McpServerModal({
       </SettingRow>
       {draft.transport === 'http' ? (
         <>
-          <SettingRow label="URL">
+          <SettingRow label={t("URL")}>
             <TextField
               width="wide"
               value={draft.url}
-              aria-label="Server URL"
+              aria-label={t("Server URL")}
               onChange={(event) => onChange({ ...draft, url: event.target.value })}
             />
           </SettingRow>
-          <SettingRow label="Token">
+          <SettingRow label={t("Token")}>
             <span className="token-field">
               <span className="field-password-wrap">
                 <TextField
@@ -79,13 +80,13 @@ export function McpServerModal({
                   autoComplete="off"
                   value={draft.token}
                   placeholder={tokenPlaceholder(draft)}
-                  aria-label="Bearer token"
+                  aria-label={t("Bearer token")}
                   onChange={(event) => onChange({ ...draft, token: event.target.value, clearToken: false })}
                 />
                 <button
                   type="button"
                   className="field-eye"
-                  aria-label={showToken ? 'Hide token' : 'Show token'}
+                  aria-label={showToken ? t("Hide token") : t("Show token")}
                   onClick={() => setShowToken((shown) => !shown)}
                 >
                   {showToken ? <IconEyeOff /> : <IconEye />}
@@ -97,27 +98,27 @@ export function McpServerModal({
                   className="text-button"
                   onClick={() => onChange({ ...draft, token: '', clearToken: !draft.clearToken })}
                 >
-                  {draft.clearToken ? 'Keep token' : 'Clear token'}
+                  {draft.clearToken ? t("Keep token") : t("Clear token")}
                 </button>
               )}
             </span>
           </SettingRow>
-          <SettingRow label="Ignore certificate" detail="Accept self-signed or otherwise invalid TLS certificates when connecting.">
+          <SettingRow label={t("Ignore certificate")} detail={t("Accept self-signed or otherwise invalid TLS certificates when connecting.")}>
             <Switch
               checked={draft.ignoreCertificate}
-              label="Ignore certificate"
+              label={t("Ignore certificate")}
               onChange={(value) => onChange({ ...draft, ignoreCertificate: value })}
             />
           </SettingRow>
           <SecretList
-            label="Headers"
-            addLabel="Add header"
-            namePlaceholder="Header"
-            nameAria="Header name"
-            valueAria="Header value"
-            removeAria="Remove header"
-            showAria="Show header"
-            hideAria="Hide header"
+            label={t("Headers")}
+            addLabel={t("Add header")}
+            namePlaceholder={t("Header")}
+            nameAria={t("Header name")}
+            valueAria={t("Header value")}
+            removeAria={t("Remove header")}
+            showAria={t("Show header")}
+            hideAria={t("Hide header")}
             rows={draft.headers}
             shown={shownHeaders}
             onShown={setShownHeaders}
@@ -126,37 +127,37 @@ export function McpServerModal({
         </>
       ) : (
         <>
-          <SettingRow label="Command">
+          <SettingRow label={t("Command")}>
             <TextField
               width="wide"
               value={draft.command}
-              aria-label="Command"
+              aria-label={t("Command")}
               onChange={(event) => onChange({ ...draft, command: event.target.value })}
             />
           </SettingRow>
-          <SettingRow label="Arguments">
+          <SettingRow label={t("Arguments")}>
             <TextField
               width="wide"
               value={draft.args}
-              placeholder="Optional"
-              aria-label="Arguments"
+              placeholder={t("Optional")}
+              aria-label={t("Arguments")}
               onChange={(event) => onChange({ ...draft, args: event.target.value })}
             />
           </SettingRow>
           {draft.args.includes(MCP_FOLDER_PLACEHOLDER) && (
             <div className="form-pad">
-              <p className="lede">Replace {MCP_FOLDER_PLACEHOLDER} with a folder path before saving.</p>
+              <p className="lede">{t("Replace {folder} with a folder path before saving.", { folder: MCP_FOLDER_PLACEHOLDER })}</p>
             </div>
           )}
           <SecretList
-            label="Environment"
-            addLabel="Add variable"
-            namePlaceholder="NAME"
-            nameAria="Variable name"
-            valueAria="Variable value"
-            removeAria="Remove variable"
-            showAria="Show variable"
-            hideAria="Hide variable"
+            label={t("Environment")}
+            addLabel={t("Add variable")}
+            namePlaceholder={t("NAME")}
+            nameAria={t("Variable name")}
+            valueAria={t("Variable value")}
+            removeAria={t("Remove variable")}
+            showAria={t("Show variable")}
+            hideAria={t("Hide variable")}
             rows={draft.env}
             shown={shownEnv}
             onShown={setShownEnv}
@@ -166,7 +167,7 @@ export function McpServerModal({
       )}
       {notice && (
         <div className="form-pad">
-          <p className="lede">{notice}</p>
+          <p className="lede">{t(notice)}</p>
         </div>
       )}
       <footer className="modal-footer">
@@ -176,10 +177,9 @@ export function McpServerModal({
           </p>
         )}
         <button type="button" disabled={connecting} onClick={onClose}>
-          Cancel
-        </button>
+          {t("Cancel")}</button>
         <button type="button" className={BUTTON.primary} disabled={!ready || connecting} onClick={onSave}>
-          {editing ? 'Save server' : 'Add server'}
+          {editing ? t("Save server") : t("Add server")}
         </button>
       </footer>
     </Dialog>
@@ -229,7 +229,7 @@ function SecretList({
               type={shown[index] ? 'text' : 'password'}
               autoComplete="off"
               value={row.value}
-              placeholder={row.savedName && row.name.trim() === row.savedName ? 'Leave blank to keep' : undefined}
+              placeholder={row.savedName && row.name.trim() === row.savedName ? t("Leave blank to keep") : undefined}
               aria-label={valueAria}
               onChange={(event) => onChange(replaceRow(rows, index, { ...row, value: event.target.value }))}
             />

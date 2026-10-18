@@ -1,3 +1,4 @@
+import { t } from '../i18n/index.ts';
 import type { SessionSummary } from '../../../shared/types.ts';
 import { groupSessions } from '../lib/group-sessions.ts';
 import { formatChatDate, formatChatTime } from '../lib/session-time.ts';
@@ -49,8 +50,7 @@ export function ProjectChatsPage({ projectId }: { projectId: string }) {
             onClick={() => createChat(project.id)}
           >
             <IconPlus />
-            New chat
-          </button>
+            {t("New chat")}</button>
         </div>
       </header>
       <div className="min-h-0 flex-1 overflow-auto [scrollbar-gutter:stable]">
@@ -63,15 +63,15 @@ export function ProjectChatsPage({ projectId }: { projectId: string }) {
               >
                 <IconChat />
               </span>
-              <p className="text-ui font-medium text-ink">No chats in this project yet</p>
-              <p className="text-small text-muted">Start one with New chat and it appears here.</p>
+              <p className="text-ui font-medium text-ink">{t("No chats in this project yet")}</p>
+              <p className="text-small text-muted">{t("Start one with New chat and it appears here.")}</p>
             </div>
           ) : (
             [...groups.entries()].map(([label, items]) =>
               items.length === 0 ? null : (
                 <section key={label} className="mb-section last:mb-0">
                   <div className="sticky top-0 z-10 mb-2 flex items-center gap-3 bg-main py-2">
-                    <h2 className="text-micro font-semibold tracking-[0.04em] text-muted uppercase">{label}</h2>
+                    <h2 className="text-micro font-semibold tracking-[0.04em] text-muted uppercase">{t(label)}</h2>
                     <span className="ml-auto text-micro tabular-nums text-muted">{items.length}</span>
                   </div>
                   <ul className="flex flex-col gap-2">
@@ -118,7 +118,7 @@ function ProjectChatRow({
           {mood !== 'idle' && (
             <span className="chat-mood-dot h-1.5 w-1.5 flex-none rounded-full bg-mood" aria-hidden="true" />
           )}
-          {active && <span className="text-micro text-mood">{moodLabel(mood)}</span>}
+          {active && <span className="text-micro text-mood">{t(moodLabel(mood))}</span>}
           <time className="w-14 flex-none text-right text-small tabular-nums text-muted" dateTime={session.updatedAt}>
             {formatChatTime(session.updatedAt)}
           </time>

@@ -1,3 +1,4 @@
+import { t } from '../../i18n/index.ts';
 import type { Dispatch, SetStateAction } from 'react';
 import { MCP_MARKETPLACE, type McpMarketplaceEntry } from './mcpMarketplace.ts';
 import { Dialog } from '../../ui/Dialog.tsx';
@@ -20,30 +21,30 @@ export function MarketplaceDialog({
   const needle = query.trim().toLowerCase();
   const entries = MCP_MARKETPLACE.filter((entry) => {
     if (!needle) return true;
-    return `${entry.title}\n${entry.blurb}\n${entry.command} ${entry.args}`.toLowerCase().includes(needle);
+    return `${t(entry.title)}\n${t(entry.blurb)}\n${entry.command} ${entry.args}`.toLowerCase().includes(needle);
   });
   return (
-    <Dialog title="MCP marketplace" onClose={onClose}>
+    <Dialog title={t("MCP marketplace")} onClose={onClose}>
       <div className="form-pad">
         <TextField
           autoFocus
           width="block"
           value={query}
-          placeholder="Search servers"
-          aria-label="Search marketplace"
+          placeholder={t("Search servers")}
+          aria-label={t("Search marketplace")}
           onChange={(event) => onQueryChange(event.target.value)}
         />
       </div>
       {entries.length === 0 ? (
-        <p className="catalog-empty">No servers match</p>
+        <p className="catalog-empty">{t("No servers match")}</p>
       ) : (
         entries.map((entry) => {
           const added = installed.has(entry.id.toLowerCase());
           return (
             <div className="setting-row" key={entry.id}>
               <div className="catalog-copy">
-                <strong>{entry.title}</strong>
-                <span className="row-detail">{entry.blurb}</span>
+                <strong>{t(entry.title)}</strong>
+                <span className="row-detail">{t(entry.blurb)}</span>
                 <span className="row-detail">
                   {entry.command} {entry.args}
                 </span>
@@ -51,7 +52,7 @@ export function MarketplaceDialog({
               </div>
               <span className="row-actions">
                 <button type="button" className="text-button" disabled={added} onClick={() => onAdd(entry)}>
-                  {added ? 'Added' : 'Add'}
+                  {added ? t("Added") : t("Add")}
                 </button>
               </span>
             </div>

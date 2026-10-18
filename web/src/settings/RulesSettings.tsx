@@ -1,3 +1,4 @@
+import { t } from '../i18n/index.ts';
 import { useEffect, useState } from 'react';
 import type { RuleRecord } from '../../../shared/types.ts';
 import { listRules, putRules } from '../api/client.ts';
@@ -18,7 +19,7 @@ export function RulesSettings() {
   useEffect(() => {
     void listRules()
       .then(setRules)
-      .catch((error: unknown) => setNotice(error instanceof Error ? error.message : 'Could not load rules'))
+      .catch((error: unknown) => setNotice(error instanceof Error ? error.message : t("Could not load rules")))
       .finally(() => setLoading(false));
   }, []);
 
@@ -26,7 +27,7 @@ export function RulesSettings() {
     setNotice(null);
     void putRules(next)
       .then(setRules)
-      .catch((error: unknown) => setNotice(error instanceof Error ? error.message : 'Could not save rules'));
+      .catch((error: unknown) => setNotice(error instanceof Error ? error.message : t("Could not save rules")));
   };
 
   const openEditor = (index: number | null) => {
@@ -39,8 +40,8 @@ export function RulesSettings() {
     <div className="stack">
       <div className="section-header">
         <div>
-          <h2>Rules</h2>
-          <p className="lede">Each rule is added to the system message.</p>
+          <h2>{t("Rules")}</h2>
+          <p className="lede">{t("Each rule is added to the system message.")}</p>
         </div>
         <button
           type="button"
@@ -48,24 +49,23 @@ export function RulesSettings() {
           onClick={() => openEditor(null)}
         >
           <IconPlus />
-          New rule
-        </button>
+          {t("New rule")}</button>
       </div>
       <SettingCard>
         {loading ? (
           <div className="flex min-h-20 items-center justify-center gap-2 py-4 text-ui text-muted" role="status" aria-live="polite">
             <IconSpinner />
-            <span>Loading rules…</span>
+            <span>{t("Loading rules…")}</span>
           </div>
         ) : rules.length === 0 ? (
-          <p className="catalog-empty">No rules yet</p>
+          <p className="catalog-empty">{t("No rules yet")}</p>
         ) : (
           rules.map((rule, index) => (
             <div className="rule-item" key={`${index}-${rule}`}>
               <div className="setting-row">
                 <div className="memory-copy">
                   <span className="rule-preview">{rule.text.split(/\r?\n/, 1)[0]}</span>
-                  <span className="row-detail">{rule.source === 'xeck' ? 'Xeck' : 'User'}</span>
+                  <span className="row-detail">{rule.source === 'xeck' ? t("Xeck") : t("User")}</span>
                 </div>
                 <span className="row-actions">
                   <button
@@ -79,15 +79,15 @@ export function RulesSettings() {
                       return next;
                     })}
                   >
-                    {expandedRules.has(index) ? 'Hide' : 'View'}
+                    {expandedRules.has(index) ? t("Hide") : t("View")}
                   </button>
-                  <button type="button" className="icon-button" aria-label={`Edit rule ${index + 1}`} onClick={() => openEditor(index)}>
+                  <button type="button" className="icon-button" aria-label={t("Edit rule {0}", { "0": index + 1 })} onClick={() => openEditor(index)}>
                     <IconEdit />
                   </button>
                   <button
                     type="button"
                     className="icon-button danger"
-                    aria-label={`Remove rule ${index + 1}`}
+                    aria-label={t("Remove rule {0}", { "0": index + 1 })}
                     onClick={() => {
                       setExpandedRules((current) => new Set(
                         [...current]
@@ -129,7 +129,7 @@ export function RulesSettings() {
           }}
         />
       )}
-      {notice && <p className="lede">{notice}</p>}
+      {notice && <p className="lede">{t(notice)}</p>}
     </div>
   );
 }
@@ -148,23 +148,22 @@ function RuleModal({
   onSave: () => void;
 }) {
   return (
-    <Dialog title={editing ? 'Edit rule' : 'New rule'} onClose={onClose}>
+    <Dialog title={editing ? t("Edit rule") : t("New rule")} onClose={onClose}>
       <div className="form-pad">
-        <p className="setting-label">Rule</p>
+        <p className="setting-label">{t("Rule")}</p>
         <Textarea
           autoFocus
           value={text}
-          placeholder={editing ? 'Edit rule' : 'Add a rule'}
-          aria-label={editing ? 'Edit rule' : 'Add a rule'}
+          placeholder={editing ? t("Edit rule") : t("Add a rule")}
+          aria-label={editing ? t("Edit rule") : t("Add a rule")}
           onChange={(event) => onChange(event.target.value)}
         />
       </div>
       <footer className="modal-footer">
         <button type="button" onClick={onClose}>
-          Cancel
-        </button>
+          {t("Cancel")}</button>
         <button type="button" disabled={!text.trim()} onClick={onSave}>
-          {editing ? 'Save rule' : 'Add rule'}
+          {editing ? t("Save rule") : t("Add rule")}
         </button>
       </footer>
     </Dialog>

@@ -1,3 +1,4 @@
+import { t } from '../i18n/index.ts';
 import { useEffect, useRef, useState, type ComponentProps, type HTMLAttributes } from 'react';
 import { ICON_BUTTON } from './button-styles.ts';
 import { IconEdit } from './icons.tsx';
@@ -99,12 +100,12 @@ export function EditableField({
         className="editable-value"
         data-empty={shown ? 'false' : 'true'}
         disabled={disabled}
-        aria-label={`Edit ${label}`}
+        aria-label={t("Edit {0}", { "0": label })}
         onClick={start}
       >
-        {shown || placeholder}
+        {shown || t(placeholder)}
       </button>
-      <button type="button" className={ICON_BUTTON} tabIndex={-1} disabled={disabled} aria-label={`Edit ${label}`} onClick={start}>
+      <button type="button" className={ICON_BUTTON} tabIndex={-1} disabled={disabled} aria-label={t("Edit {0}", { "0": label })} onClick={start}>
         <IconEdit />
       </button>
     </span>

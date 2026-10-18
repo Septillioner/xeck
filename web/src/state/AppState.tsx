@@ -1,3 +1,4 @@
+import { t } from '../i18n/index.ts';
 import { useCallback, useEffect, useMemo, useRef, useState, type ReactNode } from 'react';
 import type {
   AgentPublic,
@@ -62,6 +63,7 @@ import {
   type TerminalMood,
 } from './mood.ts';
 import type { StreamingState, TerminalEntry } from './live-types.ts';
+import { setLanguage } from '../i18n/index.ts';
 import { AppStateContext, reportError, type AppStateValue, type ArtifactTab, type QueuedMessage } from './context.ts';
 
 import { bootApp, displaySettings } from './boot.ts';
@@ -120,6 +122,10 @@ export function AppStateProvider({ children }: { children: ReactNode }) {
   const [planPanelDismissed, setPlanPanelDismissed] = useState<Record<string, true>>({});
   const [terminals, setTerminals] = useState<Record<string, TerminalEntry>>({});
   const [error, setError] = useState<string | null>(null);
+
+  useEffect(() => {
+    if (ready) setLanguage(settings.language);
+  }, [ready, settings.language]);
 
   const activeId = useRef<string | null>(null);
   const draftProjectIdRef = useRef<string | null>(null);
@@ -496,7 +502,7 @@ export function AppStateProvider({ children }: { children: ReactNode }) {
     } catch (cause) {
       if (activeId.current !== place.id) return;
       setActive(null);
-      setError(cause instanceof Error ? cause.message : 'Session not found');
+      setError(cause instanceof Error ? cause.message : t("Session not found"));
     }
   }, [showDraft, showSettings, resumeLive]);
 
@@ -531,7 +537,7 @@ export function AppStateProvider({ children }: { children: ReactNode }) {
         });
       })
       .catch((cause: unknown) => {
-        if (!cancelled) setLoadError(cause instanceof Error ? cause.message : 'Failed to load');
+        if (!cancelled) setLoadError(cause instanceof Error ? cause.message : t("Failed to load"));
       });
     return () => {
       cancelled = true;
@@ -608,7 +614,7 @@ export function AppStateProvider({ children }: { children: ReactNode }) {
       const session = await patchSession(id, { title });
       rememberSummary(session);
     } catch (cause) {
-      setError(cause instanceof Error ? cause.message : 'Could not rename the chat');
+      setError(cause instanceof Error ? cause.message : t("Could not rename the chat"));
     }
   }, [rememberSummary]);
 
@@ -620,9 +626,9 @@ export function AppStateProvider({ children }: { children: ReactNode }) {
       }
       clearTerminal(id);
       await deleteSession(id);
-      const remaining = sessionsRef.current.filter((item) => item.id !== id);
+      const remaining = sessionsRef.current.filter((item) => item.id !== id && !item.botConversation?.participants.includes(id));
       setSessions(remaining);
-      if (activeId.current === id) {
+      if (activeId.current && !remaining.some((item) => item.id === activeId.current)) {
         if (remaining[0]) {
           const nextId = remaining[0].id;
           activeId.current = nextId;
@@ -637,7 +643,7 @@ export function AppStateProvider({ children }: { children: ReactNode }) {
         }
       }
     } catch (cause) {
-      setError(cause instanceof Error ? cause.message : 'Could not delete the chat');
+      setError(cause instanceof Error ? cause.message : t("Could not delete the chat"));
     }
   }, [clearTerminal]);
 
@@ -658,7 +664,7 @@ export function AppStateProvider({ children }: { children: ReactNode }) {
       }
       rememberSummary(session);
     } catch (cause) {
-      setError(cause instanceof Error ? cause.message : 'Could not change the model');
+      setError(cause instanceof Error ? cause.message : t("Could not change the model"));
     }
   }, [active, rememberSummary]);
 
@@ -672,7 +678,7 @@ export function AppStateProvider({ children }: { children: ReactNode }) {
       if (activeId.current !== session.id) return;
       rememberSummary(session);
     } catch (cause) {
-      setError(cause instanceof Error ? cause.message : 'Could not change reasoning effort');
+      setError(cause instanceof Error ? cause.message : t("Could not change reasoning effort"));
     }
   }, [active, rememberSummary]);
 
@@ -686,13 +692,13 @@ export function AppStateProvider({ children }: { children: ReactNode }) {
       if (activeId.current !== session.id) return;
       rememberSummary(session);
     } catch (cause) {
-      setError(cause instanceof Error ? cause.message : 'Could not change service tier');
+      setError(cause instanceof Error ? cause.message : t("Could not change service tier"));
     }
   }, [active, rememberSummary]);
 
   const runSend = useCallback(async (content: string, clearDraft = true) => {
     const trimmed = content.trim();
-    if (!trimmed) return;
+    if (!trimmed || active?.botConversation) return;
     if (active && streamsRef.current[active.id]) return;
     setError(null);
 
@@ -701,7 +707,7 @@ export function AppStateProvider({ children }: { children: ReactNode }) {
       if (!session) {
         const chosen = draftProfileRef.current?.model ? draftProfileRef.current : settings.defaultProfile;
         if (!chosen?.model) {
-          setError('Choose a model for this chat');
+          setError(t("Choose a model for this chat"));
           setDraft(trimmed);
           return;
         }
@@ -734,11 +740,11 @@ export function AppStateProvider({ children }: { children: ReactNode }) {
         writeLocation({ kind: 'chat', id: session.id }, 'push');
       }
     } catch (cause) {
-      setError(cause instanceof Error ? cause.message : 'Could not start a chat');
+      setError(cause instanceof Error ? cause.message : t("Could not start a chat"));
       return;
     }
     if (!session.profile.model.trim()) {
-      setError('Choose a model for this chat');
+      setError(t("Choose a model for this chat"));
       setDraft(trimmed);
       return;
     }
@@ -1069,7 +1075,7 @@ export function AppStateProvider({ children }: { children: ReactNode }) {
       const session = await putSessionPolicy(current, next);
       rememberSummary(session);
     } catch (cause) {
-      setError(cause instanceof Error ? cause.message : 'Could not change the policy');
+      setError(cause instanceof Error ? cause.message : t("Could not change the policy"));
     } finally {
       setPolicyBusy(false);
     }

@@ -9,6 +9,7 @@ import { streamSessionTurn } from './session-stream.ts';
 export async function postMessage(c: Context) {
   const session = await readSession(c.req.param('id') ?? '');
   if (!session) return c.json({ error: 'Session not found' }, 404);
+  if (session.botConversation) return c.json({ error: 'Bot conversations are managed by XeckBots' }, 403);
   if (session.origin?.by === 'agent') return c.json({ error: 'Subagent turns are managed by the parent agent' }, 403);
   const body = await readBody(c);
   const content = typeof body?.content === 'string' ? body.content.trim() : '';

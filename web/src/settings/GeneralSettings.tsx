@@ -1,5 +1,6 @@
+import { t } from '../i18n/index.ts';
 import { useEffect, useState } from 'react';
-import type { AgentPublic } from '../../../shared/types.ts';
+import type { AgentPublic, LanguageSetting } from '../../../shared/types.ts';
 import { listAgents } from '../api/client.ts';
 import { Menu } from '../ui/Menu.tsx';
 import { useAppState } from '../state/AppState.tsx';
@@ -16,7 +17,7 @@ export function GeneralSettings() {
     void listAgents('agent').then((agents) => {
       if (!cancelled) setSubagents(agents);
     }).catch((error: unknown) => {
-      if (!cancelled) setNotice(error instanceof Error ? error.message : 'Could not load subagents');
+      if (!cancelled) setNotice(error instanceof Error ? error.message : t("Could not load subagents"));
     });
     return () => { cancelled = true; };
   }, []);
@@ -28,7 +29,7 @@ export function GeneralSettings() {
     ? `${settings.autocompleteProfile.provider}:${settings.autocompleteProfile.model}`
     : '';
   const modelOptions = [
-    { value: '', label: 'None' },
+    { value: '', label: t("None") },
     ...configuredModels.map((profile) => {
       const name =
         catalog.find((entry) => entry.provider === profile.provider && entry.model === profile.model)?.name ??
@@ -46,7 +47,7 @@ export function GeneralSettings() {
     try {
       await saveSettings({ autocompleteProfile: match ?? null });
     } catch (error: unknown) {
-      setNotice(error instanceof Error ? error.message : 'Could not save the autocomplete model');
+      setNotice(error instanceof Error ? error.message : t("Could not save the autocomplete model"));
     }
   };
 
@@ -58,7 +59,7 @@ export function GeneralSettings() {
     try {
       await saveSettings({ agentProfiles: { ...settings.agentProfiles, [agentId]: profile ?? null } });
     } catch (error: unknown) {
-      setNotice(error instanceof Error ? error.message : 'Could not save the subagent model');
+      setNotice(error instanceof Error ? error.message : t("Could not save the subagent model"));
     } finally {
       setSavingAgent(null);
     }
@@ -66,16 +67,30 @@ export function GeneralSettings() {
 
   return (
     <div className="stack">
-      <h2>General</h2>
+      <h2>{t("General")}</h2>
       <SettingCard>
-        <SettingRow label="Migration" detail="Move existing application data into Xeck.">
-          <button type="button" className={BUTTON.secondary} onClick={openMigration}>Open migration</button>
+        <SettingRow label={t("Language")} detail={t("Choose the language used throughout the application.")}>
+          <Menu
+            label={t("Language")}
+            value={settings.language}
+            options={[
+              { value: 'system', label: t("System language") },
+              { value: 'tr', label: t("Türkçe") },
+              { value: 'en', label: t("English") },
+            ]}
+            onChange={(language) => { void saveSettings({ language: language as LanguageSetting }).catch((error: unknown) => setNotice(error instanceof Error ? error.message : t("Could not save language"))); }}
+          />
         </SettingRow>
       </SettingCard>
       <SettingCard>
-        <SettingRow label="Default model" detail="Used when you start a new chat.">
+        <SettingRow label={t("Migration")} detail={t("Move existing application data into Xeck.")}>
+          <button type="button" className={BUTTON.secondary} onClick={openMigration}>{t("Open migration")}</button>
+        </SettingRow>
+      </SettingCard>
+      <SettingCard>
+        <SettingRow label={t("Default model")} detail={t("Used when you start a new chat.")}>
           <Menu
-            label="Default model"
+            label={t("Default model")}
             value={selected}
             options={modelOptions}
             onChange={(next) => {
@@ -92,11 +107,11 @@ export function GeneralSettings() {
           />
         </SettingRow>
         <SettingRow
-          label="Autocomplete model"
-          detail="Names a new chat from its first message. None keeps the first message as the title."
+          label={t("Autocomplete model")}
+          detail={t("Names a new chat from its first message. None keeps the first message as the title.")}
         >
           <Menu
-            label="Autocomplete model"
+            label={t("Autocomplete model")}
             value={autocompleteSelected}
             options={modelOptions}
             onChange={(next) => {
@@ -104,55 +119,55 @@ export function GeneralSettings() {
             }}
           />
         </SettingRow>
-        <SettingRow label="Enter to send" detail="Shift+Enter inserts a new line.">
+        <SettingRow label={t("Enter to send")} detail={t("Shift+Enter inserts a new line.")}>
           <Switch
             checked={settings.enterToSend}
-            label="Enter to send"
+            label={t("Enter to send")}
             onChange={(enterToSend) => {
               void saveSettings({ enterToSend });
             }}
           />
         </SettingRow>
-        <SettingRow label="Debug mode" detail="Shows skill and MCP details and this chat's context tree.">
+        <SettingRow label={t("Debug mode")} detail={t("Shows skill and MCP details and this chat's context tree.")}>
           <Switch
             checked={settings.debugMode}
-            label="Debug mode"
+            label={t("Debug mode")}
             onChange={(debugMode) => {
               void saveSettings({ debugMode });
             }}
           />
         </SettingRow>
-        <SettingRow label="Show reasoning" detail="Collapsed by default inside each reply.">
+        <SettingRow label={t("Show reasoning")} detail={t("Collapsed by default inside each reply.")}>
           <Switch
             checked={settings.showReasoning}
-            label="Show reasoning"
+            label={t("Show reasoning")}
             onChange={(showReasoning) => {
               void saveSettings({ showReasoning });
             }}
           />
         </SettingRow>
-        {notice && <p className="error-banner">{notice}</p>}
+        {notice && <p className="error-banner">{t(notice)}</p>}
       </SettingCard>
       {subagents.length > 0 && (
         <SettingCard>
           <div className="form-pad">
-            <p className="setting-label">Subagent models</p>
-            <p className="lede">Inherit uses the master chat's current model. A selected model applies to new delegated tasks.</p>
+            <p className="setting-label">{t("Subagent models")}</p>
+            <p className="lede">{t("Inherit uses the master chat's current model. A selected model applies to new delegated tasks.")}</p>
           </div>
           {subagents.map((agent) => {
             const profile = settings.agentProfiles[agent.id];
             const value = profile ? `${profile.provider}:${profile.model}` : '';
             const options = [
-              { value: '', label: 'Inherit', group: 'Parent model' },
-              ...modelOptions.slice(1).map((option) => ({ ...option, group: 'Selected model' })),
+              { value: '', label: t("Inherit"), group: t("Parent model") },
+              ...modelOptions.slice(1).map((option) => ({ ...option, group: t("Selected model") })),
             ];
             if (value && !options.some((option) => option.value === value)) {
-              options.push({ value, label: `${profile!.provider} · ${profile!.model} (unavailable)`, group: 'Selected model' });
+              options.push({ value, label: t("{model} (unavailable)", { model: `${profile!.provider} · ${profile!.model}` }), group: t("Selected model") });
             }
             return (
               <SettingRow key={agent.id} label={agent.label} detail={agent.description}>
                 <Menu
-                  label={`${agent.label} model`}
+                  label={t("{0} model", { "0": t(agent.label) })}
                   value={value}
                   options={options}
                   disabled={savingAgent !== null}

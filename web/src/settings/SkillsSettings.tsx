@@ -1,3 +1,4 @@
+import { t } from '../i18n/index.ts';
 import { useEffect, useState } from 'react';
 import type { SkillRecord } from '../../../shared/types.ts';
 import { listSkills, putSkills } from '../api/client.ts';
@@ -28,7 +29,7 @@ export function SkillsSettings() {
   useEffect(() => {
     void listSkills()
       .then(setSkills)
-      .catch((error: unknown) => setNotice(error instanceof Error ? error.message : 'Could not load skills'))
+      .catch((error: unknown) => setNotice(error instanceof Error ? error.message : t("Could not load skills")))
       .finally(() => setLoading(false));
   }, []);
 
@@ -36,7 +37,7 @@ export function SkillsSettings() {
     setNotice(null);
     void putSkills(next)
       .then(setSkills)
-      .catch((error: unknown) => setNotice(error instanceof Error ? error.message : 'Could not save skills'));
+      .catch((error: unknown) => setNotice(error instanceof Error ? error.message : t("Could not save skills")));
   };
 
   const openEditor = (skill: SkillRecord | null) => {
@@ -49,22 +50,21 @@ export function SkillsSettings() {
     <div className="stack">
       <div className="section-header">
         <div>
-          <h2>Skills</h2>
-          <p className="lede">The model loads a skill body only when it asks for that name.</p>
+          <h2>{t("Skills")}</h2>
+          <p className="lede">{t("The model loads a skill body only when it asks for that name.")}</p>
         </div>
         <button type="button" className="text-button with-icon" onClick={() => openEditor(null)}>
           <IconPlus />
-          New skill
-        </button>
+          {t("New skill")}</button>
       </div>
       <SettingCard>
         {loading ? (
           <div className="flex min-h-20 items-center justify-center gap-2 py-4 text-ui text-muted" role="status" aria-live="polite">
             <IconSpinner />
-            <span>Loading skills…</span>
+            <span>{t("Loading skills…")}</span>
           </div>
         ) : skills.length === 0 ? (
-          <p className="catalog-empty">No skills yet</p>
+          <p className="catalog-empty">{t("No skills yet")}</p>
         ) : (
           skills.map((skill) => (
             <div className="setting-row" key={skill.name}>
@@ -73,13 +73,13 @@ export function SkillsSettings() {
                 <span className="row-detail">{skill.description}</span>
               </div>
               <span className="row-actions">
-                <button type="button" className="icon-button" aria-label={`Edit ${skill.name}`} onClick={() => openEditor(skill)}>
+                <button type="button" className="icon-button" aria-label={t("Edit {0}", { "0": skill.name })} onClick={() => openEditor(skill)}>
                   <IconEdit />
                 </button>
                 <button
                   type="button"
                   className="icon-button danger"
-                  aria-label={`Remove ${skill.name}`}
+                  aria-label={t("Remove {0}", { "0": skill.name })}
                   onClick={() => {
                     if (editingName === skill.name) {
                       setEditingName(null);
@@ -110,7 +110,7 @@ export function SkillsSettings() {
           }}
         />
       )}
-      {notice && <p className="lede">{notice}</p>}
+      {notice && <p className="lede">{t(notice)}</p>}
     </div>
   );
 }
@@ -155,10 +155,10 @@ function SkillModal({
   };
 
   return (
-    <Dialog title={editing ? 'Edit skill' : 'New skill'} onClose={onClose}>
+    <Dialog title={editing ? t("Edit skill") : t("New skill")} onClose={onClose}>
       {!editing && (
         <div className="form-pad">
-          <div className="segment" role="group" aria-label="Skill source">
+          <div className="segment" role="group" aria-label={t("Skill source")}>
             {SKILL_SOURCES.map((item) => (
               <button
                 key={item}
@@ -166,7 +166,7 @@ function SkillModal({
                 data-active={source === item ? 'true' : 'false'}
                 onClick={() => setSource(item)}
               >
-                {SKILL_SOURCE_LABELS[item]}
+                {t(SKILL_SOURCE_LABELS[item])}
               </button>
             ))}
           </div>
@@ -174,13 +174,13 @@ function SkillModal({
       )}
       {showFile ? (
         <div className="form-pad">
-          <p className="setting-label">Skill file</p>
+          <p className="setting-label">{t("Skill file")}</p>
           <Textarea
             autoFocus
             minRows={10}
             value={fileText}
-            placeholder="Paste a skill file"
-            aria-label="Skill file"
+            placeholder={t("Paste a skill file")}
+            aria-label={t("Skill file")}
             onChange={(event) => {
               setFileText(event.target.value);
               setFileError(null);
@@ -190,29 +190,29 @@ function SkillModal({
         </div>
       ) : (
         <>
-          <SettingRow label="Name">
+          <SettingRow label={t("Name")}>
             <TextField
               autoFocus
               width="wide"
               value={draft.name}
-              aria-label="Skill name"
+              aria-label={t("Skill name")}
               onChange={(event) => onChange({ ...draft, name: event.target.value })}
             />
           </SettingRow>
-          <SettingRow label="Description">
+          <SettingRow label={t("Description")}>
             <TextField
               width="wide"
               value={draft.description}
-              aria-label="Skill description"
+              aria-label={t("Skill description")}
               onChange={(event) => onChange({ ...draft, description: event.target.value })}
             />
           </SettingRow>
           <div className="form-pad">
-            <p className="setting-label">Instructions</p>
+            <p className="setting-label">{t("Instructions")}</p>
             <Textarea
               value={draft.content}
-              placeholder="Instructions"
-              aria-label="Skill instructions"
+              placeholder={t("Instructions")}
+              aria-label={t("Skill instructions")}
               onChange={(event) => onChange({ ...draft, content: event.target.value })}
             />
           </div>
@@ -220,10 +220,9 @@ function SkillModal({
       )}
       <footer className="modal-footer">
         <button type="button" onClick={onClose}>
-          Cancel
-        </button>
+          {t("Cancel")}</button>
         <button type="button" disabled={showFile ? !fileReady : !formReady} onClick={save}>
-          {editing ? 'Save skill' : 'Add skill'}
+          {editing ? t("Save skill") : t("Add skill")}
         </button>
       </footer>
     </Dialog>

@@ -1,3 +1,4 @@
+import { t } from '../../i18n/core.ts';
 import type {
   BuiltinMcpStatus,
   McpServerRecord,
@@ -166,13 +167,13 @@ export function tokenDetail(server: McpServerRecord): string {
 }
 
 export function builtinStatusText(builtin: BuiltinMcpStatus): string {
-  if (!builtin.enabled || builtin.status === 'disabled') return OFF_LABEL;
-  return `${builtin.toolCount} tools`;
+  if (!builtin.enabled || builtin.status === 'disabled') return t(OFF_LABEL);
+  return t(builtin.toolCount === 1 ? '{count} tool' : '{count} tools', { count: builtin.toolCount });
 }
 
 export function statusText(server: McpServerRecord, state: McpServerStatus | undefined): string {
-  if (!server.enabled || state?.status === 'disabled') return OFF_LABEL;
-  if (state?.status === 'connected') return `${state.toolCount} tools`;
+  if (!server.enabled || state?.status === 'disabled') return t(OFF_LABEL);
+  if (state?.status === 'connected') return t(state.toolCount === 1 ? '{count} tool' : '{count} tools', { count: state.toolCount });
   if (state?.status === 'error') return state.error || 'Error';
-  return 'Not connected';
+  return t('Not connected');
 }

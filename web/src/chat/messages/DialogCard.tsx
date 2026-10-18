@@ -1,3 +1,4 @@
+import { t } from '../../i18n/index.ts';
 import { useState, type FormEvent } from 'react';
 import type { UserDialog } from '../../../../shared/types.ts';
 import { TextField } from '../../ui/TextField.tsx';
@@ -28,7 +29,7 @@ export function InteractiveDialogCard({
     try {
       await onRespond(dialog.id, response);
     } catch (cause) {
-      setErrorMessage(cause instanceof Error ? cause.message : 'Could not send');
+      setErrorMessage(cause instanceof Error ? cause.message : t("Could not send"));
     } finally {
       setSubmitting(false);
     }
@@ -55,7 +56,7 @@ export function InteractiveDialogCard({
 
       {answered && (
         <p className="interaction-answered">
-          {answer ? `Answered: ${answer}` : 'Unanswered — the turn ended here.'}
+          {answer ? t("Answered: {0}", { "0": answer }) : t("Unanswered — the turn ended here.")}
         </p>
       )}
       {errorMessage && <p className="interaction-error">{errorMessage}</p>}
@@ -68,7 +69,7 @@ export function InteractiveDialogCard({
             onClick={() => void submit({ approved: true })}
             disabled={submitting || answered}
           >
-            {submitting ? 'Confirming' : 'Approve'}
+            {submitting ? t("Confirming") : t("Approve")}
           </button>
           <button
             type="button"
@@ -76,17 +77,15 @@ export function InteractiveDialogCard({
             onClick={() => void submit({ approved: false })}
             disabled={submitting || answered}
           >
-            Reject
-          </button>
+            {t("Reject")}</button>
         </div>
       ) : dialog.type === 'yes_no' ? (
         <div className="interaction-actions">
           <button type="button" className="interaction-btn-primary" onClick={() => void submit({ response: 'yes' })} disabled={submitting || answered}>
-            {submitting ? 'Sending' : 'Yes'}
+            {submitting ? t("Sending") : t("Yes")}
           </button>
           <button type="button" className="interaction-btn-secondary" onClick={() => void submit({ response: 'no' })} disabled={submitting || answered}>
-            No
-          </button>
+            {t("No")}</button>
         </div>
       ) : dialog.type === 'multiple_select' ? (
         <form
@@ -119,18 +118,17 @@ export function InteractiveDialogCard({
               width="block"
               value={otherValue}
               onChange={(event) => setOtherValue(event.target.value)}
-              placeholder="Other"
-              aria-label="Other answer"
+              placeholder={t("Other")}
+              aria-label={t("Other answer")}
               disabled={submitting || answered}
             />
           )}
           <div className="interaction-actions">
             <button type="submit" className="interaction-btn-primary" disabled={submitting || answered || (selectedOptions.length === 0 && !(allowOther && otherValue.trim()))}>
-              {submitting ? 'Sending' : 'Submit'}
+              {submitting ? t("Sending") : t("Submit")}
             </button>
             <button type="button" className="interaction-btn-secondary" onClick={() => void submit({})} disabled={submitting || answered}>
-              Dismiss
-            </button>
+              {t("Dismiss")}</button>
           </div>
         </form>
       ) : (
@@ -139,7 +137,7 @@ export function InteractiveDialogCard({
             width="block"
             value={inputVal}
             onChange={(e) => setInputVal(e.target.value)}
-            placeholder="Type your response..."
+            placeholder={t("Type your response...")}
             autoFocus
             disabled={submitting || answered}
           />
@@ -149,7 +147,7 @@ export function InteractiveDialogCard({
               className="interaction-btn-primary"
               disabled={submitting || answered || !inputVal.trim()}
             >
-              {submitting ? 'Sending' : 'Send response'}
+              {submitting ? t("Sending") : t("Send response")}
             </button>
             <button
               type="button"
@@ -157,8 +155,7 @@ export function InteractiveDialogCard({
               onClick={() => void submit({ approved: false })}
               disabled={submitting || answered}
             >
-              Dismiss
-            </button>
+              {t("Dismiss")}</button>
           </div>
         </form>
       )}

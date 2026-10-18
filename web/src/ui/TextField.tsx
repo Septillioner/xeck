@@ -1,3 +1,4 @@
+import { t } from '../i18n/index.ts';
 import type { ComponentProps } from 'react';
 import { cn } from '../lib/cn.ts';
 
@@ -9,8 +10,12 @@ export function TextField({
   className,
   width,
   bare = false,
+  placeholder,
+  title,
+  'aria-label': ariaLabel,
   ...rest
 }: ComponentProps<'input'> & { width?: 'wide' | 'block'; bare?: boolean }) {
-  if (bare) return <input {...rest} className={className} />;
-  return <input {...rest} className={cn('field', width === 'wide' && 'field-wide', width === 'block' && 'field-block', className)} />;
+  const labels = { placeholder: placeholder === undefined ? undefined : t(placeholder), title: title === undefined ? undefined : t(title), 'aria-label': ariaLabel === undefined ? undefined : t(ariaLabel) };
+  if (bare) return <input {...rest} {...labels} className={className} />;
+  return <input {...rest} {...labels} className={cn('field', width === 'wide' && 'field-wide', width === 'block' && 'field-block', className)} />;
 }

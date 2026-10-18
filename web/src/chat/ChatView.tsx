@@ -1,3 +1,4 @@
+import { t } from '../i18n/index.ts';
 import { useEffect, useMemo, useRef, useState, type ComponentType } from 'react';
 import type { ContextTree, ProviderKind, TranscriptMessage } from '../../../shared/types.ts';
 import { maxContextThreshold } from '../../../shared/model-context.ts';
@@ -51,6 +52,7 @@ export function ChatView() {
   } = useAppState();
   const parentId = active?.origin?.by === 'agent' ? active.origin.parent : null;
   const isSubagent = parentId !== null;
+  const isBotConversation = Boolean(active?.botConversation);
   const activeAgent = agents.find((agent) => agent.id === active?.agentId);
   const AgentIcon = AGENT_ICONS[activeAgent?.id ?? ''] ?? AGENT_ICONS[activeAgent?.icon ?? ''] ?? IconChat;
   const scrollRef = useRef<HTMLDivElement>(null);
@@ -120,7 +122,7 @@ export function ChatView() {
         setContextError(null);
       })
       .catch((cause: unknown) => {
-        if (!cancelled) setContextError(cause instanceof Error ? cause.message : 'Could not load context');
+        if (!cancelled) setContextError(cause instanceof Error ? cause.message : t("Could not load context"));
       });
     return () => {
       cancelled = true;
@@ -194,17 +196,19 @@ export function ChatView() {
     <section className="chat-column" data-mood={activeMood} ref={surfaceRef}>
       <div className="chat-stage relative" data-agent-header={active && !isSubagent ? 'true' : undefined}>
       {active && !isSubagent && (
-        <header className="pointer-events-none absolute inset-x-0 top-4 z-10 flex justify-center px-4" aria-label="Chat agent">
+        <header className="pointer-events-none absolute inset-x-0 top-4 z-10 flex justify-center px-4" aria-label={t("Chat agent")}>
           <div className="flex h-10 min-w-0 max-w-xs items-center gap-2.5 rounded-full bg-chip py-1.5 pl-1.5 pr-4 text-ui text-ink">
-            {active.bot ? (
+            {active.botConversation ? (
+              <span className="flex size-7 shrink-0 items-center justify-center rounded-full bg-field text-muted" aria-hidden="true"><IconChat /></span>
+            ) : active.bot ? (
               <BotAvatar name={active.title} color={active.bot.color} />
             ) : (
               <span className="flex size-7 shrink-0 items-center justify-center rounded-full bg-field text-accent" aria-hidden="true">
                 <AgentIcon />
               </span>
             )}
-            <span className="min-w-0 truncate font-medium leading-tight" title={active.bot ? active.title : activeAgent?.label ?? active.agentId ?? 'Agent'}>
-              {active.bot ? active.title : activeAgent?.label ?? active.agentId ?? 'Agent'}
+            <span className="min-w-0 truncate font-medium leading-tight" title={active.bot ? active.title : t(activeAgent?.label ?? active.agentId ?? 'Agent')}>
+              {active.bot ? active.title : t(activeAgent?.label ?? active.agentId ?? 'Agent')}
             </span>
           </div>
         </header>
@@ -212,7 +216,7 @@ export function ChatView() {
       {parentId && (
         <header className="shrink-0">
           <div className="column flex items-center gap-3 px-5 py-2">
-            <button type="button" className={BUTTON.ghost} onClick={() => void openChat(parentId)}>Back to parent chat</button>
+            <button type="button" className={BUTTON.ghost} onClick={() => void openChat(parentId)}>{t("Back to parent chat")}</button>
             <span className="truncate text-small text-muted">{active?.agentId} · {active?.profile.model}</span>
           </div>
         </header>
@@ -226,12 +230,12 @@ export function ChatView() {
             >
               <IconFolder />
             </span>
-            <span className="text-ui text-muted">New chat in</span>
+            <span className="text-ui text-muted">{t("New chat in")}</span>
             <span className="truncate text-ui font-medium text-ink">{draftProject.name}</span>
           </div>
         </header>
       )}
-      {empty && !isSubagent ? (
+      {empty && !isSubagent && !isBotConversation ? (
         <div className="center-stage">
           <div className="column">
             {!active?.bot && <AgentPicker />}
@@ -244,13 +248,13 @@ export function ChatView() {
         </div>
       ) : (
         <>
-          {plan && !isSubagent && (
+          {plan && !isSubagent && !isBotConversation && (
             <div className="shrink-0 px-4 pt-3">
               <div className="column">
                 <button
                   type="button"
                   className="w-full rounded-card bg-chip px-4 py-3 text-left transition-colors hover:bg-hover focus-visible:outline-2 focus-visible:outline-offset-2 focus-visible:outline-ink"
-                  aria-label={`Open active plan ${plan.name}`}
+                  aria-label={t("Open active plan {0}", { "0": plan.name })}
                   onClick={() => void openPlanPanel()}
                 >
                   <span className="block truncate text-sm font-semibold text-ink">{plan.name}</span>
@@ -264,14 +268,14 @@ export function ChatView() {
               <div className="column" data-text-size={settings.textSize}>
                 {transcript}
                 <XeckPulse key={active?.id} signal={live && streaming ? streaming : null} />
-                {(error || active?.subagentError) && <ErrorBanner message={error ?? active?.subagentError ?? ''} onRetry={isSubagent ? undefined : () => void retry()} />}
+                {(error || active?.subagentError) && <ErrorBanner message={error ?? active?.subagentError ?? ''} onRetry={isSubagent || isBotConversation ? undefined : () => void retry()} />}
                 {isSubagent && active?.subagentStatus && !live && !error && !active.subagentError && (
-                  <p className="py-2 text-small text-muted" role="status">{active.subagentStatus === 'done' ? 'Complete' : active.subagentStatus === 'cancelled' ? 'Cancelled' : active.subagentStatus === 'failed' ? 'Failed' : 'Running'}</p>
+                  <p className="py-2 text-small text-muted" role="status">{active.subagentStatus === 'done' ? t("Complete") : active.subagentStatus === 'cancelled' ? t("Cancelled") : active.subagentStatus === 'failed' ? t("Failed") : t("Running")}</p>
                 )}
               </div>
             </div>
           </div>
-          {!isSubagent && <div className="column composer-dock">
+          {!isSubagent && !isBotConversation && <div className="column composer-dock">
             <div data-mood={activeMood}>
               <Composer modelMenu={modelMenu} />
             </div>
@@ -279,10 +283,11 @@ export function ChatView() {
           </div>}
         </>
       )}
+      {isBotConversation && <p className="px-gutter py-4 text-center text-small text-muted">{t('This conversation belongs to the bots. Your personal chats stay separate.')}</p>}
       </div>
       {/* The plan pane is docked, so it is a column beside the chat like the
           debug pane is, and never an overlay that hides the transcript. */}
-      {!isSubagent && <PlanPanel />}
+      {!isSubagent && !isBotConversation && <PlanPanel />}
       {settings.debugMode && active && (
         <ContextSidebar tree={contextTree} parts={active.contextParts ?? null} error={contextError} selection={selection} />
       )}
@@ -349,7 +354,7 @@ const AGENT_TINT: Record<string, string> = {
 function AgentPicker() {
   const { agents, draftAgentId, setDraftAgentId, openSettings } = useAppState();
   return (
-    <div className="agent-picker" role="radiogroup" aria-label="Agent">
+    <div className="agent-picker" role="radiogroup" aria-label={t("Agent")}>
       {agents.map((agent) => {
         const Icon = AGENT_ICONS[agent.id] ?? AGENT_ICONS[agent.icon] ?? IconChat;
         const selected = draftAgentId === agent.id;
@@ -367,8 +372,8 @@ function AgentPicker() {
               <Icon />
             </span>
             <span className="agent-card-copy">
-              <span className="agent-card-title">{agent.label}</span>
-              <span className="agent-card-desc">{agent.description}</span>
+              <span className="agent-card-title">{t(agent.label)}</span>
+              <span className="agent-card-desc">{t(agent.description)}</span>
             </span>
             <span className="agent-card-check" aria-hidden="true"><IconCheck /></span>
           </button>
@@ -379,8 +384,8 @@ function AgentPicker() {
           <IconPlus />
         </span>
         <span className="agent-card-copy">
-          <span className="agent-card-title">New agent</span>
-          <span className="agent-card-desc">Customize rules, skills, and MCPs.</span>
+          <span className="agent-card-title">{t("New agent")}</span>
+          <span className="agent-card-desc">{t("Customize rules, skills, and MCPs.")}</span>
         </span>
         <span className="agent-card-add" aria-hidden="true"><IconChevron /></span>
       </button>
@@ -392,12 +397,11 @@ function ErrorBanner({ message, onRetry }: { message: string; onRetry?: () => vo
   return (
     <div className="error-banner" role="alert">
       <div>
-        <strong>Generation failed</strong>
-        <p>{message}</p>
+        <strong>{t("Generation failed")}</strong>
+        <p>{t(message)}</p>
       </div>
       {onRetry && <button type="button" onClick={onRetry}>
-        Regenerate
-      </button>}
+        {t("Regenerate")}</button>}
     </div>
   );
 }

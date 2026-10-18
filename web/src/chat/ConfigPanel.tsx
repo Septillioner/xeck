@@ -1,3 +1,4 @@
+import { t } from '../i18n/index.ts';
 import { useState } from 'react';
 import { REASONING_EFFORTS, SERVICE_TIERS, type ReasoningEffort, type ServiceTier } from '../../../shared/types.ts';
 import { Switch } from '../ui/SettingRow.tsx';
@@ -52,10 +53,10 @@ export function ConfigPanel({
       <div className="menu-rail">
         {onMaxContextChange && (
           <div className="config-row">
-            <span>MAX context</span>
+            <span>{t("MAX context")}</span>
             <Switch
               checked={maxContextEnabled === true}
-              label={`Use MAX context tier for ${modelLabel}`}
+              label={t("Use MAX context tier for {0}", { "0": modelLabel })}
               onChange={onMaxContextChange}
             />
           </div>
@@ -63,15 +64,15 @@ export function ConfigPanel({
         {onMaxContextChange && <div className="config-separator" role="separator" />}
         {onServiceTierChange && (
           <button type="button" className="config-row" data-active={picking === 'tier' ? 'true' : 'false'} onClick={() => openPick('tier')}>
-            <span>{SERVICE_TIER_ROW_LABEL}</span>
-            <span className="config-value">{serviceTier ?? SERVICE_TIER_AUTO_LABEL}</span>
+            <span>{t(SERVICE_TIER_ROW_LABEL)}</span>
+            <span className="config-value">{t(serviceTier ?? SERVICE_TIER_AUTO_LABEL)}</span>
             <i className="chevron" />
           </button>
         )}
         {onEffortChange && (
           <button type="button" className="config-row" data-active={picking === 'effort' ? 'true' : 'false'} onClick={() => openPick('effort')}>
-            <span>{EFFORT_ROW_LABEL}</span>
-            <span className="config-value">{effort ?? EFFORT_DEFAULT_LABEL}</span>
+            <span>{t(EFFORT_ROW_LABEL)}</span>
+            <span className="config-value">{t(effort ?? EFFORT_DEFAULT_LABEL)}</span>
             <i className="chevron" />
           </button>
         )}
@@ -84,7 +85,7 @@ export function ConfigPanel({
             onToggleModel();
           }}
         >
-          <span>{MODEL_ROW_LABEL}</span>
+          <span>{t(MODEL_ROW_LABEL)}</span>
           <span className="config-value">{modelLabel}</span>
           <i className="chevron" />
         </button>
@@ -92,11 +93,11 @@ export function ConfigPanel({
       {picking === 'tier' && (
         <div className="menu-rail">
           <button type="button" className="config-row" data-active={serviceTier === null ? 'true' : 'false'} onClick={() => chooseTier(null)}>
-            {SERVICE_TIER_AUTO_LABEL}
+            {t(SERVICE_TIER_AUTO_LABEL)}
           </button>
           {SERVICE_TIERS.map((item) => (
-            <button key={item} type="button" className="config-row" data-active={serviceTier === item ? 'true' : 'false'} onClick={() => chooseTier(item)}>
-              {item}
+            <button key={t(item)} type="button" className="config-row" data-active={serviceTier === item ? 'true' : 'false'} onClick={() => chooseTier(item)}>
+              {t(item)}
             </button>
           ))}
         </div>
@@ -104,11 +105,11 @@ export function ConfigPanel({
       {picking === 'effort' && (
         <div className="menu-rail">
           <button type="button" className="config-row" data-active={effort === null ? 'true' : 'false'} onClick={() => chooseEffort(null)}>
-            {EFFORT_DEFAULT_LABEL}
+            {t(EFFORT_DEFAULT_LABEL)}
           </button>
           {REASONING_EFFORTS.map((item) => (
-            <button key={item} type="button" className="config-row" data-active={effort === item ? 'true' : 'false'} onClick={() => chooseEffort(item)}>
-              {item}
+            <button key={t(item)} type="button" className="config-row" data-active={effort === item ? 'true' : 'false'} onClick={() => chooseEffort(item)}>
+              {t(item)}
             </button>
           ))}
         </div>

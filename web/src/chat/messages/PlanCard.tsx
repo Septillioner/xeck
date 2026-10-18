@@ -1,3 +1,4 @@
+import { t } from '../../i18n/index.ts';
 import type { PlanSnapshot } from '../../../../shared/types.ts';
 import { useAppState } from '../../state/AppState.tsx';
 import { IconFileText, IconPlay } from '../../ui/icons.tsx';
@@ -19,7 +20,7 @@ export function PlanCard({ plan }: { plan: PlanSnapshot }) {
       data-openable={readOnly ? undefined : 'true'}
       role={readOnly ? undefined : 'button'}
       tabIndex={readOnly ? undefined : 0}
-      title={readOnly ? undefined : 'Open the plan panel'}
+      title={readOnly ? undefined : t("Open the plan panel")}
       onClick={readOnly ? undefined : () => void openPlanPanel()}
       onKeyDown={(event) => {
         if (readOnly) return;
@@ -34,7 +35,7 @@ export function PlanCard({ plan }: { plan: PlanSnapshot }) {
           <IconFileText />
         </span>
         <span className="min-w-0 flex-1">
-          <span className="block text-xs font-medium uppercase tracking-wide text-muted">Plan</span>
+          <span className="block text-xs font-medium uppercase tracking-wide text-muted">{t("Plan")}</span>
           <span className="block truncate text-sm font-semibold text-ink underline decoration-track underline-offset-4 group-hover:decoration-muted">
             {plan.name}
           </span>
@@ -62,9 +63,8 @@ function BuildPlanButton() {
     <div className="plan-actions" onClick={(event) => event.stopPropagation()}>
       <button type="button" className="plan-build" disabled={policyBusy} onClick={() => void buildPlan()}>
         <IconPlay />
-        Build
-      </button>
-      <span className="plan-hint">Switches to the agent policy and starts the work</span>
+        {t("Build")}</button>
+      <span className="plan-hint">{t("Switches to the agent policy and starts the work")}</span>
     </div>
   );
 }

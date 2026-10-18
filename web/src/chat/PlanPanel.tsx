@@ -1,3 +1,4 @@
+import { t } from '../i18n/index.ts';
 import { useEffect, useRef, useState, type CSSProperties, type PointerEvent as ReactPointerEvent } from 'react';
 import type { ChangedFile } from '../../../shared/types.ts';
 import { useAppState } from '../state/AppState.tsx';
@@ -103,11 +104,10 @@ export function PlanPanel() {
         className="plan-pane"
         data-open="false"
         style={{ '--pane-width': `${PANE_COLLAPSED_WIDTH}px` } as CSSProperties}
-        aria-label="Artifacts"
+        aria-label={t("Artifacts")}
       >
         <button type="button" className="plan-reopen" onClick={() => void openPlanPanel()}>
-          Artifacts
-        </button>
+          {t("Artifacts")}</button>
       </aside>
     );
   }
@@ -118,20 +118,20 @@ export function PlanPanel() {
       className="plan-pane"
       data-open="true"
       style={{ '--pane-width': `${width}px` } as CSSProperties}
-      aria-label="Artifacts"
+      aria-label={t("Artifacts")}
     >
       <button
         type="button"
         className="plan-resize"
-        aria-label="Resize artifacts pane"
+        aria-label={t("Resize artifacts pane")}
         data-active={dragging ? 'true' : 'false'}
         onPointerDown={onResizePointerDown}
         onPointerMove={onResizePointerMove}
         onPointerUp={onResizePointerUp}
       />
       <div className="plan-pane-head">
-        <h2>Artifacts</h2>
-        <div className="plan-tabs" role="group" aria-label="Artifact view">
+        <h2>{t("Artifacts")}</h2>
+        <div className="plan-tabs" role="group" aria-label={t("Artifact view")}>
           {planSurface ? (
             <button
               type="button"
@@ -140,8 +140,7 @@ export function PlanPanel() {
               aria-pressed={artifactTab === 'plans'}
               onClick={() => setArtifactTab('plans')}
             >
-              Plan
-            </button>
+              {t("Plan")}</button>
           ) : null}
           <button
             type="button"
@@ -150,22 +149,21 @@ export function PlanPanel() {
             aria-pressed={artifactTab === 'changes'}
             onClick={() => setArtifactTab('changes')}
           >
-            Changes{changedFiles.length > 0 ? ` ${changedFiles.length}` : ''}
+            {t("Changes")}{changedFiles.length > 0 ? ` ${changedFiles.length}` : ''}
           </button>
         </div>
         {artifactTab === 'plans' && planVisible && offerBuild ? (
           <button
             type="button"
             className="plan-build"
-            title="Switch to the workspace default policy and implement the plan"
+            title={t("Switch to the workspace default policy and implement the plan")}
             disabled={policyBusy || Boolean(streaming) || !planView || planView.total === 0}
             onClick={() => void buildPlan()}
           >
             <IconPlay />
-            Build
-          </button>
+            {t("Build")}</button>
         ) : null}
-        <button type="button" className="context-close" aria-label="Close artifacts" onClick={closePlanPanel}>
+        <button type="button" className="context-close" aria-label={t("Close artifacts")} onClick={closePlanPanel}>
           <IconClose />
         </button>
       </div>
@@ -173,12 +171,12 @@ export function PlanPanel() {
       {artifactTab === 'plans' && planSurface ? (
         <div className="artifact-body">
           {planPanelLoading ? (
-            <p className="plan-panel-status">Loading plan</p>
+            <p className="plan-panel-status">{t("Loading plan")}</p>
           ) : planView ? (
             <>
               <div className="plan-pane-head artifact-plan-head">
                 <h2 title={planView.name}>{planView.name}</h2>
-                <div className="plan-tabs" role="group" aria-label="Plan view">
+                <div className="plan-tabs" role="group" aria-label={t("Plan view")}>
                   <button
                     type="button"
                     className="plan-tab"
@@ -186,8 +184,7 @@ export function PlanPanel() {
                     aria-pressed={tab === 'preview'}
                     onClick={() => setTab('preview')}
                   >
-                    Preview
-                  </button>
+                    {t("Preview")}</button>
                   <button
                     type="button"
                     className="plan-tab"
@@ -195,8 +192,7 @@ export function PlanPanel() {
                     aria-pressed={tab === 'source'}
                     onClick={() => setTab('source')}
                   >
-                    Source
-                  </button>
+                    {t("Source")}</button>
                 </div>
               </div>
               {/* The checklist stays pinned while the plan document is read, so the
@@ -207,7 +203,7 @@ export function PlanPanel() {
               </div>
               <div className="plan-doc" data-tab={tab}>
                 <div className="plan-pane-scroll">
-                  {planPanelLoading ? <p className="plan-panel-status">Loading plan</p> : null}
+                  {planPanelLoading ? <p className="plan-panel-status">{t("Loading plan")}</p> : null}
                   {/* Preview reads `body`, so the front matter and the generated
                       `<!-- todos:start -->` block stay out of the rendered document;
                       the steps are already shown above as the live checklist. Source
@@ -222,7 +218,7 @@ export function PlanPanel() {
                 </div>
               </div>
             </>
-          ) : <p className="plan-panel-status">This chat has no plan yet.</p>}
+          ) : <p className="plan-panel-status">{t("This chat has no plan yet.")}</p>}
         </div>
       ) : (
         <ChangedFiles files={changedFiles} loading={planPanelLoading} />
@@ -236,8 +232,8 @@ export function PlanPanel() {
 
 function ChangedFiles({ files, loading }: { files: ChangedFile[]; loading: boolean }) {
   const [openPath, setOpenPath] = useState<string | null>(null);
-  if (loading && files.length === 0) return <p className="plan-panel-status">Loading changes</p>;
-  if (files.length === 0) return <p className="plan-panel-status">This chat changed no files.</p>;
+  if (loading && files.length === 0) return <p className="plan-panel-status">{t("Loading changes")}</p>;
+  if (files.length === 0) return <p className="plan-panel-status">{t("This chat changed no files.")}</p>;
   return (
     <div className="artifact-body">
       <div className="artifact-file-list">
@@ -255,7 +251,7 @@ function ChangedFiles({ files, loading }: { files: ChangedFile[]; loading: boole
               <span className="artifact-counts">
                 {file.added > 0 && <span className="artifact-added">+{file.added}</span>}
                 {file.removed > 0 && <span className="artifact-removed">−{file.removed}</span>}
-                {file.changes > 1 && <span className="artifact-times">{file.changes}×</span>}
+                {file.changes > 1 && <span className="artifact-times">{file.changes}{t("×")}</span>}
               </span>
             </button>
             {openPath === file.path && file.diff ? (

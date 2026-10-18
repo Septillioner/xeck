@@ -1,3 +1,4 @@
+import { t } from '../i18n/index.ts';
 import type { PlanSnapshot } from '../../../shared/types.ts';
 
 /**
@@ -15,7 +16,7 @@ export function PlanMeter({ plan }: { plan: PlanSnapshot }) {
       aria-valuemin={0}
       aria-valuemax={plan.total}
       aria-valuenow={plan.done}
-      aria-label="Plan progress"
+      aria-label={t("Plan progress")}
     >
       <span className="plan-meter-track">
         <span className="plan-meter-fill" style={{ width: `${percent}%` }} data-state={done ? 'done' : 'open'} />

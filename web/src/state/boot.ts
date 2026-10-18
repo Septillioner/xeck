@@ -1,4 +1,4 @@
-import { ACCENT_COLORS, DEFAULT_SETTINGS, TOOL_USAGE_VIEW_MODES, type AgentPublic, type CatalogEntry, type Project, type ProviderPublic, type SessionSummary, type Settings, type StoredSession } from '../../../shared/types.ts';
+import { LANGUAGES, ACCENT_COLORS, DEFAULT_SETTINGS, TOOL_USAGE_VIEW_MODES, type AgentPublic, type CatalogEntry, type Project, type ProviderPublic, type SessionSummary, type Settings, type StoredSession } from '../../../shared/types.ts';
 import { getSettings, listAgents, listCatalog, listProjects, listProviders, listSessions } from '../api/client.ts';
 
 let bootPromise: Promise<{
@@ -14,6 +14,7 @@ export function displaySettings(settings: Settings): Settings {
   const accent = ACCENT_COLORS.includes(settings.accent) ? settings.accent : DEFAULT_SETTINGS.accent;
   return {
     ...settings,
+    language: LANGUAGES.includes(settings.language) ? settings.language : DEFAULT_SETTINGS.language,
     systemInstructions: typeof settings.systemInstructions === 'string' ? settings.systemInstructions : '',
     xeckInstructionsEnabled: settings.xeckInstructionsEnabled !== false,
     accent,

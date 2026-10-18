@@ -1,25 +1,31 @@
+import { getLocale } from '../i18n/core.ts';
 /**
  * Session timestamps as the lists write them: a clock for today, the day for
  * anything older. `now` is injectable so the two functions stay pure and can be
  * checked without mocking the clock.
  */
 
-const TIME = new Intl.DateTimeFormat(undefined, { hour: '2-digit', minute: '2-digit' });
-const DATE = new Intl.DateTimeFormat(undefined, { day: 'numeric', month: 'short' });
-const DATE_WITH_YEAR = new Intl.DateTimeFormat(undefined, { day: 'numeric', month: 'short', year: 'numeric' });
+function formats() {
+  const locale = getLocale();
+  return {
+    time: new Intl.DateTimeFormat(locale, { hour: '2-digit', minute: '2-digit' }),
+    date: new Intl.DateTimeFormat(locale, { day: 'numeric', month: 'short' }),
+    year: new Intl.DateTimeFormat(locale, { day: 'numeric', month: 'short', year: 'numeric' }),
+  };
+}
 
 /** Row label: today's chats read as a time, older ones as a day. */
 export function formatChatTime(value: string, now = new Date()): string {
   const date = new Date(value);
   if (Number.isNaN(date.getTime())) return '';
-  return isSameLocalDay(date, now) ? TIME.format(date) : DATE.format(date);
+  return isSameLocalDay(date, now) ? formats().time.format(date) : formats().date.format(date);
 }
 
 /** Header label: the day, with the year only when it is not the current one. */
 export function formatChatDate(value: string, now = new Date()): string {
   const date = new Date(value);
   if (Number.isNaN(date.getTime())) return '';
-  return date.getFullYear() === now.getFullYear() ? DATE.format(date) : DATE_WITH_YEAR.format(date);
+  return date.getFullYear() === now.getFullYear() ? formats().date.format(date) : formats().year.format(date);
 }
 
 function isSameLocalDay(left: Date, right: Date): boolean {

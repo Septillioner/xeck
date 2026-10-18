@@ -1,3 +1,4 @@
+import { getLocale, t } from '../i18n/core.ts';
 import type { StoredSession, TokenUsage } from '../../../shared/types.ts';
 
 const TOKEN_SCALE = 1000;
@@ -5,16 +6,16 @@ const TOKEN_TENTHS = 10;
 const MS_PER_SECOND = 1000;
 
 export function formatTokenCount(value: number): string {
-  if (value < TOKEN_SCALE) return String(Math.round(value));
+  if (value < TOKEN_SCALE) return new Intl.NumberFormat(getLocale()).format(Math.round(value));
   const scaled = value / TOKEN_SCALE;
   const rounded = scaled >= TOKEN_TENTHS ? Math.round(scaled) : Math.round(scaled * TOKEN_TENTHS) / TOKEN_TENTHS;
-  return `${rounded}k`;
+  return `${new Intl.NumberFormat(getLocale()).format(rounded)}k`;
 }
 
 export function formatTokenSpeed(completionTokens: number, durationMs: number): string | null {
   if (durationMs <= 0) return null;
   const perSecond = completionTokens / (durationMs / MS_PER_SECOND);
-  return `${Math.round(perSecond)} tok/s`;
+  return t('{count} tok/s', { count: new Intl.NumberFormat(getLocale()).format(Math.round(perSecond)) });
 }
 
 export function sessionWithUsage(session: StoredSession, reported: TokenUsage | undefined, startedAt: number): StoredSession {

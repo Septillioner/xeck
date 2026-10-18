@@ -79,3 +79,28 @@ test('concurrent settings patches preserve the subagent selection and unrelated 
     await rm(directory, { recursive: true, force: true });
   }
 });
+
+
+test('language preferences default for older settings and persist through unrelated updates', async () => {
+  const previousAppData = process.env.APPDATA;
+  const directory = await mkdtemp(path.join(os.tmpdir(), 'xeck-language-settings-'));
+  process.env.APPDATA = directory;
+  try {
+    assert.equal((await readSettings()).language, 'system');
+    for (const language of ['tr', 'en', 'system'] as const) {
+      const response = await settingsRoutes.request('/api/settings', { method: 'PUT', headers: { 'content-type': 'application/json' }, body: JSON.stringify({ language }) });
+      assert.equal(response.status, 200);
+      assert.equal((await readSettings()).language, language);
+    }
+    await writeSettings({ language: 'tr' });
+    await writeSettings({ showReasoning: true });
+    assert.equal((await readSettings()).language, 'tr');
+    assert.equal((await writeSettings({ language: 'unsupported' })).language, 'system');
+    await writeJson(settingsPath(), { showUsage: false });
+    assert.equal((await readSettings()).language, 'system');
+  } finally {
+    if (previousAppData === undefined) delete process.env.APPDATA;
+    else process.env.APPDATA = previousAppData;
+    await rm(directory, { recursive: true, force: true });
+  }
+});

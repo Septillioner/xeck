@@ -1,3 +1,4 @@
+import { t } from '../i18n/core.ts';
 import { activityBaseLabel } from '../../../shared/activity.ts';
 import type { ToolUsageViewMode, TranscriptBlock, TranscriptToolBlock } from '../../../shared/types.ts';
 import type { ActivityCall } from './activity-calls.ts';
@@ -41,11 +42,11 @@ export function toolUsageSummary(tools: TranscriptToolBlock[], calls: ActivityCa
     addedPartial ||= change.addedLines === undefined && Boolean(change.truncated);
     removedPartial ||= change.removedLines === undefined && Boolean(change.truncated);
   }
-  const parts = [`${seen.size} ${seen.size === 1 ? 'tool' : 'tools'}`];
-  if (reads.size) parts.push(`${reads.size} ${reads.size === 1 ? 'file' : 'files'} read`);
-  if (added) parts.push(`${added}${addedPartial ? '+' : ''} ${added === 1 ? 'line' : 'lines'} added`);
-  if (removed) parts.push(`${removed}${removedPartial ? '+' : ''} ${removed === 1 ? 'line' : 'lines'} removed`);
-  if (failures) parts.push(`${failures} failed`);
+  const parts = [t(seen.size === 1 ? '{count} tool' : '{count} tools', { count: seen.size })];
+  if (reads.size) parts.push(t(reads.size === 1 ? '{count} file read' : '{count} files read', { count: reads.size }));
+  if (added) parts.push(t(added === 1 ? '{count} line added' : '{count} lines added', { count: `${added}${addedPartial ? '+' : ''}` }));
+  if (removed) parts.push(t(removed === 1 ? '{count} line removed' : '{count} lines removed', { count: `${removed}${removedPartial ? '+' : ''}` }));
+  if (failures) parts.push(t('{count} failed', { count: failures }));
   return parts.join(' · ');
 }
 
@@ -57,13 +58,13 @@ export interface ActivitySignal {
 }
 
 export function currentActivity(signal: ActivitySignal): { label: string; mood: BotMood } {
-  if (signal.stopping) return { label: 'Stopping · saving progress', mood: 'waiting' };
+  if (signal.stopping) return { label: "Stopping · saving progress", mood: 'waiting' };
   if (signal.blocks.some((block) => block.kind === 'dialog' && !block.resolved)) {
-    return { label: 'Waiting for your input', mood: 'waiting' };
+    return { label: "Waiting for your input", mood: 'waiting' };
   }
-  if (signal.rateLimit) return { label: 'Waiting to retry', mood: 'waiting' };
+  if (signal.rateLimit) return { label: "Waiting to retry", mood: 'waiting' };
   if (signal.phase === 'summarizing' || signal.phase === 'summarized') {
-    return { label: 'Summarizing context', mood: 'thinking' };
+    return { label: "Summarizing context", mood: 'thinking' };
   }
   const pending = signal.blocks.filter((block): block is TranscriptToolBlock => block.kind === 'tool' && block.pending).at(-1);
   if (pending) {
@@ -80,6 +81,6 @@ export function currentActivity(signal: ActivitySignal): { label: string; mood: 
     return { label: description, mood: 'working' };
   }
   const last = signal.blocks.at(-1);
-  if (last?.kind === 'text' && last.text) return { label: 'Writing a response', mood: 'thinking' };
-  return { label: 'Thinking', mood: 'thinking' };
+  if (last?.kind === 'text' && last.text) return { label: "Writing a response", mood: 'thinking' };
+  return { label: "Thinking", mood: 'thinking' };
 }

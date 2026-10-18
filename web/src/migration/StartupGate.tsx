@@ -1,3 +1,4 @@
+import { t, useI18n } from '../i18n/index.ts';
 import { useEffect, useState, type ReactNode } from 'react';
 import { listMigrations } from '../api/client.ts';
 import { MigrationContent } from './MigrationPage.tsx';
@@ -6,6 +7,7 @@ import { BUTTON } from '../ui/button-styles.ts';
 
 /** No app provider or boot request is mounted before the migration decision. */
 export function StartupGate({ children }: { children: ReactNode }) {
+  useI18n();
   const [stage, setStage] = useState<'checking' | 'prompt' | 'app' | 'error'>('checking');
   const [error, setError] = useState('');
   const [attempt, setAttempt] = useState(0);
@@ -15,7 +17,7 @@ export function StartupGate({ children }: { children: ReactNode }) {
     void listMigrations().then((snapshot) => {
       if (!cancelled) setStage(snapshot.startupRequired ? 'prompt' : 'app');
     }).catch((cause: unknown) => {
-      if (!cancelled) { setError(cause instanceof Error ? cause.message : 'Could not check existing data.'); setStage('error'); }
+      if (!cancelled) { setError(cause instanceof Error ? cause.message : t("Could not check existing data.")); setStage('error'); }
     });
     return () => { cancelled = true; };
   }, [attempt]);
@@ -26,9 +28,9 @@ export function StartupGate({ children }: { children: ReactNode }) {
       {stage === 'prompt' ? <MigrationContent startup onContinue={() => setStage('app')} /> : (
         <main className="flex flex-1 flex-col items-center justify-center gap-4 px-gutter text-body text-muted">
           {stage === 'error' ? <>
-            <p role="alert">{error}</p>
-            <button type="button" className={BUTTON.secondary} onClick={() => { setStage('checking'); setAttempt((value) => value + 1); }}>Retry</button>
-          </> : <p role="status">Checking existing Xeck data…</p>}
+            <p role="alert">{t(error)}</p>
+            <button type="button" className={BUTTON.secondary} onClick={() => { setStage('checking'); setAttempt((value) => value + 1); }}>{t("Retry")}</button>
+          </> : <p role="status">{t("Checking existing Xeck data…")}</p>}
         </main>
       )}
     </div>

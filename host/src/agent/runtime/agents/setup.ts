@@ -66,7 +66,7 @@ export async function prepareSessionAgent(sessionId: string, input: AgentSetupIn
   // Workspace toolset: `general` sohbet çekirdeğine düşer, dosya/terminal/plan
   // tool'ları hiç sunulmaz. Harici MCP'ler ve (toolset.skills ise) load_skill korunur.
   const toolset = new Set<string>(selectedBuiltinNames(workspaceDef.toolset.builtin));
-  if (!storedSession?.bot) {
+  if (!storedSession?.bot || storedSession.botConversation) {
     toolset.delete(LIST_MESSAGE_TARGETS_TOOL);
     toolset.delete(SEND_CHAT_MESSAGE_TOOL);
   }
@@ -74,7 +74,7 @@ export async function prepareSessionAgent(sessionId: string, input: AgentSetupIn
   const [skills, mcp, systemPrompt] = await Promise.all([
     includeTools ? readSkills() : [],
     includeTools ? refreshMcp() : { tools: {} },
-    buildHostSystemPrompt(agentDef.id, storedSession?.bot ? { name: storedSession.title, systemPrompt: storedSession.bot.systemPrompt } : undefined),
+    buildHostSystemPrompt(agentDef.id, storedSession?.bot ? { name: storedSession.botConversation?.responderTitle ?? storedSession.title, systemPrompt: storedSession.bot.systemPrompt } : undefined),
   ]);
   const availableTools = includeTools
     ? [
@@ -95,7 +95,7 @@ export async function prepareSessionAgent(sessionId: string, input: AgentSetupIn
   const create = async (): Promise<SessionAgent> => {
     const continuedReplies: string[] = [];
     let builder = new AgentBuilder()
-      .Name(storedSession?.bot ? storedSession.title : AGENT_NAME)
+      .Name(storedSession?.bot ? storedSession.botConversation?.responderTitle ?? storedSession.title : AGENT_NAME)
       .WithModelProfile(libraryProfile)
       .Provider(createLLMProvider(libraryProfile, apiKey))
       .ApiKey(apiKey)

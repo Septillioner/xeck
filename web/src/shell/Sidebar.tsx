@@ -1,3 +1,4 @@
+import { t } from '../i18n/index.ts';
 import { useEffect, useLayoutEffect, useRef, useState, type RefObject } from 'react';
 import { createPortal } from 'react-dom';
 import { useAppState } from '../state/AppState.tsx';
@@ -74,10 +75,11 @@ export function Sidebar() {
   const projectSubmenuTriggerRef = useRef<HTMLButtonElement>(null);
   const projectSubmenuRef = useRef<HTMLDivElement>(null);
   const botWorkspace = botsOpen || (Boolean(active?.bot) && !projectPageId);
-  const bots = sessions.filter((session) => session.bot);
+  const bots = sessions.filter((session) => session.bot && !session.botConversation);
+  const botConversations = sessions.filter((session) => session.botConversation);
   const groups = groupSessions(sessions.filter((session) => !session.projectId && !session.bot));
   const projectOptions: MenuOption[] = [
-    { value: '', label: 'No project' },
+    { value: '', label: t("No project") },
     ...projects.map((project) => ({ value: project.id, label: project.name, icon: <IconFolder /> })),
   ];
 
@@ -202,7 +204,7 @@ export function Sidebar() {
       else await createProject(name);
       setProjectDialogOpen(false);
     } catch (cause) {
-      setProjectDialogError(cause instanceof Error ? cause.message : 'Could not save project');
+      setProjectDialogError(cause instanceof Error ? cause.message : t("Could not save project"));
     } finally {
       setProjectDialogBusy(false);
     }
@@ -246,7 +248,7 @@ export function Sidebar() {
               void openChat(session.id);
             }}
           >
-            {busy ? <IconBusy mood={mood} /> : session.bot ? <BotAvatar name={session.title} color={session.bot.color} /> : null}
+            {busy ? <IconBusy mood={mood} /> : session.botConversation ? <IconChat /> : session.bot ? <BotAvatar name={session.title} color={session.bot.color} /> : null}
             <TypingText text={session.title} className="min-w-0 flex-1 truncate" />
             {hasMood && <span className="chat-mood-dot h-1.5 w-1.5 flex-none rounded-full bg-mood" aria-hidden="true" />}
             <span className="w-7 flex-none hover-none:w-8" aria-hidden="true" />
@@ -263,7 +265,7 @@ export function Sidebar() {
           >
             <button
               type="button"
-              aria-label={`Chat actions for ${session.title}`}
+              aria-label={t("Chat actions for {0}", { "0": session.title })}
               aria-haspopup="menu"
               aria-expanded={actionsOpen}
               aria-controls={actionsMenuId}
@@ -282,7 +284,7 @@ export function Sidebar() {
               <div
                 id={actionsMenuId}
                 role="menu"
-                aria-label={`Chat actions for ${session.title}`}
+                aria-label={t("Chat actions for {0}", { "0": session.title })}
                 className={cn('absolute right-0 w-44 overflow-y-auto rounded-control bg-chip p-1', menuUp ? 'bottom-full mb-1' : 'top-full mt-1')}
                 style={{ maxHeight: `calc(100vh - ${MENU_VIEWPORT_GUTTER_PX * 2}px)` }}
               >
@@ -298,7 +300,7 @@ export function Sidebar() {
                       className="flex w-full items-center justify-between rounded-tile px-3 py-2 text-left text-ui text-ink hover:bg-hover"
                       onClick={() => setProjectSubmenuOpen((open) => !open)}
                     >
-                      <span>Projeye taşı</span>
+                      <span>{t("Projeye taşı")}</span>
                       <span aria-hidden="true">›</span>
                     </button>
                     {projectSubmenuOpen && createPortal(
@@ -306,7 +308,7 @@ export function Sidebar() {
                         ref={projectSubmenuRef}
                         id={`chat-project-options-${session.id}`}
                         role="menu"
-                        aria-label="Move chat to project"
+                        aria-label={t("Move chat to project")}
                         className="fixed z-30 max-h-60 w-48 overflow-y-auto rounded-control bg-chip p-1"
                         style={{
                           top: projectSubmenuPosition?.top ?? 0,
@@ -331,7 +333,7 @@ export function Sidebar() {
                             onClick={() => {
                               setProjectActionError(null);
                               void assignChatToProject(session.id, option.value || null).catch((cause) =>
-                                setProjectActionError(cause instanceof Error ? cause.message : 'Could not move the chat'),
+                                setProjectActionError(cause instanceof Error ? cause.message : t("Could not move the chat")),
                               );
                               setOpenActionsId(null);
                               setProjectSubmenuOpen(false);
@@ -345,6 +347,7 @@ export function Sidebar() {
                       document.body,
                     )}
                   </div>
+                {!session.botConversation && (
                 <button
                   type="button"
                   role="menuitem"
@@ -358,8 +361,9 @@ export function Sidebar() {
                   }}
                 >
                   <IconEdit />
-                  <span>Yeniden adlandır</span>
+                  <span>{t("Yeniden adlandır")}</span>
                 </button>
+                )}
                 <button
                   type="button"
                   role="menuitem"
@@ -371,13 +375,13 @@ export function Sidebar() {
                   }}
                 >
                   <IconTrash />
-                  <span>Sil</span>
+                  <span>{t("Sil")}</span>
                 </button>
               </div>
             )}
           </div>
         )}
-        {hasMood && <span className="sr-only">{moodLabel(mood)}</span>}
+        {hasMood && <span className="sr-only">{t(moodLabel(mood))}</span>}
       </li>
     );
   };
@@ -392,8 +396,7 @@ export function Sidebar() {
         <span className="flex size-6 flex-none items-center justify-center rounded-tile text-small font-semibold text-logo" aria-hidden="true">
           <IconXeck size={20} />
         </span>
-        Xeck
-      </div>
+        {t("Xeck")}</div>
       <nav className="flex flex-col gap-1.5 px-2.5">
         <button
           type="button"
@@ -401,8 +404,7 @@ export function Sidebar() {
           className={NAV_ROW}
         >
           <IconChat />
-          New chat
-        </button>
+          {t("New chat")}</button>
         <button
           ref={searchButtonRef}
           type="button"
@@ -411,8 +413,7 @@ export function Sidebar() {
           className={cn(NAV_ROW, searchOpen && ACTIVE_ROW)}
         >
           <IconSearch />
-          Search
-        </button>
+          {t("Search")}</button>
         <button
           type="button"
           data-active={settingsOpen ? 'true' : 'false'}
@@ -420,36 +421,33 @@ export function Sidebar() {
           className={cn(NAV_ROW, settingsOpen && ACTIVE_ROW)}
         >
           <IconSettings />
-          Settings
-        </button>
+          {t("Settings")}</button>
       </nav>
       <div className="min-h-0 flex-1 overflow-auto pt-5 pr-2.5 pb-6 pl-2.5 [scrollbar-gutter:stable]">
-        <nav aria-label="Workspaces" className="mb-4 flex flex-col gap-1">
+        <nav aria-label={t("Workspaces")} className="mb-4 flex flex-col gap-1">
           <button type="button" className={cn(NAV_ROW, !botsOpen && !active?.bot && !settingsOpen && !projectPageId && ACTIVE_ROW)} onClick={() => {
             const chat = sessions.find((session) => !session.bot && !session.projectId);
             if (chat) void openChat(chat.id);
             else createChat();
           }}>
-            <IconChat />Chat
-          </button>
+            <IconChat />{t("Chat")}</button>
           <button type="button" className={cn(NAV_ROW, (botsOpen || Boolean(active?.bot)) && !settingsOpen && !projectPageId && ACTIVE_ROW)} onClick={openBots}>
-            <IconXeck />XeckBot
-          </button>
+            <IconXeck />{t("XeckBot")}</button>
         </nav>
         <section className="mb-4">
           <div className="mx-2.5 mb-2 flex items-center justify-between">
-            <h2 className="text-micro font-semibold tracking-[0.06em] text-muted uppercase">Projects</h2>
+            <h2 className="text-micro font-semibold tracking-[0.06em] text-muted uppercase">{t("Projects")}</h2>
             <button
               type="button"
-              aria-label="New project"
+              aria-label={t("New project")}
               className={ICON_BUTTON}
               onClick={openCreateProject}
             >
               <IconPlus />
             </button>
           </div>
-          {projects.length === 0 && <p className="mx-2.5 py-1.5 text-small text-muted">No projects yet</p>}
-          {projectActionError && <p className="mx-2 mb-2 text-small text-danger" role="alert">{projectActionError}</p>}
+          {projects.length === 0 && <p className="mx-2.5 py-1.5 text-small text-muted">{t("No projects yet")}</p>}
+          {projectActionError && <p className="mx-2 mb-2 text-small text-danger" role="alert">{t(projectActionError)}</p>}
           <ul className="flex flex-col gap-1">
             {projects.map((project) => {
               const projectSessions = sessions.filter((session) => session.projectId === project.id);
@@ -463,7 +461,7 @@ export function Sidebar() {
                   <div className={cn('group/project relative flex min-h-8 items-center gap-2 rounded-control px-2.5 hover:bg-hover hover-none:min-h-11', pageOpen && ACTIVE_ROW)}>
                     <button
                       type="button"
-                      aria-label={expanded ? `Collapse ${project.name}` : `Expand ${project.name}`}
+                      aria-label={expanded ? t("Collapse {0}", { "0": project.name }) : t("Expand {0}", { "0": project.name })}
                       aria-expanded={expanded}
                       aria-controls={`project-chats-${project.id}`}
                       className={ICON_BUTTON_ROW}
@@ -489,7 +487,7 @@ export function Sidebar() {
                     >
                       <button
                         type="button"
-                        aria-label={`Project actions for ${project.name}`}
+                        aria-label={t("Project actions for {0}", { "0": project.name })}
                         aria-haspopup="menu"
                         aria-expanded={menuOpen}
                         aria-controls={projectMenuId}
@@ -505,7 +503,7 @@ export function Sidebar() {
                         <div
                           id={projectMenuId}
                           role="menu"
-                          aria-label={`Project actions for ${project.name}`}
+                          aria-label={t("Project actions for {0}", { "0": project.name })}
                           className={cn('absolute right-0 w-44 overflow-y-auto rounded-control bg-chip p-1', menuUp ? 'bottom-full mb-1' : 'top-full mt-1')}
                 style={{ maxHeight: `calc(100vh - ${MENU_VIEWPORT_GUTTER_PX * 2}px)` }}
                         >
@@ -519,7 +517,7 @@ export function Sidebar() {
                             }}
                           >
                             <IconPlus />
-                            <span>New chat</span>
+                            <span>{t("New chat")}</span>
                           </button>
                           <button
                             type="button"
@@ -531,7 +529,7 @@ export function Sidebar() {
                             }}
                           >
                             <IconEdit />
-                            <span>Rename</span>
+                            <span>{t("Rename")}</span>
                           </button>
                           <button
                             type="button"
@@ -543,14 +541,14 @@ export function Sidebar() {
                             }}
                           >
                             <IconTrash />
-                            <span>Delete</span>
+                            <span>{t("Delete")}</span>
                           </button>
                         </div>
                       )}
                     </div>
                   </div>
                   {expanded && (projectSessions.length === 0 ? (
-                    <p className="py-1 pl-12 text-small text-muted">No chats yet</p>
+                    <p className="py-1 pl-12 text-small text-muted">{t("No chats yet")}</p>
                   ) : (
                     <ul id={`project-chats-${project.id}`} className="mt-1 mb-1 ml-8 flex flex-col gap-1">
                       {projectSessions.slice(0, PROJECT_CHAT_PREVIEW_COUNT).map((session) => renderSession(session, true))}
@@ -561,30 +559,36 @@ export function Sidebar() {
             })}
           </ul>
         </section>
-        <h2 className="mx-2.5 mb-2 text-micro font-semibold tracking-[0.06em] text-muted uppercase">{botWorkspace ? 'XeckBots' : 'Chats'}</h2>
+        <h2 className="mx-2.5 mb-2 text-micro font-semibold tracking-[0.06em] text-muted uppercase">{botWorkspace ? t("XeckBots") : t("Chats")}</h2>
         {botWorkspace ? (
           bots.length > 0 ? (
             <ul className="flex flex-col gap-1">
               {bots.map((session) => renderSession(session))}
             </ul>
           ) : (
-            <p className="mx-2.5 py-1.5 text-small text-muted">Henüz XeckBot yok</p>
+            <p className="mx-2.5 py-1.5 text-small text-muted">{t("Henüz XeckBot yok")}</p>
           )
         ) : [...groups.entries()].map(([label, items]) =>
           items.length === 0 ? null : (
             <section key={label} className="mb-1.5">
-              <h3 className="mx-2.5 mt-5 mb-2 text-micro font-semibold tracking-[0.04em] text-muted uppercase">{label}</h3>
+              <h3 className="mx-2.5 mt-5 mb-2 text-micro font-semibold tracking-[0.04em] text-muted uppercase">{t(label)}</h3>
               <ul className="flex flex-col gap-1">
                 {items.map((session) => renderSession(session))}
               </ul>
             </section>
           ),
         )}
+        {botWorkspace && botConversations.length > 0 && (
+          <section className="mt-5">
+            <h2 className="mx-2.5 mb-2 text-micro font-semibold tracking-[0.06em] text-muted uppercase">{t('Bot conversations')}</h2>
+            <ul className="flex flex-col gap-1">{botConversations.map((session) => renderSession(session))}</ul>
+          </section>
+        )}
       </div>
     </aside>
     {projectDialogOpen && (
       <Dialog
-        title={projectDialogId ? 'Rename project' : 'New project'}
+        title={projectDialogId ? t("Rename project") : t("New project")}
         onClose={() => setProjectDialogOpen(false)}
       >
         <form
@@ -595,8 +599,7 @@ export function Sidebar() {
           }}
         >
           <label className="flex flex-col gap-2 text-ui text-muted">
-            Project name
-            <TextField
+            {t("Project name")}<TextField
               autoFocus
               width="block"
               value={projectNameDraft}
@@ -604,21 +607,20 @@ export function Sidebar() {
               onChange={(event) => setProjectNameDraft(event.target.value)}
             />
           </label>
-          {projectDialogError && <p className="text-small text-danger" role="alert">{projectDialogError}</p>}
+          {projectDialogError && <p className="text-small text-danger" role="alert">{t(projectDialogError)}</p>}
           <div className="flex justify-end gap-2">
             <button
               type="button"
               className={BUTTON.ghost}
               onClick={() => setProjectDialogOpen(false)}
             >
-              Cancel
-            </button>
+              {t("Cancel")}</button>
             <button
               type="submit"
               className={BUTTON.primary}
               disabled={projectDialogBusy}
             >
-              {projectDialogBusy ? 'Saving' : 'Save'}
+              {projectDialogBusy ? t("Saving") : t("Save")}
             </button>
           </div>
         </form>
@@ -626,21 +628,19 @@ export function Sidebar() {
     )}
     {deleteDialogChatId && (
       <Dialog
-        title="Chatu sil"
+        title={t("Chatu sil")}
         onClose={() => setDeleteDialogChatId(null)}
       >
         <div className="flex flex-col gap-3 p-4">
           <p className="text-ui text-muted">
-            Bu chatı silmek istediğinize emin misiniz? Bu işlem geri alınamaz.
-          </p>
+            {t("Bu chatı silmek istediğinize emin misiniz? Bu işlem geri alınamaz.")}</p>
           <div className="flex justify-end gap-2">
             <button
               type="button"
               className={BUTTON.ghost}
               onClick={() => setDeleteDialogChatId(null)}
             >
-              İptal
-            </button>
+              {t("İptal")}</button>
             <button
               type="button"
               data-primary
@@ -650,29 +650,26 @@ export function Sidebar() {
                 setDeleteDialogChatId(null);
               }}
             >
-              Sil
-            </button>
+              {t("Sil")}</button>
           </div>
         </div>
       </Dialog>
     )}
     {deleteDialogProjectId && (
       <Dialog
-        title="Projeyi sil"
+        title={t("Projeyi sil")}
         onClose={() => setDeleteDialogProjectId(null)}
       >
         <div className="flex flex-col gap-3 p-4">
           <p className="text-ui text-muted">
-            Bu projeyi silmek istediğinize emin misiniz? Bu işlem geri alınamaz.
-          </p>
+            {t("Bu projeyi silmek istediğinize emin misiniz? Bu işlem geri alınamaz.")}</p>
           <div className="flex justify-end gap-2">
             <button
               type="button"
               className={BUTTON.ghost}
               onClick={() => setDeleteDialogProjectId(null)}
             >
-              İptal
-            </button>
+              {t("İptal")}</button>
             <button
               type="button"
               data-primary
@@ -682,8 +679,7 @@ export function Sidebar() {
                 setDeleteDialogProjectId(null);
               }}
             >
-              Sil
-            </button>
+              {t("Sil")}</button>
           </div>
         </div>
       </Dialog>
@@ -758,16 +754,16 @@ function SearchOverlay({
           <TextField bare
             ref={inputRef}
             value={query}
-            placeholder="Search chats"
-            aria-label="Search chats"
+            placeholder={t("Search chats")}
+            aria-label={t("Search chats")}
             className="h-full min-w-0 flex-1 border-0 bg-transparent p-0 text-lead focus:outline-none"
             onChange={(event) => onQuery(event.target.value)}
           />
-          <kbd className="flex-none rounded-full bg-field px-2 py-0.5 font-sans text-micro text-muted">Esc</kbd>
+          <kbd className="flex-none rounded-full bg-field px-2 py-0.5 font-sans text-micro text-muted">{t("Esc")}</kbd>
         </div>
         <div className="max-h-[320px] overflow-auto p-1 [scrollbar-gutter:stable]">
           {matches.length === 0 ? (
-            <p className="p-4 text-ui text-muted">No chats</p>
+            <p className="p-4 text-ui text-muted">{t("No chats")}</p>
           ) : (
             matches.map((session) => (
               <button

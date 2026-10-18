@@ -1,3 +1,4 @@
+import { t } from '../i18n/index.ts';
 import { useEffect, useMemo, useRef, useState, type CSSProperties, type ReactNode } from 'react';
 import TextareaAutosize from 'react-textarea-autosize';
 import { COMMAND_NAME_PATTERN, SUMMARY_COMMAND } from '../../../shared/commands.ts';
@@ -55,7 +56,7 @@ function ModeSwitch() {
     return (
       <div className="mode-combobox" style={policyAccentStyle(selectedPolicyAccentColor)}>
         <Menu
-          label="Policy"
+          label={t("Policy")}
           value={selectedPolicy}
           buttonClass="mode-trigger"
           placement="top"
@@ -75,7 +76,7 @@ function ModeSwitch() {
   return (
     <div className="mode-combobox" style={policyAccentStyle(selectedPolicyAccentColor)}>
       <Menu
-        label="Policy"
+        label={t("Policy")}
         value={policyId}
         buttonClass="mode-trigger"
         placement="top"
@@ -149,7 +150,7 @@ export function Composer({ modelMenu }: { modelMenu: ReactNode }) {
       }}
     >
       {menuOpen && (
-        <div className="command-menu" role="listbox" aria-label="Commands">
+        <div className="command-menu" role="listbox" aria-label={t("Commands")}>
           {rows.map((row, index) => (
             <button
               key={row.name}
@@ -165,20 +166,20 @@ export function Composer({ modelMenu }: { modelMenu: ReactNode }) {
               }}
             >
               <span>/{row.name}</span>
-              <span>{row.detail}</span>
+              <span>{t(row.detail)}</span>
             </button>
           ))}
         </div>
       )}
         {queuedMessages.length > 0 && (
-          <section className="mb-3 min-w-0 overflow-hidden rounded-card bg-chip p-3" aria-label="Queued messages">
+          <section className="mb-3 min-w-0 overflow-hidden rounded-card bg-chip p-3" aria-label={t("Queued messages")}>
             <div className="mb-2 flex items-center justify-between gap-2">
-              <h2 className="text-xs font-semibold text-ink">Queued messages</h2>
+              <h2 className="text-xs font-semibold text-ink">{t("Queued messages")}</h2>
               <span className="rounded-full bg-chip px-2 py-0.5 text-xs font-medium tabular-nums text-muted">
                 {queuedMessages.length}
               </span>
             </div>
-            <ol className="flex max-h-40 flex-col gap-1.5 overflow-y-auto p-0" aria-label="Queued messages">
+            <ol className="flex max-h-40 flex-col gap-1.5 overflow-y-auto p-0" aria-label={t("Queued messages")}>
               {queuedMessages.map((message) => (
                 <li
                   className="flex min-w-0 items-start gap-2 rounded-control bg-field px-3 py-2"
@@ -190,11 +191,10 @@ export function Composer({ modelMenu }: { modelMenu: ReactNode }) {
                   <button
                     type="button"
                     className="shrink-0 rounded-tile px-2 py-1 text-xs text-muted transition-colors hover:bg-hover hover:text-ink focus-visible:outline-2 focus-visible:outline-offset-2 focus-visible:outline-ink"
-                    aria-label={`Remove queued message: ${message.content}`}
+                    aria-label={t("Remove queued message: {0}", { "0": message.content })}
                     onClick={() => removeQueuedMessage(message.id)}
                   >
-                    Remove
-                  </button>
+                    {t("Remove")}</button>
                 </li>
               ))}
             </ol>
@@ -207,7 +207,7 @@ export function Composer({ modelMenu }: { modelMenu: ReactNode }) {
             minRows={1}
             maxRows={COMPOSER_MAX_ROWS}
             value={draft}
-            placeholder="Ask me anything..."
+            placeholder={t("Ask me anything...")}
             onChange={(event) => setDraft(event.target.value)}
             onKeyDown={(event) => {
               // Enter that confirms an IME candidate must not send or pick a row.
@@ -251,13 +251,13 @@ export function Composer({ modelMenu }: { modelMenu: ReactNode }) {
               <button
                 type="submit"
                 className="send-orb"
-                aria-label={generating || queuedMessages.length > 0 ? 'Queue message' : 'Send'}
+                aria-label={generating || queuedMessages.length > 0 ? t("Queue message") : t("Send")}
                 disabled={draft.trim().length === 0}
               >
                 <IconSend />
               </button>
               {generating && (
-                <button type="button" className="send-orb" aria-label="Stop" onClick={stop}>
+                <button type="button" className="send-orb" aria-label={t("Stop")} onClick={stop}>
                   <IconStop />
                 </button>
               )}

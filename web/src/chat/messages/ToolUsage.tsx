@@ -1,3 +1,5 @@
+import { t } from '../../i18n/index.ts';
+import { translateActivityLabel } from '../../i18n/activity.ts';
 import { useState } from 'react';
 import { activityBaseLabel, isSkillOrMcpLabel } from '../../../../shared/activity.ts';
 import type { ToolUsageViewMode, TranscriptToolBlock } from '../../../../shared/types.ts';
@@ -25,7 +27,7 @@ export function CompactToolUsage({ tools, calls = [], ...inspection }: ToolInspe
       <summary onClick={(event) => { event.preventDefault(); setOpen(!open); }}>
         <IconWand className="activity-icon" />
         <span className="tool-summary-text" title={summary}>{summary}</span>
-        {tools.some((tool) => tool.pending) && <span className="tool-running-dot" aria-label="Tools running" />}
+        {tools.some((tool) => tool.pending) && <span className="tool-running-dot" aria-label={t("Tools running")} />}
         <IconChevron className="tool-chevron" />
       </summary>
       <div className="tool-usage-body">
@@ -53,7 +55,7 @@ export function ToolUsage({ tool, call, mode, debug, selectedCallId, onSelectCal
     <details className="tool-usage" open={open} data-failed={failed ? 'true' : undefined} data-active={selectedCallId === tool.callId ? 'true' : undefined}>
       <summary onClick={(event) => { event.preventDefault(); setUserOpen(!open); }}>
         <ToolIcon className="activity-icon" />
-        <span className={tool.pending ? 'activity-line-label shimmer-text' : 'activity-line-label'}>{tool.label}</span>
+        <span className={tool.pending ? 'activity-line-label shimmer-text' : 'activity-line-label'}>{translateActivityLabel(tool.label)}</span>
         <IconChevron className="tool-chevron" />
       </summary>
       <div className="tool-usage-body">
@@ -61,14 +63,14 @@ export function ToolUsage({ tool, call, mode, debug, selectedCallId, onSelectCal
         {terminal && <TerminalCard terminal={terminal} pending={tool.pending} />}
         {call && Object.keys(call.args).length > 0 && (
           <details className="tool-payload" open={mode === 'detailed'}>
-            <summary>Arguments</summary>
+            <summary>{t("Arguments")}</summary>
             <pre>{JSON.stringify(call.args, null, 2)}</pre>
           </details>
         )}
-        {!change && !terminal && result && <pre className="tool-output">{result.slice(0, 12000)}{result.length > 12000 ? '\n… Output truncated for display' : ''}</pre>}
-        {!change && !terminal && !result && <p className="tool-result-state">{tool.pending ? 'Running…' : failed ? 'Tool failed' : 'Completed'}</p>}
+        {!change && !terminal && result && <pre className="tool-output">{result.slice(0, 12000)}{result.length > 12000 ? t("\n… Output truncated for display") : ''}</pre>}
+        {!change && !terminal && !result && <p className="tool-result-state">{tool.pending ? t("Running…") : failed ? t("Tool failed") : t("Completed")}</p>}
         {debug && isSkillOrMcpLabel(tool.label) && (
-          <button type="button" className={BUTTON.ghost} onClick={() => onSelectCall(tool.callId)}>Inspect tool call</button>
+          <button type="button" className={BUTTON.ghost} onClick={() => onSelectCall(tool.callId)}>{t("Inspect tool call")}</button>
         )}
       </div>
     </details>

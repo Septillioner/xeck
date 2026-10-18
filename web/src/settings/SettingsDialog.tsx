@@ -1,3 +1,4 @@
+import { t } from '../i18n/index.ts';
 import { useEffect } from 'react';
 import { LOCAL_PROVIDER_KINDS, PROVIDER_KINDS, isCustomizeTab, isLocalProvider, isProviderKind, type ProviderKind } from '../../../shared/types.ts';
 import { useAppState } from '../state/AppState.tsx';
@@ -41,8 +42,8 @@ export function SettingsPage() {
   return (
     <section className="settings panel-shell flex min-w-0 flex-1 bg-main max-md:flex-col" aria-labelledby="settings-title">
       <nav className="settings-nav">
-        <h2 id="settings-title">Settings</h2>
-        <button type="button" className={cn(ICON_BUTTON, 'md:hidden')} aria-label="Close settings" onClick={closeSettings}>
+        <h2 id="settings-title">{t("Settings")}</h2>
+        <button type="button" className={cn(ICON_BUTTON, 'md:hidden')} aria-label={t("Close settings")} onClick={closeSettings}>
           <IconClose />
         </button>
         <button
@@ -54,8 +55,7 @@ export function SettingsPage() {
           <span className={NAV_CHIP}>
             <IconSliders />
           </span>
-          General
-        </button>
+          {t("General")}</button>
         <button
           type="button"
           className={cn(SETTINGS_NAV_ROW, settingsTab === 'appearance' && NAV_ROW_ACTIVE)}
@@ -65,8 +65,7 @@ export function SettingsPage() {
           <span className={NAV_CHIP}>
             <IconPalette />
           </span>
-          Appearance
-        </button>
+          {t("Appearance")}</button>
         <button
           type="button"
           className={cn(SETTINGS_NAV_ROW, customizeActive && NAV_ROW_ACTIVE)}
@@ -76,14 +75,13 @@ export function SettingsPage() {
           <span className={NAV_CHIP}>
             <IconWand />
           </span>
-          Customize
-        </button>
-        <p className="nav-heading">Model Providers</p>
-        <p className="nav-subhead">Local</p>
+          {t("Customize")}</button>
+        <p className="nav-heading">{t("Model Providers")}</p>
+        <p className="nav-subhead">{t("Local")}</p>
         {LOCAL_KINDS.map((kind) => (
           <ProviderLink key={kind} kind={kind} label={providerLabel(kind, providers)} active={settingsTab === kind} />
         ))}
-        <p className="nav-subhead">Remote</p>
+        <p className="nav-subhead">{t("Remote")}</p>
         {remote.map((kind) => (
           <ProviderLink key={kind} kind={kind} label={providerLabel(kind, providers)} active={settingsTab === kind} />
         ))}

@@ -1,3 +1,4 @@
+import { t } from '../../i18n/index.ts';
 import type { FileChange } from '../../../../shared/types.ts';
 import { diffLineClass, highlightedDiffLine, languageForPath } from './diff-highlight.ts';
 
@@ -17,9 +18,9 @@ export function FileChangeCard({ change, defaultOpen }: { change: FileChange; de
   return (
     <details className="file-change-card" open={defaultOpen ?? Boolean(change.diff)}>
       <summary>
-        <span>{title}</span>
+        <span>{t(title)}</span>
         <code>{summary}</code>
-        {change.truncated && <small>truncated</small>}
+        {change.truncated && <small>{t("truncated")}</small>}
       </summary>
       {change.diff ? (
         <pre className="file-change-diff" data-language={languageForPath(change.path)}>
@@ -33,7 +34,7 @@ export function FileChangeCard({ change, defaultOpen }: { change: FileChange; de
         </pre>
       ) : (
         <p className="file-change-meta">
-          {change.operation === 'delete' ? (change.recursive ? 'Recursive deletion' : 'Deleted') : 'Completed'}
+          {change.operation === 'delete' ? (change.recursive ? t("Recursive deletion") : t("Deleted")) : t("Completed")}
         </p>
       )}
     </details>

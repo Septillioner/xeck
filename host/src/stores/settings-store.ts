@@ -1,5 +1,5 @@
 import type { ModelProfile, Settings } from '../../../shared/types.ts';
-import { ACCENT_COLORS, DEFAULT_SETTINGS, isProviderKind, TEXT_SIZES, THEMES, TOOL_USAGE_VIEW_MODES } from '../../../shared/types.ts';
+import { LANGUAGES, ACCENT_COLORS, DEFAULT_SETTINGS, isProviderKind, TEXT_SIZES, THEMES, TOOL_USAGE_VIEW_MODES } from '../../../shared/types.ts';
 import { settingsPath } from '../infra/data-dir.ts';
 import { readJson, writeJson } from '../infra/json-file.ts';
 import { dataLock as exclusive } from '../infra/data-lock.ts';
@@ -37,6 +37,7 @@ function normalizeSettings(value: Partial<Settings> & { poyrazInstructionsEnable
     : DEFAULT_SETTINGS.accent;
 
   return {
+    language: LANGUAGES.includes(value.language as Settings['language']) ? value.language as Settings['language'] : DEFAULT_SETTINGS.language,
     defaultProfile: normalizeOptionalProfile(value.defaultProfile),
     agentProfiles: normalizeAgentProfiles(value.agentProfiles),
     autocompleteProfile: normalizeOptionalProfile(value.autocompleteProfile),

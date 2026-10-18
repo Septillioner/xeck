@@ -1,3 +1,4 @@
+import { t } from '../i18n/index.ts';
 import { useEffect, useState } from 'react';
 import type { MigrationSnapshot } from '../../../shared/migrations.ts';
 import { executeMigration, listMigrations, skipMigration } from '../api/client.ts';
@@ -21,13 +22,13 @@ export function MigrationContent({ onBack, onContinue, startup = false }: {
   async function refresh() {
     setNotice(null);
     try { setSnapshot(await listMigrations()); }
-    catch (error) { setNotice(error instanceof Error ? error.message : 'Could not inspect migration sources.'); }
+    catch (error) { setNotice(error instanceof Error ? error.message : t("Could not inspect migration sources.")); }
   }
 
   useEffect(() => {
     let cancelled = false;
     void listMigrations().then((value) => { if (!cancelled) setSnapshot(value); })
-      .catch((error: unknown) => { if (!cancelled) setNotice(error instanceof Error ? error.message : 'Could not inspect migration sources.'); });
+      .catch((error: unknown) => { if (!cancelled) setNotice(error instanceof Error ? error.message : t("Could not inspect migration sources.")); });
     return () => { cancelled = true; };
   }, []);
 
@@ -51,43 +52,43 @@ export function MigrationContent({ onBack, onContinue, startup = false }: {
       <div className="mx-auto flex max-w-3xl flex-col gap-6">
         <header className="flex flex-wrap items-start justify-between gap-3">
           <div>
-            <h1 id="migration-title" className="text-heading font-semibold text-ink">{startup ? 'Bring your existing data into Xeck?' : 'Migration'}</h1>
-            <p className="mt-2 text-body text-muted">{startup ? 'We found your former application data. Would you like to migrate it?' : 'Move existing application data into Xeck.'}</p>
+            <h1 id="migration-title" className="text-heading font-semibold text-ink">{startup ? t("Bring your existing data into Xeck?") : t("Migration")}</h1>
+            <p className="mt-2 text-body text-muted">{startup ? t("We found your former application data. Would you like to migrate it?") : t("Move existing application data into Xeck.")}</p>
           </div>
-          {onBack && <button type="button" className={BUTTON.ghost} disabled={pending !== null} onClick={onBack}>Back to settings</button>}
+          {onBack && <button type="button" className={BUTTON.ghost} disabled={pending !== null} onClick={onBack}>{t("Back to settings")}</button>}
         </header>
-        <p className="text-ui text-muted">Available migrations appear below. Close other Xeck instances before renaming a data folder.</p>
-        {snapshot?.busy && <p className="text-ui text-muted" role="status">An agent is running. Finish active replies, then refresh.</p>}
-        {!snapshot && !notice && <p className="text-ui text-muted" role="status">Checking data folders…</p>}
+        <p className="text-ui text-muted">{t("Available migrations appear below. Close other Xeck instances before renaming a data folder.")}</p>
+        {snapshot?.busy && <p className="text-ui text-muted" role="status">{t("An agent is running. Finish active replies, then refresh.")}</p>}
+        {!snapshot && !notice && <p className="text-ui text-muted" role="status">{t("Checking data folders…")}</p>}
         {snapshot?.migrations.map((migration) => (
           <SettingCard key={migration.id}>
             <div className="flex flex-col gap-4 p-4">
               <div>
-                <h2 className="text-lead font-semibold text-ink">{migration.title}</h2>
-                <p className="mt-2 text-ui text-muted">{migration.description}</p>
+                <h2 className="text-lead font-semibold text-ink">{t(migration.title)}</h2>
+                <p className="mt-2 text-ui text-muted">{t(migration.description)}</p>
               </div>
               <dl className="flex flex-col gap-3 text-ui">
-                <div><dt className="text-muted">From</dt><dd className="mt-1 break-all text-ink">{migration.sourcePath}</dd></div>
-                <div><dt className="text-muted">To</dt><dd className="mt-1 break-all text-ink">{migration.targetPath}</dd></div>
+                <div><dt className="text-muted">{t("From")}</dt><dd className="mt-1 break-all text-ink">{migration.sourcePath}</dd></div>
+                <div><dt className="text-muted">{t("To")}</dt><dd className="mt-1 break-all text-ink">{migration.targetPath}</dd></div>
               </dl>
-              <p className="text-ui text-muted">{migration.detail}</p>
+              <p className="text-ui text-muted">{t(migration.detail)}</p>
               {migration.state === 'ready' && (
                 <div className="flex flex-wrap gap-3"><button type="button" className={BUTTON.primary} disabled={pending !== null || snapshot.busy}
                   aria-busy={pending === migration.id} onClick={() => void migrate(migration.id)}>
-                  {pending === migration.id ? 'Please wait…' : startup ? 'Migrate existing data' : 'Rename data folder'}
+                  {pending === migration.id ? t("Please wait…") : startup ? t("Migrate existing data") : t("Rename data folder")}
                 </button>
                 {startup && <button type="button" className={BUTTON.secondary} disabled={pending !== null || snapshot.busy}
-                  onClick={() => void migrate(migration.id, true)}>Start fresh</button>}
+                  onClick={() => void migrate(migration.id, true)}>{t("Start fresh")}</button>}
                 </div>
               )}
             </div>
           </SettingCard>
         ))}
-        {notice && <p className="text-ui text-danger" role="alert">{notice}</p>}
-        {success && <p className="text-ui text-ink" role="status">{success}</p>}
-        {startup && <p className="text-ui text-muted">Migrate renames the old folder to xeck. Start fresh creates an empty xeck folder and leaves the old data untouched.</p>}
-        {startup && snapshot && !snapshot.startupRequired && <div><button type="button" className={BUTTON.primary} disabled={pending !== null} onClick={onContinue}>Continue to Xeck</button></div>}
-        <div><button type="button" className={BUTTON.secondary} disabled={pending !== null} onClick={() => void refresh()}>Refresh</button></div>
+        {notice && <p className="text-ui text-danger" role="alert">{t(notice)}</p>}
+        {success && <p className="text-ui text-ink" role="status">{t(success)}</p>}
+        {startup && <p className="text-ui text-muted">{t("Migrate renames the old folder to xeck. Start fresh creates an empty xeck folder and leaves the old data untouched.")}</p>}
+        {startup && snapshot && !snapshot.startupRequired && <div><button type="button" className={BUTTON.primary} disabled={pending !== null} onClick={onContinue}>{t("Continue to Xeck")}</button></div>}
+        <div><button type="button" className={BUTTON.secondary} disabled={pending !== null} onClick={() => void refresh()}>{t("Refresh")}</button></div>
       </div>
     </main>
   );

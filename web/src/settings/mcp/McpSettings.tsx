@@ -1,3 +1,4 @@
+import { t } from '../../i18n/index.ts';
 import { useEffect, useState } from 'react';
 import type {
   BuiltinMcpStatus,
@@ -29,8 +30,8 @@ import {
   type ServerDraft,
 } from './mcp-draft.ts';
 
-const BUILTIN_STATUS_ERROR = 'Could not load MCP servers';
-const SAVE_ERROR = 'Could not save MCP servers';
+const BUILTIN_STATUS_ERROR = "Could not load MCP servers";
+const SAVE_ERROR = "Could not save MCP servers";
 
 function groupTools<T extends { group?: string }>(tools: T[]): [string, T[]][] {
   const groups = new Map<string, T[]>();
@@ -62,7 +63,7 @@ export function McpSettings() {
         setStates(snapshot.states);
         setBuiltin(snapshot.builtin ?? DEFAULT_BUILTIN_STATUS);
       })
-      .catch((error: unknown) => setNotice(error instanceof Error ? error.message : 'Could not load MCP servers'))
+      .catch((error: unknown) => setNotice(error instanceof Error ? error.message : t("Could not load MCP servers")))
       .finally(() => setLoading(false));
   }, []);
 
@@ -74,7 +75,7 @@ export function McpSettings() {
         setServers(receivedServers(snapshot.servers));
         setStates(snapshot.states);
       })
-      .catch((error: unknown) => setNotice(error instanceof Error ? error.message : 'Could not save MCP servers'))
+      .catch((error: unknown) => setNotice(error instanceof Error ? error.message : t("Could not save MCP servers")))
       .finally(() => setPendingControl(null));
   };
 
@@ -105,7 +106,7 @@ export function McpSettings() {
       headers: { 'content-type': 'application/json' },
       body: JSON.stringify({ disabled: [...disabled] }),
     }).then(async (response) => {
-      if (!response.ok) throw new Error('Could not save MCP tool settings');
+      if (!response.ok) throw new Error(t("Could not save MCP tool settings"));
       setBuiltin(await response.json() as BuiltinMcpStatus);
     }).catch((error: unknown) => {
       setBuiltin(previous);
@@ -137,13 +138,12 @@ export function McpSettings() {
     <div className="stack">
       <div className="section-header">
         <div>
-          <h2>MCP</h2>
-          <p className="lede">Enabled servers connect on the next turn. Shell and files stay off.</p>
+          <h2>{t("MCP")}</h2>
+          <p className="lede">{t("Enabled servers connect on the next turn. Shell and files stay off.")}</p>
         </div>
         <span className="row-actions">
           <button type="button" className="text-button" disabled={pendingControl !== null} onClick={() => setMarketOpen(true)}>
-            Browse marketplace
-          </button>
+            {t("Browse marketplace")}</button>
           <button
             type="button"
             className="text-button with-icon"
@@ -151,15 +151,14 @@ export function McpSettings() {
             onClick={() => openEditor(null)}
           >
             <IconPlus />
-            New server
-          </button>
+            {t("New server")}</button>
         </span>
       </div>
       {loading ? (
         <SettingCard>
           <div className="flex min-h-20 items-center justify-center gap-2 py-4 text-ui text-muted" role="status" aria-live="polite">
             <IconSpinner />
-            <span>Loading MCP servers…</span>
+            <span>{t("Loading MCP servers…")}</span>
           </div>
         </SettingCard>
       ) : (
@@ -168,12 +167,12 @@ export function McpSettings() {
           <header className="card-header">
             <div>
               <strong>{BUILTIN_MCP_TITLE}</strong>
-              <p>{builtinStatusText(builtin)}</p>
+              <p>{t(builtinStatusText(builtin))}</p>
             </div>
             <span className="row-actions">
               <Switch
                 checked={builtin.enabled}
-                label={`${BUILTIN_MCP_TITLE} enabled`}
+                label={t("{0} enabled", { "0": BUILTIN_MCP_TITLE })}
                 pending={pendingControl === 'builtin'}
                 disabled={pendingControl !== null}
                 onChange={(enabled) => {
@@ -186,7 +185,7 @@ export function McpSettings() {
                     .then(setBuiltin)
                     .catch((error: unknown) => {
                       setBuiltin(previous);
-                      setNotice(error instanceof Error ? error.message : 'Could not save MCP servers');
+                      setNotice(error instanceof Error ? error.message : t("Could not save MCP servers"));
                     })
                     .finally(() => setPendingControl(null));
                 }}
@@ -196,17 +195,17 @@ export function McpSettings() {
           {builtin.status === 'connected' && builtin.tools.length > 0 && (
             <details className="tool-list">
               <summary>
-                <span>Tools</span>
+                <span>{t("Tools")}</span>
                 <i className="chevron" />
               </summary>
               {groupTools(builtin.tools).map(([group, tools]) => (
                 <details className="tool-subgroup" key={group} open>
                   <summary className="flex items-center justify-between gap-3">
-                    <span>{group} <span className="text-muted">{tools.filter((tool) => tool.enabled).length}/{tools.length}</span></span>
+                    <span>{t(group)} <span className="text-muted">{tools.filter((tool) => tool.enabled).length}/{tools.length}</span></span>
                     <span onClick={(event) => event.stopPropagation()}>
                       <Switch
                         checked={tools.every((tool) => tool.enabled)}
-                        label={`${group} tools enabled`}
+                        label={t("{0} tools enabled", { "0": group })}
                         pending={pendingControl === `builtin-group:${group}`}
                         disabled={pendingControl !== null}
                         onChange={(enabled) => toggleBuiltinTools(tools.map((tool) => tool.name), enabled, `builtin-group:${group}`)}
@@ -219,7 +218,7 @@ export function McpSettings() {
                         <strong>{tool.name}</strong>
                         {tool.description && <p>{tool.description}</p>}
                       </div>
-                      <Switch checked={Boolean(tool.enabled)} label={`${tool.name} enabled`} disabled={pendingControl !== null} onChange={(enabled) => toggleBuiltinTools([tool.name], enabled, `builtin-tool:${tool.name}`)} />
+                      <Switch checked={Boolean(tool.enabled)} label={t("{0} enabled", { "0": tool.name })} disabled={pendingControl !== null} onChange={(enabled) => toggleBuiltinTools([tool.name], enabled, `builtin-tool:${tool.name}`)} />
                     </div>
                   ))}
                 </details>
@@ -230,7 +229,7 @@ export function McpSettings() {
       {servers.length === 0 ? (
         builtin ? null : (
           <SettingCard>
-            <p className="catalog-empty">No servers yet</p>
+            <p className="catalog-empty">{t("No servers yet")}</p>
           </SettingCard>
         )
       ) : (
@@ -242,12 +241,12 @@ export function McpSettings() {
               <header className="card-header">
                 <div>
                   <strong>{server.id}</strong>
-                  <p>{statusText(server, state)}</p>
+                  <p>{t(statusText(server, state))}</p>
                 </div>
                 <span className="row-actions">
                   <Switch
                     checked={server.enabled}
-                    label={`${server.id} enabled`}
+                    label={t("{0} enabled", { "0": server.id })}
                     pending={pendingControl === `toggle:${server.id}`}
                     disabled={pendingControl !== null}
                     onChange={(enabled) => {
@@ -261,7 +260,7 @@ export function McpSettings() {
                   <button
                     type="button"
                     className="icon-button"
-                    aria-label={`Edit ${server.id}`}
+                    aria-label={t("Edit {0}", { "0": server.id })}
                     disabled={pendingControl !== null}
                     onClick={() => openEditor(server)}
                   >
@@ -270,7 +269,7 @@ export function McpSettings() {
                   <button
                     type="button"
                     className="icon-button danger"
-                    aria-label={pendingControl === `delete:${server.id}` ? `Removing ${server.id}` : `Remove ${server.id}`}
+                    aria-label={pendingControl === `delete:${server.id}` ? t("Removing {0}", { "0": server.id }) : t("Remove {0}", { "0": server.id })}
                     aria-busy={pendingControl === `delete:${server.id}`}
                     data-pending={pendingControl === `delete:${server.id}` ? 'true' : 'false'}
                     disabled={pendingControl !== null}
@@ -287,28 +286,28 @@ export function McpSettings() {
                   </button>
                 </span>
               </header>
-              <SettingRow label={TRANSPORT_LABELS[server.transport]}>
+              <SettingRow label={t(TRANSPORT_LABELS[server.transport])}>
                 <span className="row-detail">{detail}</span>
               </SettingRow>
               {server.transport === 'http' && server.tokenConfigured && (
-                <SettingRow label="Token">
+                <SettingRow label={t("Token")}>
                   <span className="row-detail">{tokenDetail(server)}</span>
                 </SettingRow>
               )}
               {server.transport === 'http' && headerNames(server).length > 0 && (
-                <SettingRow label="Headers">
+                <SettingRow label={t("Headers")}>
                   <span className="row-detail">{headerNames(server).join(', ')}</span>
                 </SettingRow>
               )}
               {server.transport === 'stdio' && server.env.length > 0 && (
-                <SettingRow label="Environment">
+                <SettingRow label={t("Environment")}>
                   <span className="row-detail">{server.env.map((item) => item.name).join(', ')}</span>
                 </SettingRow>
               )}
               {state?.status === 'connected' && (state.tools ?? []).length > 0 && (
                 <details className="tool-list">
                   <summary>
-                    <span>Tools</span>
+                    <span>{t("Tools")}</span>
                     <i className="chevron" />
                   </summary>
                   {(state.tools ?? []).map((tool) => (
@@ -317,7 +316,7 @@ export function McpSettings() {
                         <strong>{tool.name}</strong>
                         {tool.description && <p>{tool.description}</p>}
                       </div>
-                      <Switch checked={Boolean(tool.enabled)} label={`${tool.name} enabled`} disabled={pendingControl !== null} onChange={(enabled) => toggleServerTool(server.id, tool.name, enabled)} />
+                      <Switch checked={Boolean(tool.enabled)} label={t("{0} enabled", { "0": tool.name })} disabled={pendingControl !== null} onChange={(enabled) => toggleServerTool(server.id, tool.name, enabled)} />
                     </div>
                   ))}
                 </details>
@@ -365,12 +364,12 @@ export function McpSettings() {
               })
               .catch((error: unknown) => {
                 setConnecting(false);
-                setNotice(error instanceof Error ? error.message : 'Could not save MCP servers');
+                setNotice(error instanceof Error ? error.message : t("Could not save MCP servers"));
               });
           }}
         />
       )}
-      {notice && <p className="lede">{notice}</p>}
+      {notice && <p className="lede">{t(notice)}</p>}
     </div>
   );
 }

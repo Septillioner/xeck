@@ -1,3 +1,4 @@
+import { t, useI18n } from '../i18n/index.ts';
 import { useEffect, useLayoutEffect, useRef, useState } from 'react';
 import { IconXeck } from '../ui/icons.tsx';
 import { currentActivity, type ActivitySignal } from './tool-usage.ts';
@@ -56,11 +57,11 @@ export function XeckPulse({ signal }: { signal: ActivitySignal | null }) {
   const remaining = retryAt ? Math.max(0, Math.ceil((retryAt - now) / 1000)) : 0;
   return (
     <div ref={position} className="xeck-pulse" data-mood={activity.mood} data-exiting={exiting || undefined} role="status" aria-live="polite" aria-atomic="true">
-      <span className="sr-only">{activity.label}</span>
+      <span className="sr-only">{t(activity.label)}</span>
       <div className="xeck-pulse-body" aria-hidden="true">
         <span className="xeck-pulse-content">
           <span className="xeck-pulse-mark"><IconXeck size={26} /></span>
-          <PulseLabel label={activity.label} remaining={remaining} />
+          <PulseLabel label={t(activity.label)} remaining={remaining} />
         </span>
       </div>
     </div>
@@ -69,6 +70,7 @@ export function XeckPulse({ signal }: { signal: ActivitySignal | null }) {
 
 /** Retain the outgoing wording until the incoming wording has rolled into place. */
 function PulseLabel({ label, remaining }: { label: string; remaining: number }) {
+  const { locale } = useI18n();
   const [labels, setLabels] = useState({ current: label, previous: null as string | null, revision: 0 });
   const [width, setWidth] = useState<number>();
   const currentLine = useRef<HTMLSpanElement>(null);
@@ -77,7 +79,7 @@ function PulseLabel({ label, remaining }: { label: string; remaining: number }) 
   }
   useLayoutEffect(() => {
     if (currentLine.current) setWidth(currentLine.current.getBoundingClientRect().width);
-  }, [labels.current, remaining]);
+  }, [labels.current, remaining, locale]);
   useEffect(() => {
     if (labels.previous === null) return;
     const timer = window.setTimeout(() => setLabels((value) => ({ ...value, previous: null })), 380);
@@ -88,17 +90,17 @@ function PulseLabel({ label, remaining }: { label: string; remaining: number }) 
     <span className="xeck-pulse-copy" style={{ width }}>
       {labels.previous !== null && (
         <span className="xeck-pulse-line" data-leaving="true" key={`previous-${labels.revision}`}>
-          {labels.previous}
+          {t(labels.previous)}
         </span>
       )}
       <span className="xeck-pulse-line" ref={currentLine} data-entering={labels.previous !== null || undefined} key={`current-${labels.revision}`}>
         <span className="xeck-pulse-label">
-          {Array.from(labels.current).map((letter, index) => (
+          {Array.from(t(labels.current)).map((letter, index) => (
             <span className="xeck-pulse-letter" key={index} style={{ animationDelay: `${(index + 1) * 40}ms` }}>{letter}</span>
           ))}
         </span>
         {labels.current === 'Waiting to retry' && remaining > 0 && (
-          <span className="xeck-pulse-retry"> · {remaining}s</span>
+          <span className="xeck-pulse-retry"> · {remaining}{t("s")}</span>
         )}
       </span>
     </span>

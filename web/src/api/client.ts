@@ -122,7 +122,7 @@ export async function deleteProject(id: string): Promise<void> {
 
 
 export async function listSessions(): Promise<SessionSummary[]> {
-  const sessions = await request<SessionSummary[]>('/api/sessions');
+  const sessions = await request<SessionSummary[]>('/api/sessions?includeBotConversations=true');
   return sessions.filter((session) => !session.parentId);
 }
 

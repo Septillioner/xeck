@@ -1,3 +1,4 @@
+import { t } from '../i18n/index.ts';
 import { useState } from 'react';
 import { isProviderKind, type CatalogEntry, type ProviderKind, type ReasoningEffort, type ServiceTier } from '../../../shared/types.ts';
 import { IconSettings, ProviderMark } from '../ui/icons.tsx';
@@ -39,8 +40,8 @@ function modelPillDetail(
   maxContextEnabled: boolean,
 ): string | undefined {
   const parts: string[] = [];
-  if (showEffort) parts.push(effort ?? EFFORT_DEFAULT_LABEL);
-  if (serviceTier) parts.push(serviceTier);
+  if (showEffort) parts.push(t(effort ?? EFFORT_DEFAULT_LABEL));
+  if (serviceTier) parts.push(t(serviceTier));
   if (maxContextEnabled) parts.push('MAX');
   if (parts.length === 0) return undefined;
   return parts.join(MODEL_PILL_DETAIL_SEPARATOR);
@@ -79,20 +80,20 @@ export function ModelMenu({
   return (
     <Menu
       variant="model"
-      label="Model"
-      placeholder="Select model"
+      label={t("Model")}
+      placeholder={t("Select model")}
       value={value}
       disabled={disabled}
       searchable
-      searchPlaceholder="Search models"
-      emptyLabel="Add a model in Settings"
+      searchPlaceholder={t("Search models")}
+      emptyLabel={t("Add a model in Settings")}
       onEmpty={onAddModel}
       showList={!hasConfig || browsing}
       onOpenChange={(next) => {
         if (!next) setBrowsing(false);
       }}
       footerAction={{
-        label: 'Manage models in Settings',
+        label: t("Manage models in Settings"),
         icon: <IconSettings />,
         onClick: onAddModel,
       }}

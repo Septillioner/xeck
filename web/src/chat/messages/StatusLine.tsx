@@ -1,3 +1,4 @@
+import { t } from '../../i18n/index.ts';
 import { useEffect, useState } from 'react';
 import type { RateLimitWait } from './types.ts';
 
@@ -5,8 +6,8 @@ export const RATE_LIMIT_LABEL = 'Rate limit reached, retrying';
 
 export function ThinkingLine({ label, live }: { label: string; live: boolean }) {
   return (
-    <p className="status-line" aria-label={label}>
-      <span className={live ? 'shimmer-text' : undefined}>{label}</span>
+    <p className="status-line" aria-label={t(label)}>
+      <span className={live ? 'shimmer-text' : undefined}>{t(label)}</span>
     </p>
   );
 }
@@ -24,10 +25,10 @@ export function RateLimitLine({ wait }: { wait: RateLimitWait }) {
   }, [wait.retryAt]);
 
   const remaining = Math.max(0, Math.ceil((wait.retryAt - now) / 1000));
-  const label = remaining > 0 ? `${RATE_LIMIT_LABEL} in ${remaining}s` : RATE_LIMIT_LABEL;
+  const label = remaining > 0 ? t("Rate limit reached, retrying in {count}s", { count: remaining }) : t(RATE_LIMIT_LABEL);
   return (
-    <p className="status-line" aria-label={RATE_LIMIT_LABEL}>
-      <span className="shimmer-text">{label}</span>
+    <p className="status-line" aria-label={t(RATE_LIMIT_LABEL)}>
+      <span className="shimmer-text">{t(label)}</span>
     </p>
   );
 }
@@ -36,7 +37,7 @@ export function Reasoning({ text, live = false }: { text: string; live?: boolean
   return (
     <details className="reasoning" open={live ? true : undefined}>
       <summary>
-        <span className={live ? 'shimmer-text' : undefined}>Thinking</span>
+        <span className={live ? 'shimmer-text' : undefined}>{t("Thinking")}</span>
         <i className="chevron" />
       </summary>
       <p>{text}</p>
