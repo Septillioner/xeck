@@ -15,9 +15,9 @@ export async function buildHostSystemPrompt(agentId?: string, bot?: { name: stri
   const customIdentity = bot?.systemPrompt?.trim();
   const instructions = customIdentity ? agentDef.instructions.filter((id) => !id.endsWith('.identity')) : agentDef.instructions;
   const identityText = buildAgentIdentityText(instructions, settings.xeckInstructionsEnabled);
-  const base = customIdentity ? settings.systemInstructions.trim() : buildXeckSystemInstructions(settings.systemInstructions, settings.xeckInstructionsEnabled);
+  const base = customIdentity || agentDef.startableBy.includes('bot') ? settings.systemInstructions.trim() : buildXeckSystemInstructions(settings.systemInstructions, settings.xeckInstructionsEnabled);
   return [base, identityText, customIdentity,
-    customIdentity ? `Your current name is ${JSON.stringify(bot!.name)}. Use this name if it differs from an earlier name in your identity.` : '',
+    bot ? `Your current name is ${JSON.stringify(bot.name)}. Use this name if it differs from an earlier name in your identity.` : '',
     'File scope: ' + JSON.stringify({ workspaceRoot: path.resolve(settings.workspaceRoot.trim() || process.cwd()), fullFileAccess: settings.fullFileAccess }),
   ]
     .filter(Boolean)

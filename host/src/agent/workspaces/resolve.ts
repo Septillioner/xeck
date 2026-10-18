@@ -3,8 +3,9 @@ import { xeckAgentId, xeckWorkspace, xeckPolicyId } from '../../domain/legacy-br
  * Katalog bağları. Kayıt tutmaz: workspace, agent ve policy satırlarını okur.
  */
 import type { AgentDef, WorkspaceDef } from '@@core/definitions/index.ts';
-import { AGENT_BY_ID, CODER_AGENT } from '../catalog/agents.ts';
-import { CODING_WORKSPACE, WORKSPACES } from '../catalog/workspaces.ts';
+import { AGENT_BY_ID, CODER_AGENT, XECKBOT_AGENT } from '../catalog/agents.ts';
+import { POLICY_BY_ID, XECKBOT_ASK_POLICY } from '../catalog/policies.ts';
+import { CODING_WORKSPACE, WORKSPACES, XECKBOT_WORKSPACE } from '../catalog/workspaces.ts';
 
 export function defaultAgentId(): string {
   return CODER_AGENT.id;
@@ -54,7 +55,16 @@ export function chatIdentityFromSession(session: {
   policyId?: unknown;
   workspace?: unknown;
   agentId?: unknown;
+  bot?: unknown;
 }): { workspace: string; agentId: string; policyId: string } {
+  if (session.bot) {
+    const policyId = typeof session.policyId === 'string' && XECKBOT_WORKSPACE.policies.includes(session.policyId)
+      ? session.policyId
+      : typeof session.policyId === 'string' && POLICY_BY_ID[session.policyId]?.label === XECKBOT_ASK_POLICY.label
+        ? XECKBOT_ASK_POLICY.id
+        : XECKBOT_WORKSPACE.defaultPolicy;
+    return { agentId: XECKBOT_AGENT.id, workspace: agentWorkspaceRef(XECKBOT_AGENT.id), policyId };
+  }
   const workspace = typeof session.workspace === 'string' && session.workspace
     ? xeckWorkspace(session.workspace)
     : defaultWorkspaceRef();

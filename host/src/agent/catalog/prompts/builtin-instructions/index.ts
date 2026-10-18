@@ -2,6 +2,7 @@ import { type BuiltinInstructionDef } from './schema.ts';
 import { CORE_BASE, CORE_IDENTITY, CORE_MEMORY, CORE_RULES, CORE_SKILLS, CORE_SUBAGENT } from './core.ts';
 import { CODER_AGENT, CODER_CORE, CODER_IDENTITY, CODER_PLAN, CODER_SUBAGENT } from './coder.ts';
 import { XECK_BASE, XECK_IDENTITY } from './xeck.ts';
+import { XECKBOT_BASE, XECKBOT_IDENTITY } from './xeckbot.ts';
 import { SUBAGENT_TASK, SUBAGENT_CODER, SUBAGENT_GENERAL } from './subagent.ts';
 
 export const BUILTIN_INSTRUCTIONS: readonly BuiltinInstructionDef[] = [
@@ -21,6 +22,8 @@ export const BUILTIN_INSTRUCTIONS: readonly BuiltinInstructionDef[] = [
   CODER_SUBAGENT,
   XECK_BASE,
   XECK_IDENTITY,
+  XECKBOT_BASE,
+  XECKBOT_IDENTITY,
 ];
 
 const BY_ID = new Map(BUILTIN_INSTRUCTIONS.map((def) => [def.id, def]));

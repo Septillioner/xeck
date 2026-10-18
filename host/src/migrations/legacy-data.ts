@@ -48,6 +48,7 @@ export async function startFreshLegacyData(): Promise<MigrationResult> {
   if (before.state === 'blocked') throw new MigrationConflictError(before.detail);
   if (before.state === 'current' || before.state === 'conflict') return { migration: before, changed: false };
   // An empty current folder records the decision and leaves the legacy folder intact.
+  await mkdir(path.dirname(before.targetPath), { recursive: true });
   await mkdir(before.targetPath);
   return { migration: await inspectLegacyData(), changed: true };
 }

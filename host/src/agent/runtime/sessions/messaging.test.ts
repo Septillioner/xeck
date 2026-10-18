@@ -12,6 +12,7 @@ import { subscribeDialog } from '../events/dialogs.ts';
 import { getLiveChat } from '../events/live-chat.ts';
 import { startSessionTurn } from './turn.ts';
 import { listMessageTargets, sendChatMessage } from './messaging.ts';
+import { XECKBOT_ASK_POLICY } from '../../catalog/policies.ts';
 import { sessionRoutes } from '../../../http/routes/sessions.ts';
 
 function deferred() {
@@ -139,7 +140,7 @@ test('self, unrelated-child, child-sender and read-only sends are rejected by th
     const childTurn = acquireAgentTurn(child.id);
     try { await assert.rejects(sendChatMessage(child.id, f.source.id, 'Child'), /user-owned/); }
     finally { childTurn.release(true); }
-    await setSessionPolicyId(f.source.id, 'coder-ask');
+    await setSessionPolicyId(f.source.id, XECKBOT_ASK_POLICY.id);
     await assert.rejects(sendChatMessage(f.source.id, f.target.id, 'Read only'), /Blocked|policy|mode/i);
     assert.equal(f.requests.length, 0);
   } finally { await f.dispose(); }

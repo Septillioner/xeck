@@ -2,7 +2,7 @@ import assert from 'node:assert/strict';
 import test from 'node:test';
 import { explainAll, type ExplainContext } from './explain.ts';
 import { selectedBuiltinNames } from '../workspaces/definitions.ts';
-import { POLICIES, POLICY_BY_ID } from '../catalog/policies.ts';
+import { POLICIES, POLICY_BY_ID, XECKBOT_AGENT_POLICY, XECKBOT_ASK_POLICY } from '../catalog/policies.ts';
 import { CODING_WORKSPACE, GENERAL_WORKSPACE } from '../catalog/workspaces.ts';
 import { getToolLabel } from '../tools/tool-labels.ts';
 import { BUILTIN_MCP_ID } from '../tools/builtin/identity.ts';
@@ -36,7 +36,7 @@ test('Faz-0 definitions validate and list every registered builtin once', () => 
   assert.ok(registered.includes('send_chat_message'));
   assert.equal(new Set(registered).size, registered.length);
   for (const policy of POLICIES) {
-    assert.ok(['coder-plan', 'coder-agent', 'coder-ask', 'chat', 'xeck-agent', 'xeck-ask'].includes(policy.id));
+    assert.ok(['coder-plan', 'coder-agent', 'coder-ask', 'chat', 'xeck-agent', 'xeck-ask', XECKBOT_AGENT_POLICY.id, XECKBOT_ASK_POLICY.id].includes(policy.id));
     assert.ok((policy.maxToolRounds ?? 0) > 0);
   }
   assert.deepEqual([...CODING_WORKSPACE.policies], ['coder-plan', 'coder-agent', 'coder-ask']);

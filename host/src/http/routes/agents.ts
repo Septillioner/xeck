@@ -14,7 +14,7 @@ export const agentRoutes = new Hono();
 
 agentRoutes.get('/api/agents', (c) => {
   const by = c.req.query('startableBy') ?? 'user';
-  if (by !== 'user' && by !== 'agent') return c.json({ error: 'Invalid agent audience' }, 400);
+  if (by !== 'user' && by !== 'agent' && by !== 'bot') return c.json({ error: 'Invalid agent audience' }, 400);
   const agents: AgentPublic[] = listStartableAgents(by).map((agent) => {
     const workspaceRef = agentWorkspaceRef(agent.id);
     const workspace = WORKSPACE_BY_REF[workspaceRef];
@@ -29,6 +29,7 @@ agentRoutes.get('/api/agents', (c) => {
     });
     return {
       id: agent.id,
+      botOnly: agent.startableBy.includes('bot'),
       label: agent.label ?? agent.id,
       description: agent.description ?? '',
       icon: agent.icon ?? 'chat',

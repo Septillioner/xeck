@@ -38,13 +38,14 @@ export function bootApp() {
 }
 
 async function loadInitialState() {
-  const [nextSessions, projects, settings, providers, catalog, agents] = await Promise.all([
+  const [nextSessions, projects, settings, providers, catalog, agents, botAgents] = await Promise.all([
     listSessions(),
     listProjects(),
     getSettings(),
     listProviders(),
     listCatalog(),
     listAgents(),
+    listAgents('bot'),
   ]);
   return {
     sessions: nextSessions,
@@ -52,7 +53,7 @@ async function loadInitialState() {
     settings: displaySettings(settings),
     providers,
     catalog,
-    agents,
+    agents: [...agents, ...botAgents],
     active: null,
   };
 }

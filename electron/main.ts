@@ -30,6 +30,7 @@ app.setPath('userData', existsSync(legacyUserData) ? legacyUserData
     : join(app.getPath('appData'), 'xeck-desktop'));
 
 let hostProcess: ChildProcess | undefined;
+let openingWindow: Promise<void> | undefined;
 /** URL the window actually loaded; the navigation guard compares against it. */
 let appEntryUrl = '';
 
@@ -50,10 +51,11 @@ async function startApplication(): Promise<void> {
     await waitForUrl(`http://${HOST_NAME}:${hostPort}/api/migrations`, 'Host dev server');
     await window.loadURL(VITE_DEV_URL);
     appEntryUrl = window.webContents.getURL();
+    window.show();
     return;
   }
 
-  hostProcess = startHostProcess(hostPort);
+  if (!hostProcess) hostProcess = startHostProcess(hostPort);
   await waitForUrl(`http://${HOST_NAME}:${hostPort}/api/migrations`, 'Host');
 
   const rendererPath = join(runtimeRoot(), 'web', 'dist', 'index.html');
@@ -61,6 +63,7 @@ async function startApplication(): Promise<void> {
     query: { apiBase: `http://${HOST_NAME}:${hostPort}` },
   });
   appEntryUrl = window.webContents.getURL();
+  window.show();
 }
 
 function createMainWindow(): BrowserWindow {
@@ -145,12 +148,15 @@ function startHostProcess(hostPort: number): ChildProcess {
       ...process.env,
       ELECTRON_RUN_AS_NODE: '1',
       XECK_HOST_PORT: String(hostPort),
+      PATH: process.platform === 'win32' ? process.env.PATH
+        : ['/opt/homebrew/bin', '/usr/local/bin', process.env.PATH, '/usr/bin', '/bin'].filter(Boolean).join(':'),
     },
     stdio: 'inherit',
     windowsHide: true,
   });
 
   child.once('exit', (code, signal) => {
+    if (hostProcess === child) hostProcess = undefined;
     if (code !== 0 && signal === null) {
       console.error(`Host exited with code ${code ?? 'unknown'}`);
     }
@@ -160,7 +166,7 @@ function startHostProcess(hostPort: number): ChildProcess {
 
 function runtimeRoot(): string {
   if (app.isPackaged) return process.resourcesPath;
-  return join(dirname(__dirname));
+  return dirname(dirname(__dirname));
 }
 
 async function waitForUrl(url: string, label: string): Promise<void> {
@@ -168,11 +174,12 @@ async function waitForUrl(url: string, label: string): Promise<void> {
 
   while (Date.now() < deadline) {
     try {
-      const response = await fetch(url);
+      const response = await fetch(url, { signal: AbortSignal.timeout(2_000) });
       if (response.ok) return;
     } catch {
-      await delay(READY_INTERVAL_MS);
+      // Retry while the local server starts.
     }
+    await delay(READY_INTERVAL_MS);
   }
 
   throw new Error(`${label} did not become ready in time`);
@@ -188,24 +195,35 @@ function delay(milliseconds: number): Promise<void> {
   return new Promise((resolve) => setTimeout(resolve, milliseconds));
 }
 
-app.whenReady().then(async () => {
-  try {
-    await startApplication();
-    const window = BrowserWindow.getAllWindows()[0];
-    window?.show();
-  } catch (error) {
+function openApplication(): Promise<void> {
+  if (openingWindow) return openingWindow;
+  openingWindow = startApplication().catch((error) => {
     console.error(error);
     stopHostProcess();
     app.quit();
-  }
-});
+  }).finally(() => { openingWindow = undefined; });
+  return openingWindow;
+}
+
+if (!app.requestSingleInstanceLock()) {
+  app.quit();
+} else {
+  app.on('second-instance', () => {
+    const window = BrowserWindow.getAllWindows()[0];
+    if (window) {
+      if (window.isMinimized()) window.restore();
+      window.show();
+      window.focus();
+    } else if (app.isReady()) void openApplication();
+  });
+  void app.whenReady().then(openApplication);
+  app.on('activate', () => {
+    if (BrowserWindow.getAllWindows().length === 0) void openApplication();
+  });
+}
 
 app.on('window-all-closed', () => {
   if (process.platform !== 'darwin') app.quit();
-});
-
-app.on('activate', () => {
-  if (BrowserWindow.getAllWindows().length === 0) void startApplication();
 });
 
 app.on('before-quit', stopHostProcess);

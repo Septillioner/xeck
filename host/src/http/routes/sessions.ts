@@ -19,7 +19,7 @@ import { getLiveChat } from '../../agent/runtime/events/live-chat.ts';
 import { alignProfile, apiKeyForProfile, providerIsEnabled } from '../../stores/provider-store.ts';
 import { readRules, readSkills } from '../../stores/instruction-store.ts';
 import { readSettings } from '../../stores/settings-store.ts';
-import { AGENT_BY_ID } from '../../agent/catalog/agents.ts';
+import { AGENT_BY_ID, XECKBOT_AGENT } from '../../agent/catalog/agents.ts';
 import { POLICY_BY_ID } from '../../agent/catalog/policies.ts';
 import { agentWorkspaceRef, defaultAgentId } from '../../agent/workspaces/resolve.ts';
 import { WORKSPACE_BY_REF } from '../../agent/catalog/workspaces.ts';
@@ -57,11 +57,11 @@ sessionRoutes.post('/api/sessions', async (c) => {
   if (effort === false) return c.json({ error: 'Invalid reasoning effort' }, 400);
   const tier = body ? readServiceTier(body.serviceTier) : undefined;
   if (tier === false) return c.json({ error: 'Invalid service tier' }, 400);
-  const agentId = typeof body?.agentId === 'string' ? body.agentId.trim() : '';
+  const agentId = body?.bot !== undefined ? XECKBOT_AGENT.id : typeof body?.agentId === 'string' ? body.agentId.trim() : '';
   if (agentId && !AGENT_BY_ID[agentId]) {
     return c.json({ error: 'Unknown agent' }, 400);
   }
-  if (agentId && !AGENT_BY_ID[agentId]?.startableBy.includes('user')) {
+  if (agentId && !AGENT_BY_ID[agentId]?.startableBy.includes(body?.bot !== undefined ? 'bot' : 'user')) {
     return c.json({ error: 'This agent can only be started by another agent' }, 400);
   }
   let policyId: string | undefined;

@@ -355,7 +355,7 @@ function AgentPicker() {
   const { agents, draftAgentId, setDraftAgentId, openSettings } = useAppState();
   return (
     <div className="agent-picker" role="radiogroup" aria-label={t("Agent")}>
-      {agents.map((agent) => {
+      {agents.filter((agent) => !agent.botOnly).map((agent) => {
         const Icon = AGENT_ICONS[agent.id] ?? AGENT_ICONS[agent.icon] ?? IconChat;
         const selected = draftAgentId === agent.id;
         return (

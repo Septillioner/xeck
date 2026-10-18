@@ -1,11 +1,19 @@
 import os from 'node:os';
+import { existsSync } from 'node:fs';
 import path from 'node:path';
 
 const DATA_DIR_NAME = 'xeck';
 
 export function applicationDataDirectories() {
   const appData = process.env.APPDATA;
-  const base = path.resolve(appData?.trim() || os.homedir());
+  const home = os.homedir();
+  // Retain existing Unix installations and explicit APPDATA overrides.
+  const previous = path.join(home, DATA_DIR_NAME);
+  const nativeBase = process.platform === 'darwin' ? path.join(home, 'Library', 'Application Support')
+    : process.platform === 'win32' ? path.join(home, 'AppData', 'Roaming')
+      : process.env.XDG_CONFIG_HOME?.trim() && path.isAbsolute(process.env.XDG_CONFIG_HOME)
+        ? process.env.XDG_CONFIG_HOME : path.join(home, '.config');
+  const base = path.resolve(appData?.trim() || (existsSync(previous) || existsSync(path.join(home, 'poyraz-web')) ? home : nativeBase));
   const current = path.join(base, DATA_DIR_NAME);
   const legacy = path.join(base, 'poyraz-web');
   return { base, current, legacy };

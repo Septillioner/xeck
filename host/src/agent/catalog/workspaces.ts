@@ -15,6 +15,8 @@ import {
 } from '../tools/builtin/memory.ts';
 import { ADD_RULE_TOOL, LIST_RULES_TOOL, REMOVE_RULE_TOOL } from '../tools/builtin/rules.ts';
 import { LIST_SKILLS_TOOL } from '../tools/builtin/skills.ts';
+import { XECKBOT_AGENT } from './agents.ts';
+import { XECKBOT_AGENT_POLICY, XECKBOT_ASK_POLICY } from './policies.ts';
 
 const GENERAL_BUILTIN = [
   ASK_QUESTION_TOOL,
@@ -65,7 +67,18 @@ export const GENERAL_WORKSPACE: WorkspaceDef = WorkspaceDefSchema.parse({
   toolset: { builtin: [...GENERAL_BUILTIN], mcp: '*', skills: true },
 });
 
-export const WORKSPACES: WorkspaceDef[] = [XECK_AGENT_WORKSPACE, CODING_WORKSPACE, GENERAL_WORKSPACE];
+export const XECKBOT_WORKSPACE: WorkspaceDef = WorkspaceDefSchema.parse({
+  id: 'xeckbot',
+  version: 1,
+  label: 'XeckBot',
+  defaultAgent: XECKBOT_AGENT.id,
+  agents: [XECKBOT_AGENT.id],
+  policies: [XECKBOT_AGENT_POLICY.id, XECKBOT_ASK_POLICY.id],
+  defaultPolicy: XECKBOT_AGENT_POLICY.id,
+  toolset: { builtin: '*', mcp: '*', skills: true },
+});
+
+export const WORKSPACES: WorkspaceDef[] = [XECK_AGENT_WORKSPACE, CODING_WORKSPACE, GENERAL_WORKSPACE, XECKBOT_WORKSPACE];
 
 export const WORKSPACE_BY_REF: Record<string, WorkspaceDef> = Object.fromEntries(
   WORKSPACES.map((workspace) => [`${workspace.id}@${workspace.version}`, workspace]),

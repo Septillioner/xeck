@@ -3,13 +3,17 @@ import { mkdtemp, rm } from 'node:fs/promises';
 import os from 'node:os';
 import path from 'node:path';
 import test from 'node:test';
-import { createSession, readSessionIdentity } from '../../stores/sessions.ts';
-import { AGENTS, CODER_AGENT, SUBAGENT_GENERAL, XECK_AGENT, listStartableAgents } from './agents.ts';
+import { createSession, readSession, saveSession, readSessionIdentity } from '../../stores/sessions.ts';
+import { readJson, writeJson } from '../../infra/json-file.ts';
+import { sessionFilePath } from '../../infra/data-dir.ts';
+import { AGENTS, CODER_AGENT, SUBAGENT_GENERAL, XECK_AGENT, XECKBOT_AGENT, listStartableAgents } from './agents.ts';
 import { policyIdFor, selectedBuiltinNames, validateDefinitions } from '../workspaces/definitions.ts';
 import { agentWorkspaceRef, resolveAgentId } from '../workspaces/resolve.ts';
-import { CODING_WORKSPACE, GENERAL_WORKSPACE } from './workspaces.ts';
+import { CODING_WORKSPACE, GENERAL_WORKSPACE, XECKBOT_WORKSPACE } from './workspaces.ts';
 import { registeredBuiltinNames } from '../tools/builtin/registry.ts';
 import { buildAgentIdentityText } from './prompts/builtin-instructions/index.ts';
+import { buildHostSystemPrompt } from './prompts/host-system-prompt.ts';
+import { XECKBOT_ASK_POLICY } from './policies.ts';
 
 async function withDataDir(t: (root: string) => Promise<void>): Promise<void> {
   const previousAppData = process.env.APPDATA;
@@ -61,7 +65,7 @@ test('picker: user-startable agents only, xeck first, showcase metadata present'
   for (const agent of AGENTS) {
     assert.equal(agent.startableBy.includes('user'), users.has(agent.id));
     assert.equal(agent.startableBy.includes('agent'), subagents.has(agent.id));
-    assert.notEqual(users.has(agent.id), subagents.has(agent.id));
+    if (!agent.startableBy.includes('bot')) assert.notEqual(users.has(agent.id), subagents.has(agent.id));
   }
   assert.equal(CODER_AGENT.label, 'Coder');
   assert.equal(XECK_AGENT.label, 'Xeck');
@@ -114,4 +118,50 @@ test('createSession derives workspace/agent from agentId', async () => {
     assert.deepEqual(await readSessionIdentity(agent.id), { workspace: 'xeck@1', agentId: 'xeck' });
     assert.deepEqual(await readSessionIdentity(fallback.id), { workspace: 'coding@1', agentId: 'coder' });
   });
-});
+});
+test('XeckBots have a separate agent, instructions, workspace and creation audience', async () => {
+  assert.deepEqual(listStartableAgents('bot').map((agent) => agent.id), [XECKBOT_AGENT.id]);
+  assert.ok(!listStartableAgents().some((agent) => agent.id === XECKBOT_AGENT.id));
+  assert.ok(!listStartableAgents('agent').some((agent) => agent.id === XECKBOT_AGENT.id));
+  assert.notEqual(agentWorkspaceRef(XECKBOT_AGENT.id), agentWorkspaceRef(XECK_AGENT.id));
+  assert.deepEqual(XECKBOT_WORKSPACE.agents, [XECKBOT_AGENT.id]);
+  assert.ok(!XECKBOT_AGENT.instructions.some((id) => XECK_AGENT.instructions.includes(id) && !id.startsWith('core.')));
+  await withDataDir(async () => {
+    const identity = { name: 'Atlas', color: 'blue' as const, purpose: 'Teach English', systemPrompt: 'You are Atlas, a patient English coach.' };
+    const bot = await createSession(null, undefined, undefined, XECK_AGENT.id, undefined, undefined, identity);
+    assert.equal(bot.agentId, XECKBOT_AGENT.id);
+    assert.equal(bot.workspace, agentWorkspaceRef(XECKBOT_AGENT.id));
+    assert.equal(bot.policyId, XECKBOT_WORKSPACE.defaultPolicy);
+    assert.equal((await createSession(null, undefined, undefined, XECK_AGENT.id)).agentId, XECK_AGENT.id);
+    await assert.rejects(createSession(null, undefined, undefined, XECKBOT_AGENT.id), /cannot be started by a user/);
+    const prompt = await buildHostSystemPrompt(bot.agentId, { name: bot.title, systemPrompt: bot.bot!.systemPrompt });
+    assert.ok(prompt.includes(identity.systemPrompt));
+    assert.ok(prompt.includes('separate histories'));
+    assert.ok(!prompt.includes('You are Xeck, a general-purpose assistant'));
+    assert.ok(!prompt.includes('You are the Xeck assistant.'));
+    const fallback = await buildHostSystemPrompt(bot.agentId, { name: bot.title });
+    assert.ok(fallback.includes('You are a XeckBot'));
+    assert.ok(!fallback.includes('You are the Xeck assistant.'));
+  });
+});
+
+test('legacy bots adopt the dedicated agent without losing identity, history or ask mode', async () => {
+  await withDataDir(async () => {
+    const bot = await createSession(null, undefined, undefined, undefined, undefined, undefined, { name: 'Legacy bot', color: 'violet', systemPrompt: 'Keep this individual identity.' });
+    bot.messages.push({ id: 'old-message', role: 'user', content: 'Keep this conversation', createdAt: bot.createdAt });
+    bot.libraryMessages.push({ role: 'user', content: 'Keep this conversation' });
+    bot.agentId = XECK_AGENT.id;
+    bot.workspace = agentWorkspaceRef(XECK_AGENT.id);
+    bot.policyId = 'xeck-ask';
+    await writeJson(sessionFilePath(bot.id), bot);
+    const restored = await readSession(bot.id);
+    assert.equal(restored?.agentId, XECKBOT_AGENT.id);
+    assert.equal(restored?.workspace, agentWorkspaceRef(XECKBOT_AGENT.id));
+    assert.equal(restored?.policyId, XECKBOT_ASK_POLICY.id);
+    assert.deepEqual(restored?.bot, bot.bot);
+    assert.deepEqual(restored?.messages, bot.messages);
+    assert.deepEqual(restored?.libraryMessages, bot.libraryMessages);
+    await saveSession(restored!);
+    assert.equal((await readJson<{ agentId: string }>(sessionFilePath(bot.id), { agentId: '' })).agentId, XECKBOT_AGENT.id);
+  });
+});

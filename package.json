@@ -17,9 +17,12 @@
     "test": "npm run typecheck --prefix host && npm run test --prefix host",
     "test:i18n": "node host/node_modules/tsx/dist/cli.mjs --tsconfig web/tsconfig.json --test web/src/i18n/i18n.test.ts",
     "dev:electron": "npm run build:electron && electron .",
-    "dist": "npm run build:desktop && electron-builder",
+    "dist": "npm run build:desktop && electron-builder --publish never",
     "build-release": "npm run build:desktop && electron-builder --win nsis --publish never -c.directories.output=build/release-build",
-    "preview:web": "npm run preview --prefix web"
+    "preview:web": "npm run preview --prefix web",
+    "dist:win": "npm run build:desktop && electron-builder --win --publish never",
+    "dist:mac": "npm run build:desktop && electron-builder --mac --publish never",
+    "dist:linux": "npm run build:desktop && electron-builder --linux --publish never"
   },
   "main": "build/dist-electron/main.js",
   "build": {
@@ -64,12 +67,38 @@
     },
     "mac": {
       "icon": "assets/branding/xeck.png",
-      "target": "dmg"
+      "target": [
+        {
+          "target": "dmg",
+          "arch": [
+            "x64",
+            "arm64"
+          ]
+        }
+      ],
+      "category": "public.app-category.productivity"
     },
     "linux": {
       "icon": "assets/branding/xeck.png",
-      "target": "AppImage"
-    }
+      "target": [
+        {
+          "target": "AppImage",
+          "arch": [
+            "x64",
+            "arm64"
+          ]
+        },
+        {
+          "target": "deb",
+          "arch": [
+            "x64",
+            "arm64"
+          ]
+        }
+      ],
+      "category": "Utility"
+    },
+    "artifactName": "${productName}-${version}-${os}-${arch}.${ext}"
   },
   "devDependencies": {
     "concurrently": "^9.2.0",

@@ -60,6 +60,8 @@ export interface PolicyChoice {
 /** One row of the new-chat agent picker, served by `GET /api/agents`. */
 export interface AgentPublic {
   id: string;
+  /** Only selectable through XeckBot creation, not the normal chat picker. */
+  botOnly?: boolean;
   label: string;
   description: string;
   /** Icon name in `web/src/ui/icons.tsx` — never an emoji. */

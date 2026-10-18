@@ -1,0 +1,48 @@
+name: Desktop packages
+
+on:
+  workflow_dispatch:
+  push:
+    tags: ['v*']
+
+permissions:
+  contents: read
+
+jobs:
+  package:
+    strategy:
+      fail-fast: false
+      matrix:
+        include:
+          - os: windows-latest
+            platform: win
+          - os: macos-latest
+            platform: mac
+          - os: ubuntu-latest
+            platform: linux
+    runs-on: ${{ matrix.os }}
+    steps:
+      - uses: actions/checkout@v4
+        with:
+          submodules: recursive
+      - uses: actions/setup-node@v4
+        with:
+          node-version: 22
+          cache: npm
+      - run: npm ci
+      - run: npm ci --prefix poyraz
+      - run: npm run build:lib
+      - run: npm ci --prefix host
+      - run: npm ci --prefix web
+      - run: npm run dist:${{ matrix.platform }}
+        env:
+          CSC_IDENTITY_AUTO_DISCOVERY: 'false'
+      - uses: actions/upload-artifact@v4
+        with:
+          name: xeck-${{ matrix.platform }}
+          path: |
+            build/release/*.exe
+            build/release/*.dmg
+            build/release/*.AppImage
+            build/release/*.deb
+          if-no-files-found: error

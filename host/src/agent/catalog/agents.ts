@@ -23,6 +23,18 @@ export const XECK_AGENT: AgentDef = AgentDefSchema.parse({
   order: 1,
 });
 
+/** Created through the XeckBot flow, never through the normal chat picker. */
+export const XECKBOT_AGENT: AgentDef = AgentDefSchema.parse({
+  id: 'xeckbot',
+  startableBy: ['bot'],
+  instructions: ['core.base', 'core.rules', 'core.skills', 'core.memory', 'core.subagent', 'xeckbot.identity', 'xeckbot.base'],
+  model: null,
+  label: 'XeckBot',
+  description: 'Personal assistant with its own identity and private conversations.',
+  icon: 'xeck',
+  order: 3,
+});
+
 export const SUBAGENT_CODER: AgentDef = AgentDefSchema.parse({
   id: 'subagent-coder',
   startableBy: ['agent'],
@@ -45,14 +57,14 @@ export const SUBAGENT_GENERAL: AgentDef = AgentDefSchema.parse({
   order: 5,
 });
 
-export const AGENTS: AgentDef[] = [XECK_AGENT, CODER_AGENT, SUBAGENT_CODER, SUBAGENT_GENERAL];
+export const AGENTS: AgentDef[] = [XECK_AGENT, CODER_AGENT, XECKBOT_AGENT, SUBAGENT_CODER, SUBAGENT_GENERAL];
 
 export const AGENT_BY_ID: Record<string, AgentDef> = Object.fromEntries(
   AGENTS.map((agent) => [agent.id, agent]),
 );
 
 /** Kullanıcının başlatabildiği agent'lar, vitrin sırasına göre. */
-export function listStartableAgents(by: 'user' | 'agent' = 'user'): AgentDef[] {
+export function listStartableAgents(by: 'user' | 'agent' | 'bot' = 'user'): AgentDef[] {
   return [...AGENTS]
     .filter((agent) => agent.startableBy.includes(by))
     .sort((left, right) => (left.order ?? 99) - (right.order ?? 99));

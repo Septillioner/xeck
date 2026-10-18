@@ -3,7 +3,7 @@ import test from 'node:test';
 import { agentRoutes } from './agents.ts';
 import { type AgentPublic } from '../../../../shared/types.ts';
 import { buildAgentIdentityText } from '../../agent/catalog/prompts/builtin-instructions/index.ts';
-import { AGENT_BY_ID } from '../../agent/catalog/agents.ts';
+import { AGENT_BY_ID, XECKBOT_AGENT } from '../../agent/catalog/agents.ts';
 
 test('agent catalog separates user agents from dedicated subagent targets', async () => {
   const users = await (await agentRoutes.request('/api/agents')).json() as AgentPublic[];
@@ -14,6 +14,10 @@ test('agent catalog separates user agents from dedicated subagent targets', asyn
   assert.equal(children[0].workspace, 'coding@1');
   assert.equal(children[1].workspace, 'general@2');
   assert.equal((await agentRoutes.request('/api/agents?startableBy=invalid')).status, 400);
+  const bots = await (await agentRoutes.request('/api/agents?startableBy=bot')).json() as AgentPublic[];
+  assert.deepEqual(bots.map((agent) => agent.id), [XECKBOT_AGENT.id]);
+  assert.equal(bots[0].botOnly, true);
+  assert.ok(!users.some((agent) => agent.botOnly));
   for (const child of children) {
     assert.doesNotThrow(() => buildAgentIdentityText(AGENT_BY_ID[child.id].instructions));
     assert.ok(!AGENT_BY_ID[child.id].instructions.includes('core.subagent'));

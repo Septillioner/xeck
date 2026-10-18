@@ -562,7 +562,7 @@ export function AppStateProvider({ children }: { children: ReactNode }) {
   }, [applyLocation]);
 
   const createBot = useCallback(async (bot: import('../../../shared/types.ts').XeckBotCreateInput) => {
-    const session = await createSession({ bot, agentId: agentsRef.current[0]?.id });
+    const session = await createSession({ bot });
     rememberSummary(session);
     await openChat(session.id);
   }, [rememberSummary, openChat]);

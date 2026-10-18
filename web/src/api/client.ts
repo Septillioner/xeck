@@ -127,8 +127,8 @@ export async function listSessions(): Promise<SessionSummary[]> {
 }
 
 /** The new-chat picker catalog: user-startable agents, coder first. */
-export async function listAgents(startableBy: 'user' | 'agent' = 'user'): Promise<AgentPublic[]> {
-  return request(startableBy === 'user' ? '/api/agents' : '/api/agents?startableBy=agent');
+export async function listAgents(startableBy: 'user' | 'agent' | 'bot' = 'user'): Promise<AgentPublic[]> {
+  return request(startableBy === 'user' ? '/api/agents' : `/api/agents?startableBy=${startableBy}`);
 }
 
 export async function createSession(input?: {

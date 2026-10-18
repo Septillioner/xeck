@@ -8,7 +8,7 @@ import { createMutex } from '../infra/mutex.ts';
 import { messageBlocks } from '../../../shared/transcript.ts';
 import { canonicalizeProfile, emptyProfile } from '../domain/profiles.ts';
 import { ChatOriginAgentSchema, ChatOriginSchema } from '../agent/core/chat.ts';
-import { AGENT_BY_ID } from '../agent/catalog/agents.ts';
+import { AGENT_BY_ID, XECKBOT_AGENT } from '../agent/catalog/agents.ts';
 import { readSettings } from './settings-store.ts';
 import { apiKeyForProfile, configuredModels } from './provider-store.ts';
 import { isLocalProvider } from '../../../shared/types.ts';
@@ -187,8 +187,8 @@ export async function createSession(
   projectId?: string,
   bot?: { name: string } & import('../../../shared/types.ts').XeckBotProfile,
 ): Promise<StoredSession> {
-  const resolvedAgentId = resolveAgentId(agentId);
-  if (!AGENT_BY_ID[resolvedAgentId]?.startableBy.includes('user')) {
+  const resolvedAgentId = resolveAgentId(bot ? XECKBOT_AGENT.id : agentId);
+  if (!AGENT_BY_ID[resolvedAgentId]?.startableBy.includes(bot ? 'bot' : 'user')) {
     throw new Error(`Agent '${resolvedAgentId}' cannot be started by a user.`);
   }
   const workspace = agentWorkspaceRef(resolvedAgentId);
@@ -303,6 +303,7 @@ export async function saveSession(session: StoredSession): Promise<StoredSession
   return exclusive(async () => {
     if (removedSessionIds.has(session.id)) return session;
     session.updatedAt = new Date().toISOString();
+    if (session.bot) Object.assign(session, chatIdentityFromSession(session));
     session.profile = canonicalizeProfile(session.profile);
     await keepStoredActivePlan(session);
     await keepStoredTitle(session);
@@ -603,6 +604,7 @@ async function readSessionFile(id: string): Promise<StoredSession | null> {
     if (session.titleSource !== 'user' && session.titleSource !== 'auto') {
       delete session.titleSource;
     }
+    if (session.bot) Object.assign(session, chatIdentityFromSession(session));
     const workspace = session.workspace || defaultWorkspaceRef();
     policyCache.set(session.id, normalizePolicyId(session, findWorkspace(workspace).defaultPolicy));
     if (!isSessionPolicyId(session.policyId)) session.policyId = policyCache.get(session.id);

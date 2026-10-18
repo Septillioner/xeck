@@ -118,7 +118,28 @@ const POLICY_ROWS = [
   },
 ] as const;
 
-export const POLICIES: PolicyDef[] = POLICY_ROWS.map((row) => PolicyDefSchema.parse(row));
+export const XECKBOT_AGENT_POLICY: PolicyDef = PolicyDefSchema.parse({
+  id: 'xeckbot-agent',
+  label: 'Agent',
+  accentColor: '#0e7490',
+  allow: { builtin: '*', mcp: '*' },
+  deny: [TODO_ADD_TOOL, PLAN_READ_TOOL, PLAN_WRITE_TOOL],
+  maxToolRounds: 100,
+  choosable: ['user'],
+  entryLine: 'Use your individual XeckBot identity and available tools to carry out the request.',
+});
+
+export const XECKBOT_ASK_POLICY: PolicyDef = PolicyDefSchema.parse({
+  id: 'xeckbot-ask',
+  label: 'Ask',
+  accentColor: '#15803d',
+  allow: { builtin: [ASK_QUESTION_TOOL], mcp: [] },
+  maxToolRounds: 30,
+  choosable: ['user'],
+  entryLine: 'Answer from your XeckBot identity and the current conversation; use ask_question for clarification.',
+});
+
+export const POLICIES: PolicyDef[] = [...POLICY_ROWS.map((row) => PolicyDefSchema.parse(row)), XECKBOT_AGENT_POLICY, XECKBOT_ASK_POLICY];
 
 export const POLICY_BY_ID: Record<string, PolicyDef> = Object.fromEntries(
   POLICIES.map((policy) => [policy.id, policy]),

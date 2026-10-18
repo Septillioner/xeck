@@ -13,6 +13,8 @@ import { startSessionTurn } from '../../agent/runtime/sessions/turn.ts';
 import { dropAgent } from '../../agent/runtime/agents/pool.ts';
 import { buildHostSystemPrompt } from '../../agent/catalog/prompts/host-system-prompt.ts';
 import { XECKBOT_CREATOR_PROMPT } from '../../agent/catalog/prompts/xeckbot-creator.ts';
+import { XECKBOT_AGENT } from '../../agent/catalog/agents.ts';
+import { XECKBOT_WORKSPACE } from '../../agent/catalog/workspaces.ts';
 import type { StoredSession, SessionSummary } from '../../../../shared/types.ts';
 
 test('XeckBot creation generates and persists an identity using the default model, then applies it to chat', async () => {
@@ -56,6 +58,10 @@ test('XeckBot creation generates and persists an identity using the default mode
     assert.equal(response.status, 201);
     const bot = await response.json() as StoredSession;
     botId = bot.id;
+    assert.equal(bot.agentId, XECKBOT_AGENT.id);
+    assert.equal(bot.workspace, `${XECKBOT_WORKSPACE.id}@${XECKBOT_WORKSPACE.version}`);
+    assert.equal(bot.policyId, XECKBOT_WORKSPACE.defaultPolicy);
+    assert.equal((await post({ agentId: XECKBOT_AGENT.id })).status, 400);
     assert.equal(bot.title, 'Atlas');
     assert.equal(bot.titleSource, 'user');
     assert.deepEqual(bot.bot, { color: 'blue', purpose: input.purpose, systemPrompt: identity });
