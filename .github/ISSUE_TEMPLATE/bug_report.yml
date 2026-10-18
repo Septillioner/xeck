@@ -10,7 +10,7 @@ body:
     id: version
     attributes:
       label: Xeck version
-      placeholder: "e.g. 4.3.23"
+      placeholder: "e.g. 4.4.0-beta.1"
     validations:
       required: true
   - type: input

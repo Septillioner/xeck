@@ -1,6 +1,6 @@
 # Contributing to Xeck
 
-Thanks for considering a contribution. The project is not licensed for public reuse yet; please check with the repository owner before submitting code you expect others to reuse or redistribute.
+Thanks for considering a contribution. Xeck is licensed under the [Apache License 2.0](LICENSE). Unless explicitly stated otherwise, contributions submitted for inclusion in Xeck are provided under the same license. Third-party components retain their own licenses.
 
 ## Before you start
 

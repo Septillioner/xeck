@@ -1,6 +1,6 @@
 {
   "name": "xeck",
-  "version": "4.3.23",
+  "version": "4.4.0-beta.1",
   "description": "Xeck desktop application, powered by Poyraz",
   "author": "Xeck",
   "private": true,
@@ -55,6 +55,10 @@
       {
         "from": "assets/branding/xeck.png",
         "to": "assets/branding/xeck.png"
+      },
+      {
+        "from": "LICENSE",
+        "to": "LICENSE"
       }
     ],
     "directories": {
@@ -106,5 +110,6 @@
     "electron-builder": "^26.0.12",
     "tsup": "^8.5.0",
     "typescript": "^5.9.0"
-  }
+  },
+  "license": "Apache-2.0"
 }
