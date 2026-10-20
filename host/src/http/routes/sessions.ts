@@ -4,6 +4,9 @@ import {
   isSessionPolicyId,
   BOT_COLORS,
   MAX_BOT_PURPOSE_CHARS,
+  MAX_BOT_SYSTEM_PROMPT_CHARS,
+  MAX_XECKBOT_BADGES,
+  MAX_XECKBOT_BADGE_LENGTH,
   type BotColor,
   type ContextParts,
   type StoredSession,
@@ -220,7 +223,23 @@ sessionRoutes.patch('/api/sessions/:id', async (c) => {
       projectId = body.projectId;
     }
   }
-  const session = await patchSession(id, { title, profile, reasoningEffort, serviceTier, projectId });
+  let botSystemPrompt: string | undefined;
+  let botBadges: string[] | undefined;
+  if ('botSystemPrompt' in body) {
+    if (!existing.bot) return c.json({ error: 'Only a XeckBot instruction can be edited here' }, 400);
+    if (typeof body.botSystemPrompt !== 'string' || !body.botSystemPrompt.trim() || body.botSystemPrompt.trim().length > MAX_BOT_SYSTEM_PROMPT_CHARS) {
+      return c.json({ error: `Bot instruction must contain 1–${MAX_BOT_SYSTEM_PROMPT_CHARS} characters` }, 400);
+    }
+    botSystemPrompt = body.botSystemPrompt.trim();
+  }
+  if ('botBadges' in body) {
+    if (!existing.bot) return c.json({ error: 'Only a XeckBot profile can have badges' }, 400);
+    if (!Array.isArray(body.botBadges) || body.botBadges.length > MAX_XECKBOT_BADGES || body.botBadges.some((badge) => typeof badge !== 'string' || !badge.trim() || badge.trim().length > MAX_XECKBOT_BADGE_LENGTH)) {
+      return c.json({ error: `Use up to ${MAX_XECKBOT_BADGES} badges, each 1–${MAX_XECKBOT_BADGE_LENGTH} characters` }, 400);
+    }
+    botBadges = [...new Set((body.botBadges as string[]).map((badge) => badge.trim()))];
+  }
+  const session = await patchSession(id, { title, profile, reasoningEffort, serviceTier, projectId, botSystemPrompt, botBadges });
   if (!session) return c.json({ error: 'Session not found' }, 404);
   return c.json(session);
 });

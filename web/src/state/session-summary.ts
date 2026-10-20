@@ -22,7 +22,7 @@ export function toSummary(session: StoredSession): SessionSummary {
     updatedAt: session.updatedAt,
     profile: session.profile,
     ...(session.projectId ? { projectId: session.projectId } : {}),
-    ...(session.bot ? { bot: { color: session.bot.color } } : {}),
+    ...(session.bot ? { bot: { color: session.bot.color, ...(session.bot.purpose ? { purpose: session.bot.purpose } : {}), ...(session.bot.badges ? { badges: session.bot.badges } : {}) } } : {}),
     ...(session.botConversation ? { botConversation: session.botConversation } : {}),
     ...(session.origin?.by === 'agent' ? { parentId: session.origin.parent } : {}),
     ...(session.subagentStatus ? { subagentStatus: session.subagentStatus } : {}),

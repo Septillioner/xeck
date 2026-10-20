@@ -618,6 +618,11 @@ export function AppStateProvider({ children }: { children: ReactNode }) {
     }
   }, [rememberSummary]);
 
+  const updateBotProfile = useCallback(async (id: string, systemPrompt: string, badges: string[]) => {
+    const session = await patchSession(id, { botSystemPrompt: systemPrompt, botBadges: badges });
+    rememberSummary(session);
+  }, [rememberSummary]);
+
   const deleteChat = useCallback(async (id: string) => {
     try {
       if (streamsRef.current[id]) {
@@ -1219,6 +1224,7 @@ export function AppStateProvider({ children }: { children: ReactNode }) {
     assignChatToProject,
     openChat,
     renameChat,
+    updateBotProfile,
     deleteChat,
     setSessionModel,
     setSessionEffort,

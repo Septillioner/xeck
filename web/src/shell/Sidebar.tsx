@@ -249,7 +249,13 @@ export function Sidebar() {
             }}
           >
             {busy ? <IconBusy mood={mood} /> : session.botConversation ? <IconChat /> : session.bot ? <BotAvatar name={session.title} color={session.bot.color} /> : null}
-            <TypingText text={session.title} className="min-w-0 flex-1 truncate" />
+            <span className="min-w-0 flex-1">
+              <TypingText text={session.title} className="block truncate" />
+              {session.bot && !session.botConversation && session.bot.badges?.length ? <span className="mt-1 flex min-w-0 gap-1 overflow-hidden">
+                {session.bot.badges.slice(0, 2).map((badge) => <span key={badge} className="max-w-24 truncate rounded-full bg-field px-1.5 py-0.5 text-micro text-muted">{badge}</span>)}
+                {session.bot.badges.length > 2 && <span className="text-micro text-muted">+{session.bot.badges.length - 2}</span>}
+              </span> : null}
+            </span>
             {hasMood && <span className="chat-mood-dot h-1.5 w-1.5 flex-none rounded-full bg-mood" aria-hidden="true" />}
             <span className="w-7 flex-none hover-none:w-8" aria-hidden="true" />
           </button>
