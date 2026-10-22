@@ -6,4 +6,5 @@ interface ElectronWindowControls {
 
 interface Window {
   electronWindow?: ElectronWindowControls;
+  electronUpdates?: { check(): Promise<string> };
 }

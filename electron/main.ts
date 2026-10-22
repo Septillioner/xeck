@@ -3,6 +3,7 @@ import { spawn, type ChildProcess } from 'node:child_process';
 import { existsSync } from 'node:fs';
 import { dirname, join } from 'node:path';
 import { installContextMenu } from './context-menu';
+import { installUpdates } from './updates';
 
 const HOST_NAME = '127.0.0.1';
 /** Host port for `npm run dev`, which is already running when Electron opens. */
@@ -219,7 +220,10 @@ if (!app.requestSingleInstanceLock()) {
       window.focus();
     } else if (app.isReady()) void openApplication();
   });
-  void app.whenReady().then(openApplication);
+  void app.whenReady().then(async () => {
+    await openApplication();
+    installUpdates((url) => appEntryUrl !== '' && isSameDocument(url, appEntryUrl));
+  });
   app.on('activate', () => {
     if (BrowserWindow.getAllWindows().length === 0) void openApplication();
   });

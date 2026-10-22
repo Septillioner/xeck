@@ -159,6 +159,8 @@ Packages are unsigned unless signing credentials are configured separately. Buil
 
 The [Desktop packages workflow](https://github.com/Septillioner/xeck/actions/workflows/desktop.yml) builds on Windows, macOS, and Linux. Manual runs upload workflow artifacts; version tags publish release packages after every platform build succeeds. Prerelease tags are marked as prereleases.
 
+Windows and AppImage builds check GitHub Releases for updates and ask before downloading or restarting. You can also check in Settings → General → Application updates. See [desktop update and release instructions](docs/desktop-updates.md) for rollout steps and platform limits.
+
 ## Tests
 
 ```bash

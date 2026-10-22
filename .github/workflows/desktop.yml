@@ -5,6 +5,10 @@ on:
   push:
     tags: ['v*']
 
+concurrency:
+  group: desktop-${{ github.ref }}
+  cancel-in-progress: false
+
 permissions:
   contents: read
 
@@ -29,19 +33,64 @@ jobs:
         with:
           node-version: 22
           cache: npm
-      - run: npm ci
-      - run: npm ci --prefix poyraz
-      - run: npm run build:lib
-      - run: npm ci --prefix host
-      - run: npm ci --prefix web
-      - run: npm run dist:${{ matrix.platform }}
+          cache-dependency-path: |
+            package-lock.json
+            poyraz/package-lock.json
+            host/package-lock.json
+            web/package-lock.json
+      - name: Cache Electron downloads
+        uses: actions/cache@v4
+        with:
+          path: |
+            ~/.cache/electron
+            ~/.cache/electron-builder
+            ~/Library/Caches/electron
+            ~/Library/Caches/electron-builder
+            ~/AppData/Local/electron/Cache
+            ~/AppData/Local/electron-builder/Cache
+          key: desktop-tools-${{ runner.os }}-${{ runner.arch }}-${{ hashFiles('package-lock.json') }}
+          restore-keys: |
+            desktop-tools-${{ runner.os }}-${{ runner.arch }}-
+      - name: Validate release version
+        if: startsWith(github.ref, 'refs/tags/')
+        shell: bash
+        env:
+          RELEASE_TAG: ${{ github.ref_name }}
+        run: node -e "if (process.env.RELEASE_TAG !== 'v' + require('./package.json').version) process.exit(1)"
+      - run: npm ci --no-audit --no-fund
+      - run: npm run test:updates
+      - name: Prepare host and web dependencies in parallel
+        shell: bash
+        run: |
+          set -euo pipefail
+          (
+            npm ci --prefix poyraz --no-audit --no-fund
+            npm run build:lib
+            npm ci --prefix host --no-audit --no-fund
+          ) &
+          host_pid=$!
+          npm ci --prefix web --no-audit --no-fund &
+          web_pid=$!
+          result=0
+          wait "$host_pid" || result=1
+          wait "$web_pid" || result=1
+          exit "$result"
+      - name: Build desktop components (Poyraz already built)
+        run: npm run build:desktop:prepared
+      - name: Package desktop
+        run: npx --no-install electron-builder --${{ matrix.platform }} --publish never
         env:
           CSC_IDENTITY_AUTO_DISCOVERY: 'false'
       - uses: actions/upload-artifact@v4
         with:
           name: xeck-${{ matrix.platform }}
+          compression-level: 0
+          retention-days: 14
           path: |
             build/release/*.exe
+            build/release/*.zip
+            build/release/*.yml
+            build/release/*.blockmap
             build/release/*.dmg
             build/release/*.AppImage
             build/release/*.deb
@@ -65,9 +114,22 @@ jobs:
           GH_TOKEN: ${{ github.token }}
           RELEASE_TAG: ${{ github.ref_name }}
         run: |
+          set -euo pipefail
+          for pattern in '*.exe' '*.dmg' '*.zip' '*.AppImage' '*.deb' '*.yml'; do
+            if ! compgen -G "release-assets/$pattern" > /dev/null; then
+              echo "Missing release asset: $pattern" >&2
+              exit 1
+            fi
+          done
           flags=()
           if [[ "$RELEASE_TAG" == *-* ]]; then flags+=(--prerelease); fi
-          if ! gh release view "$RELEASE_TAG" >/dev/null 2>&1; then
-            gh release create "$RELEASE_TAG" --verify-tag --title "Xeck $RELEASE_TAG" --generate-notes "${flags[@]}"
+          if gh release view "$RELEASE_TAG" --json isDraft --jq '.isDraft' > "$RUNNER_TEMP/release-draft"; then
+            if [[ "$(cat "$RUNNER_TEMP/release-draft")" != true ]]; then
+              echo 'Release is already published. Use a new version instead of replacing live update assets.' >&2
+              exit 1
+            fi
+          else
+            gh release create "$RELEASE_TAG" --verify-tag --title "Xeck $RELEASE_TAG" --generate-notes --draft "${flags[@]}"
           fi
           gh release upload "$RELEASE_TAG" release-assets/* --clobber
+          gh release edit "$RELEASE_TAG" --draft=false

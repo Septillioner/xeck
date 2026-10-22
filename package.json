@@ -1,6 +1,6 @@
 {
   "name": "xeck",
-  "version": "4.4.0-beta.2",
+  "version": "4.4.1",
   "description": "Xeck desktop application, powered by Poyraz",
   "author": "Xeck",
   "private": true,
@@ -22,7 +22,9 @@
     "preview:web": "npm run preview --prefix web",
     "dist:win": "npm run build:desktop && electron-builder --win --publish never",
     "dist:mac": "npm run build:desktop && electron-builder --mac --publish never",
-    "dist:linux": "npm run build:desktop && electron-builder --linux --publish never"
+    "dist:linux": "npm run build:desktop && electron-builder --linux --publish never",
+    "test:updates": "node --test electron/updates.test.cjs",
+    "build:desktop:prepared": "concurrently -n host,web,electron -c blue,green,yellow \"npm run build:host\" \"npm run build:web\" \"npm run build:electron\""
   },
   "main": "build/dist-electron/main.js",
   "build": {
@@ -86,6 +88,13 @@
             "x64",
             "arm64"
           ]
+        },
+        {
+          "target": "zip",
+          "arch": [
+            "x64",
+            "arm64"
+          ]
         }
       ],
       "category": "public.app-category.productivity"
@@ -111,7 +120,16 @@
       "category": "Utility",
       "maintainer": "Septillioner"
     },
-    "artifactName": "${productName}-${version}-${os}-${arch}.${ext}"
+    "artifactName": "${productName}-${version}-${os}-${arch}.${ext}",
+    "publish": [
+      {
+        "provider": "github",
+        "owner": "Septillioner",
+        "repo": "xeck",
+        "releaseType": "release"
+      }
+    ],
+    "generateUpdatesFilesForAllChannels": true
   },
   "devDependencies": {
     "concurrently": "^9.2.0",
@@ -121,5 +139,8 @@
     "typescript": "^5.9.0"
   },
   "license": "Apache-2.0",
-  "homepage": "https://github.com/Septillioner/xeck"
+  "homepage": "https://github.com/Septillioner/xeck",
+  "dependencies": {
+    "electron-updater": "^6.8.9"
+  }
 }

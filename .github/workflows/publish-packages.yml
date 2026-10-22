@@ -6,8 +6,11 @@ on:
         description: Successful Desktop packages run ID
         required: true
       tag:
-        description: Existing release tag
+        description: Version tag matching the build (creates or resumes a draft release)
         required: true
+concurrency:
+  group: desktop-refs/tags/${{ inputs.tag }}
+  cancel-in-progress: false
 permissions:
   actions: read
   contents: write
@@ -15,6 +18,30 @@ jobs:
   publish:
     runs-on: ubuntu-latest
     steps:
+      - uses: actions/checkout@v4
+        with:
+          ref: refs/tags/${{ inputs.tag }}
+          persist-credentials: false
+      - name: Validate source build and version
+        env:
+          GH_TOKEN: ${{ github.token }}
+          GH_REPO: ${{ github.repository }}
+          RUN_ID: ${{ inputs.run_id }}
+          RELEASE_TAG: ${{ inputs.tag }}
+        run: |
+          set -euo pipefail
+          [[ "$RUN_ID" =~ ^[0-9]+$ ]]
+          node -e "if (process.env.RELEASE_TAG !== 'v' + require('./package.json').version) throw new Error('Tag/version mismatch')"
+          gh run view "$RUN_ID" --json workflowName,conclusion,headSha > "$RUNNER_TEMP/source-run.json"
+          export EXPECTED_SHA="$(git rev-parse HEAD)"
+          node --input-type=commonjs -e '
+            const fs = require("node:fs");
+            const path = require("node:path");
+            const run = JSON.parse(fs.readFileSync(path.join(process.env.RUNNER_TEMP, "source-run.json"), "utf8"));
+            if (run.workflowName !== "Desktop packages" || run.conclusion !== "success" || run.headSha !== process.env.EXPECTED_SHA) {
+              throw new Error("Source must be a successful Desktop packages run at the release tag commit");
+            }
+          '
       - uses: actions/download-artifact@v4
         with:
           github-token: ${{ github.token }}
@@ -22,11 +49,28 @@ jobs:
           pattern: xeck-*
           path: release-assets
           merge-multiple: true
-      - name: Upload packages to existing release
+      - name: Upload packages and publish draft
         env:
           GH_TOKEN: ${{ github.token }}
           GH_REPO: ${{ github.repository }}
           RELEASE_TAG: ${{ inputs.tag }}
         run: |
-          gh release view "$RELEASE_TAG"
+          set -euo pipefail
+          for pattern in '*.exe' '*.dmg' '*.zip' '*.AppImage' '*.deb' '*.yml'; do
+            if ! compgen -G "release-assets/$pattern" > /dev/null; then
+              echo "Missing release asset: $pattern" >&2
+              exit 1
+            fi
+          done
+          flags=()
+          if [[ "$RELEASE_TAG" == *-* ]]; then flags+=(--prerelease); fi
+          if gh release view "$RELEASE_TAG" --json isDraft --jq '.isDraft' > "$RUNNER_TEMP/release-draft"; then
+            if [[ "$(cat "$RUNNER_TEMP/release-draft")" != true ]]; then
+              echo 'Release is already published. Use a new version instead of replacing live update assets.' >&2
+              exit 1
+            fi
+          else
+            gh release create "$RELEASE_TAG" --verify-tag --title "Xeck $RELEASE_TAG" --generate-notes --draft "${flags[@]}"
+          fi
           gh release upload "$RELEASE_TAG" release-assets/* --clobber
+          gh release edit "$RELEASE_TAG" --draft=false

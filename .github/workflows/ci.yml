@@ -50,5 +50,8 @@ jobs:
       - name: Test
         run: npm test
 
+      - name: Test desktop updates
+        run: npm run test:updates
+
       - name: Build desktop components
         run: npm run build:desktop

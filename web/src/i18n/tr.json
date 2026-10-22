@@ -606,5 +606,16 @@
   "xhigh": "Çok yüksek",
   "Yeniden adlandır": "Yeniden adlandır",
   "Yes": "Evet",
-  "Yesterday": "Dün"
+  "Yesterday": "Dün",
+  "Xeck is up to date.": "Xeck güncel.",
+  "An update is available. Check again when you are ready to download.": "Bir güncelleme var. İndirmeye hazır olduğunuzda tekrar kontrol edin.",
+  "Update downloaded. Check again when you are ready to restart.": "Güncelleme indirildi. Yeniden başlatmaya hazır olduğunuzda tekrar kontrol edin.",
+  "Updates are available in the installed desktop app.": "Güncellemeler kurulu masaüstü uygulamasında kullanılabilir.",
+  "An update check or download is already in progress.": "Güncelleme kontrolü veya indirme zaten devam ediyor.",
+  "Download the new version from GitHub Releases.": "Yeni sürümü GitHub Releases üzerinden indirin.",
+  "Could not check for updates. Try again later.": "Güncellemeler kontrol edilemedi. Daha sonra tekrar deneyin.",
+  "Application updates": "Uygulama güncellemeleri",
+  "Check GitHub Releases for a newer version of Xeck.": "Xeck’in yeni bir sürümü için GitHub Releases’i kontrol edin.",
+  "Checking for updates…": "Güncellemeler kontrol ediliyor…",
+  "Check for updates": "Güncellemeleri kontrol et"
 }

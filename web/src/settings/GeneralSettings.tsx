@@ -10,6 +10,29 @@ import { BUTTON } from '../ui/button-styles.ts';
 export function GeneralSettings() {
   const { settings, saveSettings, configuredModels, providers, catalog, openMigration } = useAppState();
   const [notice, setNotice] = useState<string | null>(null);
+  const [checkingUpdate, setCheckingUpdate] = useState(false);
+  const [updateNotice, setUpdateNotice] = useState<string | null>(null);
+  const checkUpdates = async () => {
+    setCheckingUpdate(true);
+    setUpdateNotice(null);
+    try {
+      const result = await window.electronUpdates?.check();
+      const messages: Record<string, string> = {
+        current: t("Xeck is up to date."),
+        available: t("An update is available. Check again when you are ready to download."),
+        downloaded: t("Update downloaded. Check again when you are ready to restart."),
+        development: t("Updates are available in the installed desktop app."),
+        busy: t("An update check or download is already in progress."),
+        manual: t("Download the new version from GitHub Releases."),
+        error: t("Could not check for updates. Try again later."),
+      };
+      setUpdateNotice(messages[result ?? 'error'] ?? messages.error);
+    } catch {
+      setUpdateNotice(t("Could not check for updates. Try again later."));
+    } finally {
+      setCheckingUpdate(false);
+    }
+  };
   const [subagents, setSubagents] = useState<AgentPublic[]>([]);
   const [savingAgent, setSavingAgent] = useState<string | null>(null);
   useEffect(() => {
@@ -68,6 +91,16 @@ export function GeneralSettings() {
   return (
     <div className="stack">
       <h2>{t("General")}</h2>
+      {window.electronUpdates && (
+        <SettingCard>
+          <SettingRow label={t("Application updates")} detail={t("Check GitHub Releases for a newer version of Xeck.")}>
+            <button type="button" className={BUTTON.secondary} disabled={checkingUpdate} onClick={() => { void checkUpdates(); }}>
+              {checkingUpdate ? t("Checking for updates…") : t("Check for updates")}
+            </button>
+          </SettingRow>
+          {updateNotice && <p className="form-pad" role="status">{updateNotice}</p>}
+        </SettingCard>
+      )}
       <SettingCard>
         <SettingRow label={t("Language")} detail={t("Choose the language used throughout the application.")}>
           <Menu

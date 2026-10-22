@@ -606,5 +606,16 @@
   "xhigh": "xhigh",
   "Yeniden adlandır": "Rename",
   "Yes": "Yes",
-  "Yesterday": "Yesterday"
+  "Yesterday": "Yesterday",
+  "Xeck is up to date.": "Xeck is up to date.",
+  "An update is available. Check again when you are ready to download.": "An update is available. Check again when you are ready to download.",
+  "Update downloaded. Check again when you are ready to restart.": "Update downloaded. Check again when you are ready to restart.",
+  "Updates are available in the installed desktop app.": "Updates are available in the installed desktop app.",
+  "An update check or download is already in progress.": "An update check or download is already in progress.",
+  "Download the new version from GitHub Releases.": "Download the new version from GitHub Releases.",
+  "Could not check for updates. Try again later.": "Could not check for updates. Try again later.",
+  "Application updates": "Application updates",
+  "Check GitHub Releases for a newer version of Xeck.": "Check GitHub Releases for a newer version of Xeck.",
+  "Checking for updates…": "Checking for updates…",
+  "Check for updates": "Check for updates"
 }
