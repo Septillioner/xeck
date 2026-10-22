@@ -435,6 +435,8 @@ export async function patchSession(
     reasoningEffort?: ReasoningEffort | null;
     serviceTier?: ServiceTier | null;
     projectId?: string | null;
+    botSystemPrompt?: string;
+    botBadges?: string[];
   },
 ): Promise<StoredSession | null> {
   if (!isSessionId(id)) return null;
@@ -455,6 +457,8 @@ export async function patchSession(
     else if (patch.serviceTier) session.serviceTier = patch.serviceTier;
     if (patch.projectId === null) delete session.projectId;
     else if (patch.projectId !== undefined) session.projectId = patch.projectId;
+    if (patch.botSystemPrompt !== undefined && session.bot) session.bot.systemPrompt = patch.botSystemPrompt;
+    if (patch.botBadges !== undefined && session.bot) session.bot.badges = patch.botBadges;
     session.updatedAt = new Date().toISOString();
     await writeSessionFile(session);
     await upsertSummary(session);
@@ -650,7 +654,7 @@ function toSummary(session: StoredSession): SessionSummary {
     updatedAt: session.updatedAt,
     profile: session.profile,
     ...(session.projectId ? { projectId: session.projectId } : {}),
-    ...(session.bot ? { bot: { color: session.bot.color } } : {}),
+    ...(session.bot ? { bot: { color: session.bot.color, ...(session.bot.purpose ? { purpose: session.bot.purpose } : {}), ...(session.bot.badges ? { badges: session.bot.badges } : {}) } } : {}),
     ...(session.botConversation ? { botConversation: session.botConversation } : {}),
     ...(session.origin?.by === 'agent' ? { parentId: session.origin.parent } : {}),
     ...(session.subagentStatus ? { subagentStatus: session.subagentStatus } : {}),

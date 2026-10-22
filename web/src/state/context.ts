@@ -114,6 +114,7 @@ export interface AppStateValue {
   assignChatToProject: (sessionId: string, projectId: string | null) => Promise<void>;
   openChat: (id: string) => Promise<void>;
   renameChat: (id: string, title: string) => Promise<void>;
+  updateBotProfile: (id: string, systemPrompt: string, badges: string[]) => Promise<void>;
   deleteChat: (id: string) => Promise<void>;
   setSessionModel: (provider: ProviderKind, model: string) => Promise<void>;
   setSessionEffort: (effort: ReasoningEffort | null) => Promise<void>;

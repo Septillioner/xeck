@@ -6,10 +6,12 @@ import { hasOpenMenu } from './open-menu.ts';
 export function Dialog({
   title,
   onClose,
+  showCloseButton = true,
   children,
 }: {
   title: string;
   onClose: () => void;
+  showCloseButton?: boolean;
   children: ReactNode;
 }) {
   const titleId = useId();
@@ -56,9 +58,9 @@ export function Dialog({
       <div className="modal-panel" role="dialog" aria-modal="true" aria-labelledby={titleId} ref={panelRef}>
         <header className="modal-header">
           <h3 id={titleId}>{t(title)}</h3>
-          <button type="button" className="icon-button" aria-label={t("Close")} onClick={onClose}>
+          {showCloseButton && <button type="button" className="icon-button" aria-label={t("Close")} onClick={onClose}>
             <IconClose />
-          </button>
+          </button>}
         </header>
         {children}
       </div>

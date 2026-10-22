@@ -180,6 +180,8 @@ export async function patchSession(
     reasoningEffort?: ReasoningEffort | null;
     serviceTier?: ServiceTier | null;
     projectId?: string | null;
+    botSystemPrompt?: string;
+    botBadges?: string[];
   },
 ): Promise<StoredSession> {
   return request(`/api/sessions/${id}`, { method: 'PATCH', body: patch });
