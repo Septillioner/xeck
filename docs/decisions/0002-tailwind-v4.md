@@ -1,8 +1,8 @@
-# ADR 0002 — Web stili Tailwind CSS v4
+# ADR 0002 — Tailwind CSS v4 for the web interface
 
-- **Durum:** Kabul edildi (Ege, 2026-10-15).
-- **Tarih:** 2026-10-15 (kayıt tarihi)
-- **Önceki karar (geçersizleşti):** `implementation_plan.md` (mobil uyum planı, 2026-10-04) Tailwind'i değerlendirip **reddetti**: 391 `className`, 506 CSS kuralı, `@property` ile kayıtlı `--accent` geçişi, 65 token değişkeni ve kural sayfasının (şimdi `docs/rules/frontend.md`) o günkü Tailwind yasağı nedeniyle maliyet faydadan büyük bulunmuştu.
-- **Güncel durum:** `web/package.json` `tailwindcss` ve `@tailwindcss/vite` `^4.3.3` kullanır. PMAP: "styled with Tailwind CSS v4"; stil yalnız `web/src/styles/` altında, tasarım jetonları `theme.css` içinde `@theme` ile. `docs/rules/frontend.md` Tailwind v4 kullanımını kural yapmıştır.
-- **Sonuç:** Tailwind v4 geçerli yaklaşımdır; eski "reddedildi" notu tarihseldir (arşivde). Kalan borç: `responsive.css` utility varyantlarına taşınmalı.
-- **Gerekçe:** CSS dosyalarını şişirmemek. Utility sınıfları ayrı kural yazma ihtiyacını azaltır.
+- **Status:** Accepted by Ege on 2026-10-15.
+- **Recorded:** 2026-10-15.
+- **Earlier decision, superseded:** The 2026-10-04 mobile implementation plan rejected Tailwind. At that time the migration was judged too costly given 391 `className` uses, 506 CSS rules, a registered `--accent` transition, 65 token variables, and the earlier design rules' Tailwind prohibition.
+- **Selected approach:** `web/package.json` uses `tailwindcss` and `@tailwindcss/vite` at `^4.3.3`. Shared CSS lives in `web/src/styles/`, with tokens in the `@theme` block of `theme.css`. [Frontend rules](../rules/frontend.md) establish Tailwind v4 as the standard.
+- **Consequence:** The earlier rejection is historical. The recorded remaining migration work was to move `responsive.css` behavior into utility variants.
+- **Rationale:** Avoid growing separate CSS rule sets when shared utilities can express the same behavior.

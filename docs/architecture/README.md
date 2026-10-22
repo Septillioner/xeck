@@ -1,41 +1,40 @@
-# Mimari (yüzeysel iskelet)
+# Architecture outline
 
-> **Durum: ERTELENDİ.** Mimari henüz oturmadı. Bu sayfa ayrıntılı değil, 2-3 cümlelik "şu an böyle çalışıyor" notlarıdır. **belirsiz** işaretli yerler kesinleşmemiştir. Kod ile eş güncellenen asıl kaynak kökteki [PMAP.md](../../PMAP.md) dosyasıdır; çelişkide PMAP esas alınır.
-> Son güncelleme: 2026-10-15.
+> **Status: deferred.** This outline records the architecture described on 2026-10-15. Items marked uncertain were unresolved at that time. Check the current implementation before relying on historical details.
 
-## Belgeler
+## Documents
 
-| Belge | Durum |
+| Document | Scope |
 |---|---|
-| [poyraz-library-boundary.md](poyraz-library-boundary.md) | Güncel. Kütüphane ile Xeck arasındaki iş bölümü ve kurallar. Başka bir ajana iş vermeden önce okunur. |
-| [host-overview.md](host-overview.md) | Kısmen eski. Host servisi, API, SSE akışı, kalıcılık. |
-| [../archive/cwap.md](../archive/cwap.md) | Arşiv. Eski CWAP taslağı, güncel mimari değildir. |
-| [../archive/architecture-report-2026-06.md](../archive/architecture-report-2026-06.md) | Arşiv. Eski mimari analiz. |
+| [Poyraz library boundary](poyraz-library-boundary.md) | Responsibilities shared between the library and Xeck. Read before changing either side of the integration. |
+| [Host overview](host-overview.md) | Host service, HTTP API, SSE, persistence, and session runtime. Some sections describe an earlier implementation. |
 
-## Genel yerleşim
+## Repository layout
 
-`poyraz/` git submodule'üdür (LLM sağlayıcıları ve sohbet çekirdeği), `host/` Node HTTP süreci (Hono, `127.0.0.1:8787`), `web/` Vite + React + Tailwind v4 arayüzü, `electron/` aynı host ve veri dizinini saran masaüstü kabuğu, `shared/` iki tarafın ortak sözleşmeleri. `poyraz/` içine bu repodan yazılıp yazılmayacağı **belirsiz**.
+`poyraz/` is the agent-library Git submodule. `host/` is the local Node/Hono HTTP service. `web/` contains the Vite, React, and Tailwind v4 interface. `electron/` wraps the host and renderer as a desktop application. `shared/` contains contracts shared by host and web.
+
+Library work belongs in its own repository; see the boundary document for the integration rules.
 
 ## Host
 
-`host/src` sorumluluğa göre gruplanmıştır: `http/` (rotalar, SSE turu), `agent/` (core, runtime, catalog, tools), `stores/` (kalıcılık), `plans/` (plan servisi), `tools/` (dosya ve terminal gövdeleri). Katmanlar arası bazı importlar açıktır ve kalmıştır. `AppState.tsx` ve `chat-turn.ts` gibi büyük dosyaların bölünmesi **belirsiz**.
+`host/src` groups responsibilities into `http/` (routes and SSE turns), `agent/` (core, runtime, catalogs, and tool presentation), `stores/` (persistence), `plans/` (plan services), and `tools/` (file and terminal implementations). The earlier outline left the split of large files such as `AppState.tsx` and `chat-turn.ts` unresolved.
 
-## Ajan modeli
+## Agents and policies
 
-Workspace, agent ve policy dört katalogtan (araç, agent, policy, workspace) birleşir; oturumun kanonik alanı `policyId`'dir. Policy metni prompt'a değil geçmişin sonuna `entryLine` olarak girer ki prompt cache korunsun. Expert sistemi bunun yerini aldı mı **belirsiz**.
+Tool, agent, policy, and workspace catalogs compose the agent configuration. The canonical persisted session field is `policyId`. Policy entry text is appended to history through `entryLine` to preserve the reusable prompt prefix. The relationship to the earlier expert-system proposal was unresolved in this outline.
 
 ## Web
 
-`web/src` katmanlıdır (`shell|chat|settings → ui → state → api|lib → shared`). Stil yalnız `web/src/styles/` altındadır, tasarım kuralları [docs/rules/frontend.md](../rules/frontend.md) içindedir. `responsive.css` geçiş borcu olarak durur.
+The frontend follows `shell|chat|settings → ui → state → api|lib → shared`. Shared styles live in `web/src/styles/`; the canonical design requirements are in [Frontend rules](../rules/frontend.md). The earlier outline recorded `responsive.css` as remaining migration work.
 
-## Oturum, plan ve hafıza
+## Persistence, plans, and memory
 
-Oturumlar ve planlar `%APPDATA%/Xeck` altında diskte tutulur; plan tek bir `.plan.md` dosyasıdır ([ADR 0004](../decisions/0004-plan-single-file.md)). Hafıza-proje bağı **belirsiz**.
+Sessions and plans are stored in the application data directory. A plan is a single `.plan.md` file; see [ADR 0004](../decisions/0004-plan-single-file.md). The original outline did not settle project-scoped memory behavior. See the host overview and current data-directory implementation for exact storage paths.
 
-## Araçlar ve izin
+## Tools and permissions
 
-Yerleşik araçlar builtin MCP sunucusu olarak sunulur ve policy `allow`/`deny` ile süzülür. Terminal yalnız `run_command` ile sınırlıdır; kalıcı terminal oturumu **belirsiz**.
+Built-in tools are exposed through an MCP server and filtered by policy allow/deny rules. The original outline described an output-only `run_command` terminal and left persistent terminal sessions unresolved.
 
-## Hata dayanıklılığı
+## Error handling
 
-Aynı-hata devre kesicisi bilerek kapalıdır ([ADR 0001](../decisions/0001-error-circuit-breaker-off.md)); araç/çağrı eşleşmesi her istekte onarılır.
+The same-error circuit breaker was deliberately disabled; see [ADR 0001](../decisions/0001-error-circuit-breaker-off.md). Provider requests repair tool-call/result pairing before submission.

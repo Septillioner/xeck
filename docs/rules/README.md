@@ -1,13 +1,10 @@
-# Kurallar
+# Rules
 
-Bu klasör kural dokümanlarının dizinidir. Araçların okuduğu veya birbirine atıf yapan kurallar **bulundukları yerde kalır**; burada yalnız işaretçi vardır.
+This directory contains the public development rules. Documentation must be written in English; user-facing application strings remain localizable.
 
-| Kural | Konum | Not |
+| Rule | Location | Purpose |
 |---|---|---|
-| Frontend stil kuralları (tek sayfa: token, düz yüzey, vurgu rengi, düğmeler, mobil) | [frontend.md](frontend.md) | Bu klasörde. Kökteki eski `design-rules.md` kaldırıldı; geçmişte git ile bulunur. |
-| Dosya sahipliği (dört katalog, kimlik, araç yüzeyi) | [file-ownership.md](file-ownership.md) | Bu klasörde. |
-| Ajan ana kural seti | [../../.clinerules/general.md](../../.clinerules/general.md) | Araç `.clinerules/` dizininden okur. PMAP.md'yi kökte tutmayı ve commit'i kullanıcıya attırmayı zorunlu kılar. |
-| Cursor işaretçisi | `.cursor/rules/design-rules.mdc` | Dosya adı eski kaldı, içeriği güncel: `docs/rules/frontend.md` dosyasına yönlendirir. |
+| Frontend rules | [frontend.md](frontend.md) | Design tokens, surfaces, controls, accessibility, settings, and responsive behavior. |
+| File ownership | [file-ownership.md](file-ownership.md) | Catalog ownership, identity resolution, tool boundaries, and the shared session runtime. |
 
-## Açık çelişki
-
+Keep a rule at its canonical location and link to it rather than maintaining competing copies. Links in public documentation must resolve to tracked public files, not private local notes or editor-specific configuration that is absent from the repository.

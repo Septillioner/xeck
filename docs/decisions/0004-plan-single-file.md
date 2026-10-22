@@ -1,9 +1,9 @@
-# ADR 0004 — Plan tek `.plan.md` dosyasıdır
+# ADR 0004 — A plan is one `.plan.md` file
 
-- **Durum:** Kabul edildi (uygulanmış, commit `38f0156`).
-- **Tarih:** 2026-10-15 (kayıt tarihi)
-- **Karar:** Plan, `sessions/<id>/plans/<slug>.plan.md` tek dosyasıdır. Front matter (`name`, `revision`, `todos`) tek doğruluk kaynağıdır; ayrı `.json` yoktur. Todo bloğu üretilen `<!-- todos:start -->` işaretleri arasındadır.
-- **Durumlar:** `pending`, `in_progress`, `completed`, `blocked`, `cancelled`. Kurallar araç seviyesindedir: aynı anda tek `in_progress`, `completed` için kanıt notu, `blocked` için gerekçe, tamamlanmış todo silinemez, en çok 30 todo, başlık en çok 120 karakter.
-- **Araçlar:** `plan_write`, `plan_read`, `todo_update`, `todo_add`. `plan_list` ve `plan_export` yok.
-- **Eski tasarımdan farklar:** `plans/<id>.md` + `.json` çifti ve plan sonrası `ask_question` onayı yapılmadı; onay yerine plan modu/agent modu (policy) ayrımı var.
-- **Kaynak:** ROADMAP (arşiv) "Plan ve todo MCP" notu ve PMAP.md. PMAP: oturum planı `sessions/<id>/plans/<slug>.plan.md`.
+- **Status:** Accepted; implemented in commit `38f0156`.
+- **Recorded:** 2026-10-15.
+- **Decision:** Store each plan at `sessions/<id>/plans/<slug>.plan.md`. Front matter (`name`, `revision`, and `todos`) is the single source of truth; there is no separate JSON file. Render the todo block between generated `<!-- todos:start -->` markers.
+- **States:** `pending`, `in_progress`, `completed`, `blocked`, and `cancelled`. Tool-level rules allow one `in_progress` todo at a time, require evidence for completion and a reason for blocking, prohibit deleting completed todos, and limit a plan to 30 todos and a 120-character title.
+- **Tools:** `plan_write`, `plan_read`, `todo_update`, and `todo_add`. There is no `plan_list` or `plan_export` tool in this design.
+- **Difference from the earlier proposal:** The `plans/<id>.md` plus JSON pair and a post-plan `ask_question` approval step were not implemented. Plan/agent policy separation governs the workflow instead.
+- **Historical source:** The earlier roadmap's plan and todo MCP proposal. The implemented session-local path supersedes its storage proposal.

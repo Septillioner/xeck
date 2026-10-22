@@ -6,6 +6,7 @@ import { Menu } from '../ui/Menu.tsx';
 import { useAppState } from '../state/AppState.tsx';
 import { SettingCard, SettingRow, Switch } from '../ui/SettingRow.tsx';
 import { BUTTON } from '../ui/button-styles.ts';
+import { version as appVersion } from '../../../package.json';
 
 export function GeneralSettings() {
   const { settings, saveSettings, configuredModels, providers, catalog, openMigration } = useAppState();
@@ -91,16 +92,19 @@ export function GeneralSettings() {
   return (
     <div className="stack">
       <h2>{t("General")}</h2>
-      {window.electronUpdates && (
-        <SettingCard>
+      <SettingCard>
+        <SettingRow label={t("Version")}>
+          <span className="text-ui text-muted">{appVersion}</span>
+        </SettingRow>
+        {window.electronUpdates && (
           <SettingRow label={t("Application updates")} detail={t("Check GitHub Releases for a newer version of Xeck.")}>
             <button type="button" className={BUTTON.secondary} disabled={checkingUpdate} onClick={() => { void checkUpdates(); }}>
               {checkingUpdate ? t("Checking for updates…") : t("Check for updates")}
             </button>
           </SettingRow>
-          {updateNotice && <p className="form-pad" role="status">{updateNotice}</p>}
-        </SettingCard>
-      )}
+        )}
+        {updateNotice && <p className="form-pad" role="status">{updateNotice}</p>}
+      </SettingCard>
       <SettingCard>
         <SettingRow label={t("Language")} detail={t("Choose the language used throughout the application.")}>
           <Menu

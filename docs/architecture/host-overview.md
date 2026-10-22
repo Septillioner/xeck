@@ -1,4 +1,4 @@
-> **Durum:** 2026-10-15'te koda göre güncellendi (yollar, uç noktalar, veri dosyaları). Kısa yerleşim için PMAP.md ve `docs/architecture/poyraz-library-boundary.md` dosyasına bakın.
+> **Status:** Updated against source on 2026-10-15 (paths, endpoints, and data files). See [Poyraz library boundary](poyraz-library-boundary.md) for a shorter responsibility overview.
 
 # Poyraz Web Host — Architecture and Technical Overview
 
@@ -117,7 +117,7 @@ The live SSE replay buffer is process-local memory. If the application process e
 
 `agents/setup.ts` builds every agent with explicit builder sections, because poyraz 1.0 ships every feature off:
 
-- `Summarization({ enabled, thresholdRatio, prefix, prompt, onSummarized })`. `onSummarized` returns the plan line (`readPlanSummaryLine`), which the library appends to the end of the summary message; no plan, no line. The prefix stays `Önceki konuşmaların özeti:` and the prompt keeps its pre-1.0 Turkish wording (`domain/summary.ts`), so stored summaries are still recognized.
+- `Summarization({ enabled, thresholdRatio, prefix, prompt, onSummarized })`. `onSummarized` returns the plan line (`readPlanSummaryLine`), which the library appends to the end of the summary message; no plan, no line. The prefix and prompt retain their pre-1.0 localized wording in `domain/summary.ts`, so stored summaries are still recognized.
 - `MaxToolRounds(n)` from the policy row. The budget now covers the whole `agent.chat` call, continuations included. The policy handed to the library carries the same number as `maxToolRounds`.
 - `Mcp({ toolPrefix: 'mcp_' })` (prefix only, the host connects MCP itself), the host-owned `createMcpClientManager({ toolPrefix })` in `stores/mcp-store.ts`, and the built-in bridge all take `HOST_MCP_TOOL_PREFIX` from `tools/builtin/identity.ts`. The library files exactly the schemas with that prefix under the `mcp` context category. `mergeExternalTools` returns the names that replaced an existing tool; the host logs them.
 - `Logging({ level: WARN, chatDebugLog: true, source: 'http' })`. Debug logs are written only when a log directory is configured (the host configures none), the same as before.

@@ -1,10 +1,10 @@
-# ADR 0003 — Ekleyici ve tek başına yayınlanabilir aşamalar
+# ADR 0003 — Additive, independently releasable phases
 
-- **Durum:** Önerilen. Eski `ROADMAP.md` "İlkeler" bölümünden çıkarıldı; hâlâ geçerli olup olmadığı Ege'ye sorulacak.
-- **Tarih:** 2026-10-15 (kayıt tarihi; ilkeler 2026-10-05 ROADMAP'inden)
-- **İlkeler:**
-  - Ekleyici ilerle: her aşama yeni şey ekler, mevcut araçlar kaldırılmaz.
-  - Her aşama tek başına yayınlanabilir; bitince uygulama eskisi gibi açılır, yeni özellik opsiyoneldir.
-  - Yeni araçlar yerleşik `poyraz` MCP sunucusuna eklenir; köprü adı kuralı `mcp_poyraz__<tool>` değişmez.
-  - Güvenlik varsayılanı kapalıdır: `fullFileAccess` kapalıyken mevcut kısıtlar geçerli kalır.
-  - Araç `description` metinleri İngilizce yazılır.
+- **Status:** Proposed. Extracted from the principles in the earlier roadmap; continued applicability requires a maintainer decision.
+- **Recorded:** 2026-10-15; the original roadmap principles date from 2026-10-05.
+- **Proposed principles:**
+  - Make additive progress: each phase adds behavior without removing existing tools.
+  - Each phase is independently releasable. The application still starts normally, and the new feature is optional.
+  - Add tools to the built-in `poyraz` MCP server while preserving the `mcp_poyraz__<tool>` bridge naming convention.
+  - Keep privileged access off by default. Existing restrictions still apply while `fullFileAccess` is disabled.
+  - Write tool descriptions in English.

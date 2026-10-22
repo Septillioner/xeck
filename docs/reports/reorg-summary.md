@@ -1,108 +1,112 @@
-# Doküman yeniden düzenleme özeti
+# Documentation reorganization report
 
-- **Tarih:** 2026-10-15 (TSİ)
-- **Yapan:** Grok Bot (Ege'nin onayıyla)
-- **Kapsam:** Yalnız dokümanlar. Kod, `poyraz/` submodule'ü, `PMAP.md`, `design-rules.md`, `.clinerules/`, `.cursor/` değiştirilmedi. **Commit ve push yapılmadı** (değişiklikler `git add` ile aşamalandı, Ege atar). Hiçbir dosya silinmedi; eskiler `docs/archive/` altında.
-- **Başlangıç durumu:** `main`, HEAD `66637a1`, çalışma ağacında yalnız `docs/docs-inventory.md` (yeni dosya). Submodule gitlink `169cc90`.
-- **Temel alınan rapor:** [docs-inventory.md](docs-inventory.md)
+- **Date:** 2026-10-15, Europe/Istanbul.
+- **Author:** Grok Bot, with Ege's approval.
+- **Scope:** Documentation only. Application code, the Poyraz submodule, root design rules, and editor configuration were not changed by the historical reorganization. Changes were staged for the user; no commit or push was made.
+- **Starting point:** `main`, HEAD `66637a1`, with the new inventory report as the only working-tree change. The submodule gitlink was `169cc90`.
+- **Source report:** [Documentation inventory](docs-inventory.md).
 
-## 1. Taşımalar (`git mv`)
+This is a historical record translated into English. Paths below describe the reorganization at that time; some archived or local files are absent from the current public checkout. Local-only note references have been removed from this public edition.
 
-| Kaynak | Hedef |
+## 1. Moves recorded with `git mv`
+
+| Source | Destination |
 |---|---|
-| `docs/arch-cwap.md` | `docs/architecture/cwap.md` (taslak/ertelendi bandı, yollar düzeltildi) |
-| `docs/backend/README.md` | `docs/architecture/host-overview.md` (kısmen eski/ertelendi bandı) |
-| `docs/circuit-breaker-report.md` | `docs/decisions/0001-error-circuit-breaker-off.md` (başına karar özeti) |
-| `docs/srp.md` | `docs/rules/file-ownership.md` (yollar düzeltildi) |
-| `docs/feedbacks/2026-10-09.md` | `docs/reports/audits/2026-10-09-agent-behavior-audit.md` |
-| `docs/architecture-report.md` | `docs/archive/architecture-report-2026-06.md` |
-| `ROADMAP.md` | `docs/archive/roadmap-features-2026-10.md` |
-| `IDEAS.md` | `docs/archive/IDEAS-2026-10.md` |
-| `docs/roadmap.md` | `docs/archive/roadmap-codebase-cleanup-2026-10.md` (bağlantılar ve yollar düzeltildi) |
-| `implementation_plan.md` | `docs/archive/implementation_plan-web-refactor-and-mobile.md` |
-| `docs/docs-inventory.md` (izlenmiyordu) | `docs/reports/docs-inventory.md` |
+| `docs/arch-cwap.md` | `docs/architecture/cwap.md`, with a draft/deferred banner and corrected paths. |
+| `docs/backend/README.md` | `docs/architecture/host-overview.md`, initially marked partly outdated. |
+| `docs/circuit-breaker-report.md` | `docs/decisions/0001-error-circuit-breaker-off.md`, with a decision summary. |
+| `docs/srp.md` | `docs/rules/file-ownership.md`, with path corrections. |
+| `docs/feedbacks/2026-10-09.md` | `docs/reports/audits/2026-10-09-agent-behavior-audit.md`. |
+| `docs/architecture-report.md` | `docs/archive/architecture-report-2026-06.md`. |
+| `ROADMAP.md` | `docs/archive/roadmap-features-2026-10.md`. |
+| `IDEAS.md` | `docs/archive/IDEAS-2026-10.md`. |
+| `docs/roadmap.md` | `docs/archive/roadmap-codebase-cleanup-2026-10.md`, with corrected links and paths. |
+| `implementation_plan.md` | `docs/archive/implementation_plan-web-refactor-and-mobile.md`. |
+| Untracked `docs/docs-inventory.md` | `docs/reports/docs-inventory.md`. |
 
-Boşalan `docs/backend/` ve `docs/feedbacks/` klasörleri kaldırıldı. Taşınmayanlar: `PMAP.md`, `design-rules.md`, `.clinerules/*`, `.cursor/rules/*`, `poyraz/**`.
+The empty `docs/backend/` and `docs/feedbacks/` directories were removed. `design-rules.md`, `.clinerules/*`, `.cursor/rules/*`, and `poyraz/**` were left in place.
 
-**İşaretçi dosyalar:** `PMAP.md` eski yollara atıf yaptığı ve PMAP değiştirilemediği için `docs/srp.md` ve `docs/circuit-breaker-report.md` yollarında kısa "Taşındı" işaretçileri bırakıldı. Bu yüzden git bu ikisini rename yerine "değişti + yeni dosya" gösterebilir. PMAP güncellenince işaretçiler silinebilir.
+Short moved-file pointers were initially retained at `docs/srp.md` and `docs/circuit-breaker-report.md` for older references. Consequently, Git could display those as modified files plus new destinations rather than renames.
 
-## 2. Yeni dosyalar
+## 2. New documents
 
-`docs/README.md` (dizin, kategoriler, backlog şeması, durum akışı, öncelik), `docs/architecture/README.md` (iskelet), `docs/rules/README.md`, `docs/decisions/README.md`, `docs/decisions/0002-tailwind-v4.md`, `0003-additive-phases.md`, `0004-plan-single-file.md`, `docs/backlog/README.md` ve aşağıdaki backlog dosyaları. Karar kayıtları 0002 ve 0003 "Önerilen" durumunda; Ege onayı bekler.
+The reorganization added documentation, architecture, rules, and decisions indexes; ADRs 0002, 0003, and 0004; a backlog index; and the backlog items below. ADRs 0002 and 0003 were initially proposed. Consult each current ADR for its later status.
 
-## 3. Backlog (32 dosya, `docs/backlog/NNN-slug.md`)
+## 3. Historical backlog snapshot
 
-| ID | Başlık | Durum | Öncelik |
+The source report described 32 backlog files under the then-used `docs/backlog/` directory. This table records that snapshot, not current task status.
+
+| ID | Topic | Recorded status | Priority |
 |---|---|---|---|
-| 001 | Self-improving agent (toggle) | idea | P1 |
-| 002 | Sanal terminal (kalıcı oturum, 6 tool) | idea | P1 |
-| 003 | grep tool'u (host) | done | P2 |
-| 004 | find_files tool'u | silindi, 033'e birleştirildi | - |
-| 005 | Arama araçlarında sert hariç tutma kuralları | silindi, 033'e birleştirildi | - |
-| 006 | Proje talimat dosyası (AGENTS.md) okuma | idea | P2 |
-| 007 | Hafızaya project alanı (proje bazlı hafıza) | idea | P3 |
-| 008 | plan_list ve plan_export araçları | idea | P3 |
-| 009 | run_command / terminal için yıkıcı komut onayı | idea | P2 |
-| 010 | Expert sistemi (ExpertProfile, Experts sekmesi, expert seçici) | idea | P3 |
-| 011 | general ajanından coding'e yönlendirme talimatı | idea | P3 |
-| 012 | Plan onayı (plan_write sonrası ask_question) | idea | P3 |
-| 013 | Ölü kanca yolunu sil | ready | P2 |
-| 014 | policyPermitsBuiltin kalksın, plan servisi isToolAllowedInPolicy kullansın | ready | P2 |
-| 015 | Derlemeyi tek fonksiyona indir | idea | P3 |
-| 016 | Canlı explain bağlamı gerçek değerler taşısın | idea | P3 |
-| 017 | Küçük artıkları sil | ready | P3 |
-| 018 | Büyük dosyaları sorumluluğa göre böl | idea | P3 |
-| 019 | responsive.css'i utility varyantlarına taşı | idea | P3 |
-| 020 | Dokümanlardaki eski yol referanslarını düzelt | review | P1 |
-| 021 | Agent davranış denetimi bulgularının takibi | idea | P1 |
-| 022 | Mimari raporunun açık bulguları (ertelendi) | idea | P3 |
-| 023 | Mesaj kuyruğunu kalıcı ve sıralanabilir yap | idea | P3 |
-| 024 | Terminal kartında stdin / etkileşimli komut | idea | P3 |
-| 025 | Subagent üretim desteği | idea | P3 |
-| 026 | Ertelenen fikirler (git_diff, LSP/semantik arama, node-pty, expert başına model) | idea | P3 |
-| 027 | Test yazma kuralı çelişkisi | idea | P1 |
-| 028 | Doküman yapısı için açık sorular | idea | P2 |
-| 029 | PMAP.md ile kod/doküman arasındaki çelişkiler | ready | P1 |
-| 030 | Plan/todo MCP (plan_write, plan_read, todo_update, todo_add) | done | P2 |
-| 031 | Web dosya hiyerarşisi (ui/, lib/, styles/, settings/mcp/) | done | P2 |
-| 032 | Mobil uyum (responsive) | done | P2 |
+| 001 | Self-improving agent toggle | idea | P1 |
+| 002 | Persistent virtual terminal with six tools | idea | P1 |
+| 003 | Host grep tool | done | P2 |
+| 004 | `find_files` tool | removed; merged into 033 | — |
+| 005 | Hard exclusions for search tools | removed; merged into 033 | — |
+| 006 | Load project instructions from `AGENTS.md` | idea | P2 |
+| 007 | Project-scoped memory | idea | P3 |
+| 008 | `plan_list` and `plan_export` tools | idea | P3 |
+| 009 | Destructive-command approval for terminal execution | idea | P2 |
+| 010 | Expert system, `ExpertProfile`, settings tab, and selector | idea | P3 |
+| 011 | Instructions routing general-agent work to coding | idea | P3 |
+| 012 | Approval with `ask_question` after `plan_write` | idea | P3 |
+| 013 | Remove the dead loop-hook path | ready | P2 |
+| 014 | Replace `policyPermitsBuiltin` with `isToolAllowedInPolicy` in plan services | ready | P2 |
+| 015 | Consolidate compilation into one function | idea | P3 |
+| 016 | Supply actual runtime values to live explain context | idea | P3 |
+| 017 | Remove small unused remnants | ready | P3 |
+| 018 | Split large files by responsibility | idea | P3 |
+| 019 | Move `responsive.css` behavior to utility variants | idea | P3 |
+| 020 | Fix stale documentation paths | review | P1 |
+| 021 | Follow up agent-behavior audit findings | idea | P1 |
+| 022 | Deferred open architecture findings | idea | P3 |
+| 023 | Persist and reorder the message queue | idea | P3 |
+| 024 | Terminal stdin and interactive commands | idea | P3 |
+| 025 | Production subagent support | idea | P3 |
+| 026 | Deferred `git_diff`, LSP/semantic search, node-pty, and per-expert model ideas | idea | P3 |
+| 027 | Resolve contradictory testing rules | idea | P1 |
+| 028 | Resolve documentation-organization questions | idea | P2 |
+| 029 | Reconcile stale architecture notes with implementation | ready | P1 |
+| 030 | Plan/todo MCP: `plan_write`, `plan_read`, `todo_update`, `todo_add` | done | P2 |
+| 031 | Web hierarchy: `ui/`, `lib/`, `styles/`, `settings/mcp/` | done | P2 |
+| 032 | Responsive/mobile layout | done | P2 |
 
-Belirsiz olanlar (expert sistemi 010, sanal terminal 002, find_files 004, genel→coding yönlendirme 011, plan onayı 012) `idea` ve gövdede "karar bekliyor" notuyla yazıldı. Self-improving agent (001) `idea`.
+Items 002, 004, 010, 011, and 012 were explicitly awaiting decisions rather than approved implementation work. The self-improving agent remained an idea.
 
-## 4. Düzeltilen referanslar
+## 4. Reference corrections
 
-- `cwap.md`: `workspaces/{policies,agents,workspaces}.ts` → `catalog/*.ts`; var olmayan `core/policy-resolve.ts` → `core/definitions/`; `builtin/file-access.ts`, `builtin/terminal-run.ts` → `host/src/tools/`.
-- `file-ownership.md`: aynı katalog yolları, `docs/arch-cwap.md` bağlantısı yeni yola, "`host/src/tools` yok" satırı kaldırıldı (dizin var; PMAP ile uyumlu).
-- `roadmap-codebase-cleanup`: `../` bağlantıları `../../` yapıldı, `backend/README.md`, `srp.md`, `arch-cwap.md` bağlantıları yeni yerlere, `workspaces/agents.ts` → `catalog/agents.ts`, `builtin/file-access.ts` → `host/src/tools/file-access.ts`, `host/src/agent/prompts/system-prompt.ts` → `host/src/agent/catalog/prompts/system-prompt.ts`.
-- `0001` kararında `host/src/infra/system-prompt.ts` için güncel yol notu (satır numaraları doğrulanmadı).
-- Tarama (`git grep`, `docs/**/*.md` bağlantı denetimi): kırık göreli bağlantı yok; kodda, `.clinerules`, `.cursor`, `poyraz.code-workspace`, `package.json` içinde taşınan dosyalara atıf yok. Atıf yapan tek dosya `PMAP.md` (aşağıda).
+- The CWAP draft changed `workspaces/{policies,agents,workspaces}.ts` to `catalog/*.ts`, nonexistent `core/policy-resolve.ts` to `core/definitions/`, and tool implementation paths from `builtin/` to `host/src/tools/`.
+- File ownership received the same catalog corrections, an updated architecture link, and removal of the incorrect claim that `host/src/tools/` did not exist.
+- The cleanup roadmap adjusted relative links for its deeper archive location. References to backend, ownership, and CWAP documents followed the moves. Agent and system-prompt paths were corrected to `catalog/`; file operations were corrected to `host/src/tools/file-access.ts`.
+- ADR 0001 received an updated system-prompt path note; its historical line numbers were not reverified.
+- The original link scan reported no broken relative links at the time. This does not guarantee the same paths exist in today's public checkout.
 
-## 5. PMAP.md (DEĞİŞTİRİLMEDİ) ile çelişkiler
+## 5. Recorded stale architecture details
 
-PMAP agent mimari indeksi olduğu için dokunulmadı; çelişkiler backlog backlog 029 olarak kayıtlı:
+Historical reconciliation work identified:
 
-1. Satır 31 pinned commit `0ddf1a7…`; `git submodule status` gerçek değer `169cc907c25e2f30c2a48e42dd27fd839d144e88` (doğrulandı).
-2. Satır 111 "session stores `mode`"; `shared/types.ts` yalnız `policyId` içerir (doğrulandı). Yeni belgelerde `policyId` yazıldı.
-3. Satır 84 mood renkleri `styles.css`; gerçek dosya `web/src/styles/mood.css` (doğrulandı).
-4. Satır 8 `docs/srp.md`, satır 33 ve 35 `docs/circuit-breaker-report.md` eski yollar (işaretçilerle çalışır durumda).
+1. A pinned commit reference of `0ddf1a7...` versus the then-current submodule gitlink `169cc907c25e2f30c2a48e42dd27fd839d144e88`.
+2. A description of stored session `mode` where `shared/types.ts` used `policyId`. New public documentation used the canonical field.
+3. Mood-color references to `styles.css` after the rules moved to `web/src/styles/mood.css`.
+4. References to the old ownership and circuit-breaker document locations, initially served by moved-file pointers.
 
-## 6. Envanter raporundaki düzeltmeler
+## 6. Corrections to the inventory
 
-Yeniden kontrolde envanterin iki iddiası yanlış çıktı (rapora not düşüldü, backlog'a yansıdı): host'ta `grep` aracı **var** (`host/src/agent/tools/builtin/grep.ts`, commit `fbd30bf`; `find_files` yok); `AppState.tsx` şu an 1162 satır.
+A second check corrected two inventory claims: the host did have a grep tool at `host/src/agent/tools/builtin/grep.ts` from commit `fbd30bf`, while `find_files` was absent; `AppState.tsx` had 1162 lines at that check.
 
-## 7. Doğrulanamayıp bırakılanlar
+## 7. Items deliberately left unverified
 
-- `design-rules.md` satır ~27 "renkler `styles.css` içinde" (dosya yok): kökte kalan dosyaya dokunulmadı (backlog 028).
-- `host-overview.md` içindeki bayat ağaç/uç noktalar: yalnız bantla işaretlendi, yeniden yazılmadı.
-- `cwap.md` içindeki `from 'poyraz'` yalnız adaptörde kuralı ve diğer kod iddiaları.
-- `0001` içindeki satır numaraları; `0002` Tailwind geçişinin gerekçesi/commit'i.
-- Backlog 005, 007, 009, 011, 016, 021: kodda ayrıntılı doğrulama yapılmadı, gövdede **doğrulanmalı** yazar.
-- `poyraz/` içi belgeler (13 dosya), `poyraz.code-workspace` yolları, `.clinerules` test kuralı çelişkisi (backlog 027): dokunulmadı.
+- A stale `styles.css` reference near line 27 of the old root design rules.
+- The host overview's earlier source tree and endpoint list, initially addressed only with a status banner.
+- The CWAP draft's claim that only an adapter could import from `poyraz`, and its other implementation claims.
+- Historical line numbers in ADR 0001 and the original migration commit/rationale behind ADR 0002.
+- Detailed implementation status of backlog items 005, 007, 009, 011, 016, and 021.
+- Thirteen submodule documentation files, workspace configuration paths, and the testing-rule contradiction in editor configuration.
 
-## 8. Açık sorular
+## 8. Open questions at the time
 
-Backlog backlog 028 ve backlog 027.
+The source report assigned the unresolved documentation questions to backlog 028 and the testing-rule conflict to backlog 027. These historical references are not instructions to stop current authorized work.
 
-## 9. Test
+## 9. Verification
 
-Kod dosyası değişmedi, `npm test` çalıştırılmadı.
+The original reorganization changed no source code and did not run `npm test`. The English translation and public-reference cleanup are separate documentation changes.

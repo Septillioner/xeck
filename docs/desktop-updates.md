@@ -12,10 +12,16 @@ No GitHub token is embedded in the application: release assets must be public.
 
 ## Publish a version
 
-1. Update the root version and lockfile together, for example:
-   `npm version 4.4.0-beta.3 --no-git-tag-version`.
-2. Commit the changes, then create the matching tag, for example
-   `git tag v4.4.0-beta.3`, and push the commit and tag.
+1. Commit your application changes first. The release script requires a clean
+   working tree and an attached branch.
+2. Run `npm run release -- patch` (or `minor`, `major`, `beta`, `rc`, or `stable`).
+   This updates both root manifests and creates a release commit and matching
+   `v` tag using your configured Git identity. Nothing is pushed automatically.
+   Use `npm run release -- patch --dry-run` to preview without changing anything.
+   `beta`/`rc` use npm prerelease increments; `stable` removes the prerelease suffix.
+   npm's `patch` also promotes an existing prerelease of that base version to stable.
+   The script prints the exact `git push --atomic origin HEAD refs/tags/v...`
+   command to send the branch and its release tag together when ready.
 3. The Desktop packages workflow checks that the tag matches `package.json`,
    tests the updater, and builds all three platforms. All builds must succeed.
 4. It uploads installers, ZIPs, update YAML files and blockmaps into a draft

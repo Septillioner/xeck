@@ -241,7 +241,7 @@
 }
 
 /* Accent selection. Applied after the dark palette so a dark theme does not keep
-   a fixed accent (see PMAP.md). */
+   a fixed accent (see docs/rules/frontend.md). */
 html { --color-accent: var(--accent); }
 html[data-accent='default'] { --accent: #294575; --color-on-accent: #fdfcfa; }
 html[data-accent='coral'] { --accent: #9e3f23; --color-on-accent: #fdfcfa; }

@@ -24,7 +24,9 @@
     "dist:mac": "npm run build:desktop && electron-builder --mac --publish never",
     "dist:linux": "npm run build:desktop && electron-builder --linux --publish never",
     "test:updates": "node --test electron/updates.test.cjs",
-    "build:desktop:prepared": "concurrently -n host,web,electron -c blue,green,yellow \"npm run build:host\" \"npm run build:web\" \"npm run build:electron\""
+    "build:desktop:prepared": "concurrently -n host,web,electron -c blue,green,yellow \"npm run build:host\" \"npm run build:web\" \"npm run build:electron\"",
+    "release": "node scripts/release.mjs",
+    "test:release": "node --test scripts/release.test.mjs"
   },
   "main": "build/dist-electron/main.js",
   "build": {

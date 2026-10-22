@@ -1,254 +1,176 @@
-# ADR 0001 — Aynı hata devre kesicisi kapalı
+# ADR 0001 — Same-error circuit breaker disabled
 
-- **Durum:** Kabul edildi, yürürlükte (kapalı).
-- **Tarih:** 10.07.2026 (raporda yazıldığı gibi)
-- **Karar:** `poyraz/` içindeki "aynı araç hatası üst üste N kez" devre kesicisi kapalıdır; host, politika bazında `errorBreaker: 'off'` verir.
-- **Gerekçe:** Devre kesici, tetiklenince `tool_calls` kırpıyor ama `providerMeta.openai.outputItems` içindeki `function_call` öğeleri kalıyordu. Responses API'ye geri oynatılınca çıktısız çağrı nedeniyle `400 No tool output found for function call` hatası oluşuyordu.
-- **Telafi:** İstek başına `sanitizeToolPairing()` eksik tool çıktısını sentetik mesajla tamamlar, öksüz tool mesajlarını atar.
-- **Yeniden açma koşulları:** Bu belgenin §6 bölümü.
-- **İlgili:** PMAP.md "Submodule" bölümü (satır 33-35).
+- **Status:** Accepted; the breaker remains disabled under this decision.
+- **Date:** 2026-07-10, preserving the date recorded in the original report.
+- **Decision:** The host disables the library's repeated-tool-error breaker through policy-level `errorBreaker: 'off'`.
+- **Reason:** The hard breaker removed `tool_calls` but retained `function_call` entries in `providerMeta.openai.outputItems`. Replaying that history through the Responses API produced `400 No tool output found for function call`.
+- **Mitigation:** Repair tool-call/result pairing per request with `sanitizeToolPairing()`, adding missing outputs and dropping orphan results.
+- **Reconsideration:** See section 6.
 
+The report below describes the implementation and verification at the time of the decision. Paths, line numbers, counts, and policy limits are historical references rather than claims about today's source.
 
----
+## 1. Summary
 
-# Devre Kesici Raporu — Aynı Hata Devre Kesiciyi Kapatıldı
+The repeated-tool-error breaker in `decision-loop.ts` was disabled. Two related protections accompanied the change: do not preserve `providerMeta` for a round whose tool calls have been removed, and repair call/result pairing before every provider request.
 
-- **Tarih:** 10.07.2026
-- **Durum:** Kapalı (`ERROR_CIRCUIT_BREAKER_ENABLED = false`)
-- **Etkilenen modül:** `poyraz/` (alt modül)
+Disabling the breaker addressed both the visible notice and the chain that caused the subsequent HTTP 400.
 
----
+## 2. Symptom
 
-## 1. Özet
+A conversation first displayed:
 
-`decision-loop.ts` içindeki "aynı araç hatası üst üste N kez" devre kesicisi kapatıldı. Aynı işi
-yapan iki eşlik eden değişiklik yapıldı: devre kesicinin tetiklendiği turda `providerMeta` artık
-saklanmıyor, ve her istek çıkmadan önce araç/çağrı eşleşmesi onarılıyor.
-
-Kapatma kararı tek başına alınmadı — devre kesici, kapalı hâliyle bile var olan bir 400 hatasının
-**kaynağıydı**. Ayrıntı için [Kök neden](#3-kök-neden).
-
----
-
-## 2. Semptom
-
-Poyraz sohbetinde aynı turda iki şey görüldü:
-
-```
+```text
 NOTICE: 'mcp_poyraz__get_file_info' returned the same error twice in a row.
 Stop retrying that tool call. Explain what you need from the user or describe the blocker in plain text.
 ```
 
-ve hemen ardından:
+It was immediately followed by:
 
-```
+```text
 400 No tool output found for function call call_u3Ba959PiIphnGBKpwNKOBdX
 ```
 
----
+## 3. Root cause
 
-## 3. Kök neden
+The failure came from the Responses API. The recorded sequence was:
 
-Hata **Responses API**'den geliyor (`400 No tool output found for function call`; Chat Completions
-böyle bir metin döndürmez). Zincir:
-
-| # | Adım | Konum |
+| Step | Behavior | Historical location |
 |---|---|---|
-| 1 | `policyForId()` üç modda da `hardBlockDeniedTools: true` döndürüyor | `host/src/agent/catalog/prompts/system-prompt.ts` |
-| 2 | Aynı hata 2 kez tekrarlayınce sert NOTICE user mesajı olarak tarihe ekleniyor, `circuitBreakerNoticeSent = true` | `poyraz/application/chat/decision-loop.ts:367-387` |
-| 3 | Sıradaki turda `toolCalls = isToolLoopBlocked() ? undefined : response.tool_calls` → `tool_calls` **siliniyor** | `decision-loop.ts:237` |
-| 4 | Ama `providerMeta` aynen saklanıyor → `openai.outputItems` içinde `function_call` item'ları duruyor | `decision-loop.ts:239-246` (eski hâli) |
-| 5 | `buildChatResponseFromResponsesOutput()` `outputItems`'ı `tool_calls`'tan bağımsız yazıyor | `poyraz/infrastructure/llm/openai-responses.ts:224-241` |
-| 6 | Sonraki istekte `toResponsesInput()` assistant + `outputItems` varsa birebir replay ediyor | `openai-responses.ts:122-126` |
-| 7 | O turda hiç `function_call_output` üretilmediği için çağrı cevapsız kalıyor → **400** | — |
+| 1 | `policyForId()` enabled `hardBlockDeniedTools: true` for all three modes. | `host/src/agent/catalog/prompts/system-prompt.ts` |
+| 2 | Two identical consecutive errors inserted a hard NOTICE as a user message and set `circuitBreakerNoticeSent = true`. | `poyraz/application/chat/decision-loop.ts:367-387` |
+| 3 | The following round evaluated `toolCalls = isToolLoopBlocked() ? undefined : response.tool_calls`, removing the tool calls. | `decision-loop.ts:237` |
+| 4 | `providerMeta` was still stored, including `function_call` output items. | Earlier `decision-loop.ts:239-246` |
+| 5 | `buildChatResponseFromResponsesOutput()` stored output items independently of `tool_calls`. | `poyraz/infrastructure/llm/openai-responses.ts:224-241` |
+| 6 | `toResponsesInput()` replayed assistant output items on the next request. | `openai-responses.ts:122-126` |
+| 7 | No `function_call_output` had been produced, leaving an unanswered call and causing HTTP 400. | Provider request |
 
-`completePendingToolResponses()` (`decision-loop.ts:109-138`) bu durumu onaramıyor; çünkü sadece
-`msg.tool_calls`'a bakıyor ve bu senaryoda `tool_calls` zaten `undefined`.
+`completePendingToolResponses()` at `decision-loop.ts:109-138` could not repair this case because it only inspected `msg.tool_calls`, which was already undefined.
 
-**Sonuç:** devre kesici "tool çağrısını engelle" derken geçerli bir tool çağrısını cevapsız bırakıyor,
-bir sonraki istekte tarih geçersizleşiyor. Devre kesiciyi kapatmak hatayı hem semptomdan hem de
-kaynağından kaldırıyor.
+The breaker therefore left valid provider-level tool calls without matching results. Disabling it prevented the destructive history transformation.
 
----
+## 4. Recorded changes
 
-## 4. Yapılan değişiklikler
+### 4.1 Disable the breaker
 
-### 4.1 Devre kesiciyi kapat
+In `poyraz/application/chat/decision-loop.ts`:
 
-**`poyraz/application/chat/decision-loop.ts`**
-
-| Satır | Değişiklik |
+| Historical line | Change |
 |---|---|
-| 39 | `export const ERROR_CIRCUIT_BREAKER_ENABLED: boolean = false;` — neden kapalı ve ne zaman açılacağı yorumla birlikte |
-| 354 | Sayaç bloğu `ERROR_CIRCUIT_BREAKER_ENABLED &&` ile kapandı |
-| 367 | Tetik bloğu `ERROR_CIRCUIT_BREAKER_ENABLED &&` ile kapandı |
-| 245 | `providerMeta: toolCalls ? response.providerMeta : undefined` — `tool_calls` silinirse hammadde çıktı da silinir |
+| 39 | Set `export const ERROR_CIRCUIT_BREAKER_ENABLED: boolean = false;`, with a comment explaining the decision. |
+| 354 | Guard the error counter with `ERROR_CIRCUIT_BREAKER_ENABLED &&`. |
+| 367 | Guard the breaker trigger with the same flag. |
+| 245 | Store `providerMeta: toolCalls ? response.providerMeta : undefined`. |
 
-Bayrak `false` olduğu için: NOTICE hiç üretilmiyor → `circuitBreakerNoticeSent` hep `false` →
-`isToolLoopBlocked()` hiç `true` olmuyor → `tool_calls` hiç strip edilmiyor → 400 zinciri kırılıyor.
+With the flag off, no NOTICE is generated, `circuitBreakerNoticeSent` stays false, `isToolLoopBlocked()` does not trigger, and tool calls are not stripped through this path.
 
-### 4.2 Geçmişi silmeden 400 onarımı
+### 4.2 Repair requests without deleting history
 
-**Yeni dosya: `poyraz/infrastructure/llm/tool-pairing.ts`**
+The new helper in `poyraz/infrastructure/llm/tool-pairing.ts` has this signature:
 
 ```ts
 sanitizeToolPairing(messages: ChatMessage[]): ChatMessage[]
 ```
 
-- **Yeni array döner, gelen `messages`'e dokunulmaz.** Kayıtlı transcript, `libraryMessages` ve
-  UI'daki mesajlar aynen kalır; sadece sağlayıcıya giden **istek payload'ı** onarılır.
-- Cevapsız her `function_call`'ın hemen ardına sentetik `role: 'tool'` mesajı eklenir
-  (`MISSING_TOOL_OUTPUT_NOTE`). Çağrı silinmiyor, eşleştirilmiş hâle getiriliyor — model kendi
-  önceki çağrısını görmeye devam ediyor.
-- Çağrısı olmayan (`tool_call_id` hiçbir çağrıya eşleşmeyen) `role: 'tool'` mesajı atlanır.
-- `id`'si boş olan `tool_call` atlanır (eşleştirilemesin; `extractToolCallsFromOutput` `''`
-  döndürebiliyor).
+- Return a new array without mutating `messages`. Stored transcripts, `libraryMessages`, and UI history remain intact; only the outgoing provider payload is repaired.
+- Add a synthetic `role: 'tool'` message containing `MISSING_TOOL_OUTPUT_NOTE` immediately after each unanswered function call. Preserve the call itself so the model can still see it.
+- Skip orphan tool-result messages whose `tool_call_id` matches no call.
+- Skip calls with an empty ID, which `extractToolCallsFromOutput` could produce.
 
-**Bağlama noktaları (sağlayıcı sınırı):**
+The helper was connected at these provider boundaries:
 
-| Dosya | Satır | Yol |
+| File | Historical line | Provider path |
 |---|---|---|
 | `infrastructure/llm/providers.ts` | 35 | Ollama |
-| `infrastructure/llm/providers.ts` | 203 | OpenAI **Responses API** |
-| `infrastructure/llm/providers.ts` | 327 | OpenAI **Chat Completions** (fallback) |
-| `infrastructure/llm/gemini-messages.ts` | 146 | Gemini (`buildGeminiRequest`) |
+| `infrastructure/llm/providers.ts` | 203 | OpenAI Responses API |
+| `infrastructure/llm/providers.ts` | 327 | OpenAI Chat Completions fallback |
+| `infrastructure/llm/gemini-messages.ts` | 146 | Gemini `buildGeminiRequest` |
 
-Tek helper, dört yol → Responses, CC fallback, Ollama ve Gemini aynı onarımdan geçiyor.
+### 4.3 Update existing assertions
 
-### 4.3 Mevcut testlerin yeni duruma uyarlanması
+Two assertions in `poyraz/tests/integration/decision-loop.test.ts` were adapted:
 
-**`poyraz/tests/integration/decision-loop.test.ts`** — yeni test yazılmadı, iki mevcut assertion
-güncellendi:
+- The test that expected a NOTICE after two identical errors now expects no NOTICE while the breaker is off. It checks `ERROR_CIRCUIT_BREAKER_ENABLED === false` and `CONSECUTIVE_SAME_ERROR_LIMIT === 2`.
+- The test that expected tool-call stripping now verifies that calls are never stripped through the disabled breaker path.
 
-- `'injects NOTICE after same error twice and blocks further tool calls'` →
-  `'does not inject a NOTICE when the same error repeats while the breaker is off'`
-  (`ERROR_CIRCUIT_BREAKER_ENABLED === false` ve `CONSECUTIVE_SAME_ERROR_LIMIT === 2` doğrulanıyor).
-- `'strips tool_calls from assistant message when circuit breaker is active'` →
-  `'never strips tool_calls from an assistant round while the breaker is off'`.
+The initial change updated existing tests rather than adding new ones. The later policy-mode change in section 9 added three cases.
 
----
+## 5. Remaining protections
 
-## 5. Kapatınca ne kaldı, ne kalktı
+The disabled layer was `CONSECUTIVE_SAME_ERROR_LIMIT = 2`: it combined a NOTICE with blocking after two equal `tool:code:message-hash` failures.
 
-### Kalkan koruma
+The following mechanisms still operated independently:
 
-| Koruma | Ne yapıyordu |
-|---|---|
-| `CONSECUTIVE_SAME_ERROR_LIMIT = 2` | Aynı `tool:code:mesaj-hash` 2 kez üst üste gelince NOTICE + tool çağrısını bloklama |
-
-### Kalan korumalar (devre kesicisiz de çalışıyor)
-
-| Mekanizma | Konum | Ne yapıyor |
+| Mechanism | Historical location | Behavior |
 |---|---|---|
-| `repeatCallLimit` (varsayılan **2**) | `poyraz/application/chat/tool-execution.ts:110` | Aynı **tool + argüman** imzası tekrarlanınca `POLICY_BLOCKED` hatası döndürüyor. Pratikte asıl koruma bu. |
-| `maxToolRounds` (host: agent 60, plan 40; kütüphane varsayılanı 10) | `poyraz/application/agent/tool-resolver.ts:21-27`, `host/src/agent/catalog/prompts/system-prompt.ts` | Bir turun toplam araç turu sınırı. |
-| Mod politikası `deniedTools` | `poyraz/application/chat/tool-policy.ts:68-87` | Modun kullanıma açmadığı araçları reddediyor. |
-| Response gate'ler | `decision-loop.ts:249-276` | Metin cevaplarını reddedip yeniden deniyor. |
-| Tool hatasının kendisi | `tool-execution.ts` → `withRepair` | Hata modelin gördüğü bir `tool` mesajı olarak geri dönüyor; model durumu kendi gözüyor. |
+| `repeatCallLimit`, default 2 | `poyraz/application/chat/tool-execution.ts:110` | Return `POLICY_BLOCKED` for repeated tool-and-argument signatures. |
+| `maxToolRounds` | `poyraz/application/agent/tool-resolver.ts:21-27` and host policy configuration | Bound total tool rounds. Recorded limits were agent 60, plan 40, library default 10. |
+| Policy `deniedTools` | `poyraz/application/chat/tool-policy.ts:68-87` | Reject tools unavailable under the policy. |
+| Response gates | `decision-loop.ts:249-276` | Reject and retry unsuitable text responses. |
+| Tool errors | `tool-execution.ts` through `withRepair` | Return the failure as a tool message visible to the model. |
 
-Yani "aynı hata sonsuza kadar dönüyor" senaryosu hâlâ **`repeatCallLimit` + `maxToolRounds`** ile
-sınır içinde. Devre kesici bu ikisinin üzerine binen üçüncü bir katmandı.
+Repeated calls remained bounded by `repeatCallLimit` and `maxToolRounds`. The same-error breaker was an additional overlapping layer.
 
----
+## 6. Conditions for reconsideration
 
-## 6. İleride açılması gerekir mi?
+Keep the breaker disabled unless a demonstrated case justifies it. The recorded reasons were:
 
-### Karar: şu an **açılması gerekmiyor**. Koşullar sağlanana kadar kapalı kalmalı.
+1. The hard NOTICE terminated tool progress by stripping calls rather than reliably guiding the model. It directly caused the invalid replay.
+2. Existing repetition and round limits already bounded execution. Argument-changing retries bypass the identical-call limit but still reach the round cap.
+3. A transient MCP startup failure could terminate the turn unnecessarily, as happened with `mcp_poyraz__get_file_info`.
 
-**Açmamak için nedenler:**
+A persistent quota failure, forbidden path, or unusable argument combination might justify additional guidance if further attempts are pointless or costly.
 
-1. **NOTICE modeli durdurmuyordu, turn'u öldürüyordu.** Sert yol (`buildErrorCircuitNotice`)
-   user mesajı olarak tarih arasına giriyor ve sıradaki turda tüm tool çağrılarını strip ediyordu.
-   Bu, 400'ün doğrudan kaynağıydı.
-2. **Aynı koruma zaten var.** Pratikte döngü yapan şey çoğunlukla argümanları da değişen çağrılar;
-   bunları `repeatCallLimit` yakalamıyor ama `maxToolRounds` yakalıyor. Ekstra katmanın getirisi düşük.
-3. **Yan etkisi pahalı.** Tek bir geçici MCP hatası (sunucu henüz başlamamış olabilir) bile turn'u
-   sonlandırabiliyor. `mcp_poyraz__get_file_info` tam olarak böyle bir durumdu.
+Before enabling a breaker:
 
-**Açılabileceği koşul:** bir tool hatasının **kalıcı** olduğu ve modelin serbestçe denemeye devam
-etmesinin anlamsız ya da pahalı olduğu durumlar. Örnek: kota dolmuş bir servis, izin verilmeyen bir
-yol, sürdürülemeyen bir argüman kombinasyonu.
+- Confirm `sanitizeToolPairing` remains connected across all four recorded provider paths. This was complete in the report.
+- Confirm the `providerMeta` guard remains in place. This was complete in the report.
+- Prefer `buildAgentSoftCircuitNotice` at the historical `decision-loop.ts:104-120`: append a `<system_reminder>` without changing `tool_calls`.
+- Review why `policyForId()` selected `hardBlockDeniedTools: true` in every mode; this forced the hard path instead of the existing soft path.
+- Consider raising `CONSECUTIVE_SAME_ERROR_LIMIT` from 2 to 3 to tolerate a transient MCP delay.
+- Preserve the invariant that removing tool calls also removes the corresponding provider metadata.
 
-### Yeniden açmak için gerekenler (checklist)
+Request pairing repair remains a defense in depth, not a reason to permit invalid history transformations elsewhere.
 
-- [ ] `sanitizeToolPairing` yerinde ve dört sağlayıcı yolunda bağlı. **(tamam)**
-- [ ] `providerMeta` guard'ı yerinde. **(tamam)**
-- [ ] Sert yol yerine **soft yol** kullanılacak: `buildAgentSoftCircuitNotice`
-      (`decision-loop.ts:104-120`). O zaten yazılı ama `hardBlockDeniedTools` her modda `true`
-      olduğu için hiç devreye girmiyor. Soft yol `tool_calls`'a dokunmaz, sadece
-      `<system_reminder>` içinde uyarı ekler.
-- [ ] `policyForId()` içindeki `hardBlockDeniedTools: true` gözden geçirilecek: neden üç modda da
-      sert blok? (`host/src/agent/catalog/prompts/system-prompt.ts`) Bu, devre kesiciyi varsayılan olarak
-      sert yola çekiyor.
-- [ ] `CONSECUTIVE_SAME_ERROR_LIMIT` 2'den **3**'e çıkarılacak — 2, tek seferlik bir MCP gecikmesi
-      için çok düşük.
-- [ ] **Varsayılan karar: açmak yerine kapalı tutmak.** Yine de açılırsa `decision-loop.ts:237`
-      ile `245` arasındaki bağ korunacak: `tool_calls` düşerse `providerMeta` de düşmeli.
+## 7. Historical verification
 
-> `sanitizeToolPairing` ikinci bir savunma hattı olarak her durumda yerinde kalacak; ama tek
-> seferlik savunma olarak görülmemeli.
+The original report recorded:
 
----
-
-## 7. Doğrulama
-
-Çalıştırılanlar:
-
-```
-poyraz/ : node_modules\.bin\tsc.cmd --noEmit -p tsconfig.json
-poyraz/ : node_modules\.bin\vitest.cmd run        → 8 dosya, 86 test geçti
-root    : npm run build:lib                        → tsup ESM + DTS başarılı
-root    : npm run typecheck --prefix host          → temiz
+```text
+poyraz/: node_modules\.bin\tsc.cmd --noEmit -p tsconfig.json
+poyraz/: node_modules\.bin\vitest.cmd run  -> 8 files, 86 tests passed
+root: npm run build:lib                   -> ESM and declarations built
+root: npm run typecheck --prefix host     -> clean
 ```
 
-Elle kontrol edilmesi gerekenler:
+It also recorded a pre-existing qualification: `poyraz/evals/scenarios/helpers.ts` had five type errors involving `ok`, `error`, and `content` on `AgentStreamEvent`. Because `evals` was included by the library tsconfig, its typecheck reported those errors; the library build and host typecheck were unaffected.
 
-1. Plan veya ask modunda tekrarlayan bir araç hatası üret → **NOTICE gelmemeli**.
-2. Daha önce `400 No tool output found for function call` almış eski bir sohbeti aç, yeni mesaj
-   gönder → **400 gelmemeli**, önceki mesajlar silinmemeli.
-3. Debug kaydında (`chat-debug-log`) istek payload'ında cevapsız `function_call` kalmamalı; varsa
-   hemen ardından `MISSING_TOOL_OUTPUT_NOTE` içeren `role: 'tool'` mesajı görünmeli.
+Manual checks requested at that time:
 
-### Bilinen önceden varan sorun
+1. Produce a repeated tool failure under plan or ask policy and confirm no breaker NOTICE appears.
+2. Resume an older conversation that previously produced the missing-output 400. Confirm the next request succeeds and previous messages remain intact.
+3. Inspect the debug request payload. Any unanswered function call should be followed by a synthetic tool message containing `MISSING_TOOL_OUTPUT_NOTE`.
 
-`poyraz/evals/scenarios/helpers.ts` içinde 5 tip hatası var (`AgentStreamEvent` üzerinde `ok`,
-`error`, `content` erişimi). Bu dosya bu değişiklikle ilgili değil ve `tsconfig` `evals`'i dahil
-ettiği için `tsc --noEmit` bunları raporluyor. Build (`tsup`) ve host typecheck etkilenmiyor.
+These are historical results and requested checks, not verification rerun during this documentation translation.
 
----
+## 8. Related historical files
 
-## 8. İlgili dosyalar
+| File | Responsibility |
+|---|---|
+| `poyraz/application/chat/decision-loop.ts` | Breaker and provider metadata guard. |
+| `poyraz/infrastructure/llm/tool-pairing.ts` | Request pairing repair. |
+| `poyraz/infrastructure/llm/providers.ts` | Responses, Chat Completions, and Ollama integration. |
+| `poyraz/infrastructure/llm/gemini-messages.ts` | Gemini integration. |
+| `poyraz/tests/integration/decision-loop.test.ts` | Existing assertion updates and later mode tests. |
+| `host/src/agent/catalog/prompts/system-prompt.ts` | `policyForId()`, hard-block behavior, and disabled breaker configuration. |
 
-```
-poyraz/application/chat/decision-loop.ts        devre kesici + providerMeta guard
-poyraz/infrastructure/llm/tool-pairing.ts       NEW — sanitizeToolPairing
-poyraz/infrastructure/llm/providers.ts          Responses / CC / Ollama bağlama
-poyraz/infrastructure/llm/gemini-messages.ts    Gemini bağlama
-poyraz/tests/integration/decision-loop.test.ts  mevcut assertion güncellemeleri
-host/src/agent/catalog/prompts/system-prompt.ts           policyForId() → hardBlockDeniedTools + errorBreaker: 'off'
-```
+## 9. Host-owned configuration update, 2026-07-10
 
----
+The host became responsible for selecting the breaker mode:
 
-## 9. Host-owned konfigürasyon (10.07.2026 güncellemesi)
+- `poyraz/domain/agent-policy.ts` defines `errorBreaker?: 'off' | 'soft' | 'hard'` through `ErrorBreakerMode`, exported from the library entry point. The recorded default is off.
+- `resolveErrorBreakerMode(agentPolicy)` uses an explicit policy value when supplied, otherwise falls back to `ERROR_CIRCUIT_BREAKER_ENABLED` for compatibility.
+- The host's `policyForId()` returned `errorBreaker: 'off'` for all three modes. That was the single configuration point for changing behavior.
+- `off` disables the counter, notice, and blocking. `soft` adds a reminder without altering calls. `hard` selects the earlier hard behavior when `hardBlockDeniedTools` is enabled, otherwise a soft notice. The metadata guard prevents the original HTTP 400 chain even when hard mode strips calls.
+- Three integration-test cases cover mode resolution, soft behavior, and hard behavior.
 
-Devre kesici artık kütüphane sabitinden değil, **poyraz-web tarafından** yönetiliyor:
-
-- `poyraz/domain/agent-policy.ts` → `errorBreaker?: 'off' | 'soft' | 'hard'` (`ErrorBreakerMode`).
-  Alan set edilmezse varsayılan `'off'`. Kütüphane `index.ts` üzerinden `ErrorBreakerMode` tipini
-  export ediyor.
-- `poyraz/application/chat/decision-loop.ts` → `resolveErrorBreakerMode(agentPolicy)`.
-  `AgentPolicy.errorBreaker` set edildiyse onu kullanır; edilmediyse eski
-  `ERROR_CIRCUIT_BREAKER_ENABLED` sabitine düşer (geriye dönük uyumluluk).
-- `host/src/agent/catalog/prompts/system-prompt.ts` → `policyForId()` her üç modda da `errorBreaker: 'off'`
-  döndürüyor. Davranışı değiştirmek için tek nokta burası.
-- Anlamlar: `'off'` = sayaç yok, NOTICE yok, blok yok. `'soft'` = `<system_reminder>` NOTICE,
-  `tool_calls`'a dokunulmaz. `'hard'` = eski sert yol (yalnızca `hardBlockDeniedTools` da
-  açıksa sert NOTICE, yoksa soft NOTICE); `tool_calls` strip edilse bile `providerMeta`
-  düşürüldüğü için 400 zinciri kurulmaz.
-- Yeni/güncel testler: `poyraz/tests/integration/decision-loop.test.ts` (3 yeni case: mod çözümü,
-  soft, hard).
-
-`'soft'` veya `'hard'` istenirse yalnızca `policyForId()` değiştirilir; kütüphaneye dokunulmaz.
-
-
+Selecting soft or hard behavior should use host policy configuration rather than another library change.

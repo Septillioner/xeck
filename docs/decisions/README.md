@@ -1,5 +1,5 @@
-# Karar kayıtları
+# Decision records
 
-Kısa, ADR tarzı kayıtlar. Dosya adı `NNNN-kisa-slug.md`. Durum: `Önerilen` (Ege onayı bekliyor), `Kabul edildi`, `Geçersizleşti`.
+Use short architecture decision records named `NNNN-short-slug.md`. Record one status: **Proposed** (awaiting a decision), **Accepted**, or **Superseded**.
 
-Klasördeki dosyalar indekstir; elle liste ya da tablo tutulmaz.
+The files in this directory form the index; do not maintain a duplicate manual list. Write records in English. Historical observations and earlier decisions must be distinguished from current requirements.

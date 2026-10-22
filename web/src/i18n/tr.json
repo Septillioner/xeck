@@ -634,5 +634,6 @@
   "Application updates": "Uygulama güncellemeleri",
   "Check GitHub Releases for a newer version of Xeck.": "Xeck’in yeni bir sürümü için GitHub Releases’i kontrol edin.",
   "Checking for updates…": "Güncellemeler kontrol ediliyor…",
-  "Check for updates": "Güncellemeleri kontrol et"
+  "Check for updates": "Güncellemeleri kontrol et",
+  "Version": "Sürüm"
 }
