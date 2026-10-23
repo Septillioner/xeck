@@ -40,7 +40,7 @@
 }
 .bot-create-progress-mark { animation: bot-progress-orbit 2.4s ease-in-out infinite; }
 .bot-create-progress-caption { animation: bot-progress-stage 320ms ease-out both; }
-.bot-create-loading-art { position: relative; background: radial-gradient(circle, var(--color-chip) 0%, var(--color-main) 72%); }
+.bot-create-loading-art { position: relative; background: var(--color-main); }
 .bot-create-loading-spark { position: absolute; top: 2px; right: 2px; animation: bot-progress-orbit 1.8s ease-in-out infinite reverse; }
 .bot-create-progress-track { height: 5px; overflow: hidden; border-radius: 999px; background: var(--color-track); }
 .bot-create-progress-track > span { display: block; width: 38%; height: 100%; border-radius: inherit; background: var(--accent); animation: bot-progress-sweep 1.7s ease-in-out infinite; }
@@ -58,6 +58,8 @@
   .bot-create-progress-mark, .bot-create-progress-caption, .bot-create-loading-spark, .bot-create-progress-track > span { animation: none; }
   .bot-create-progress-track > span { width: 38%; transform: translateX(0); }
   .bot-create-progress-step { transition: none; }
+  .agent-card, .agent-card-check, .agent-card-add { transition: none; }
+  .agent-card:active { transform: none; }
   .xeck-pulse[data-exiting='true'] { animation: none; opacity: 0; }
 }
 

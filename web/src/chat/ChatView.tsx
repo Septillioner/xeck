@@ -238,7 +238,15 @@ export function ChatView() {
       {empty && !isSubagent && !isBotConversation ? (
         <div className="center-stage">
           <div className="column">
-            {!active?.bot && <AgentPicker />}
+            {!active?.bot && (
+              <>
+                <div className="hero-stage">
+                  <h2>{t("What are we working on today?")}</h2>
+                  <p>{t("Choose an agent to get started.")}</p>
+                </div>
+                <AgentPicker />
+              </>
+            )}
             <div data-mood={activeMood}>
               <Composer modelMenu={modelMenu} />
             </div>

@@ -3,15 +3,9 @@ import { useCallback, useEffect, useMemo, useRef, useState, type ReactNode } fro
 import type {
   AgentPublic,
   CatalogEntry,
-  ChangedFile,
   ModelProfile,
-  PlanSnapshot,
-  PlanStatus,
-  PlanView,
   Project,
-  ProviderKind,
   ProviderPublic,
-  ProviderUpdate,
   ReasoningEffort,
   ServiceTier,
   SessionPolicyId,
@@ -20,55 +14,36 @@ import type {
   SettingsTab,
   StoredSession,
 } from '../../../shared/types.ts';
-import { ACCENT_COLORS, DEFAULT_SETTINGS, isLocalProvider } from '../../../shared/types.ts';
+import { ACCENT_COLORS, DEFAULT_SETTINGS } from '../../../shared/types.ts';
 import {
-  ApiError,
-  addCatalogEntry,
-  attachToStream,
   cancelChat,
-  createSession,
-  createProject as createProjectRequest,
-  deleteProject as deleteProjectRequest,
-  renameProject as renameProjectRequest,
-
-  deleteSession,
   getSession,
-  getChangedFiles,
   getPlan,
-  listCatalog,
-  listProviders,
-  listProviderModels,
   listSessionDialogs,
-  listSessions,
-  patchSession,
-  putPlanTodo,
   putSessionPolicy,
-  putProvider,
   putSettings,
-  removeCatalogEntry,
-  updateCatalogContextLength,
-  updateCatalogMaxContext,
   respondToDialog,
-  streamMessage,
 } from '../api/client.ts';
 
-import { isContextSummary } from '../../../shared/commands.ts';
 import { readLocation, routePath, writeLocation, type AppLocation } from './location.ts';
 import {
   moodForSignal,
   moodForTerminal,
   planMood,
-  terminalDuration,
   type BotMood,
-  type TerminalMood,
 } from './mood.ts';
-import type { StreamingState, TerminalEntry } from './live-types.ts';
+import type { StreamingState } from './live-types.ts';
 import { setLanguage } from '../i18n/index.ts';
-import { AppStateContext, reportError, type AppStateValue, type ArtifactTab, type QueuedMessage } from './context.ts';
+import { AppStateContext, reportError, type AppStateValue, type QueuedMessage } from './context.ts';
 
 import { bootApp, displaySettings } from './boot.ts';
-import { createStreamEventApplier } from './stream-events.ts';
-import { toSummary, catalogSupportsEffort, refreshReasoningEffortFlags } from './session-summary.ts';
+import { toSummary, refreshReasoningEffortFlags } from './session-summary.ts';
+import { useStreamRuntime } from './use-stream-runtime.ts';
+import { useArtifactsState } from './use-artifacts-state.ts';
+import { useModelSettings } from './use-model-settings.ts';
+import { useProjectChatActions } from './use-project-chat-actions.ts';
+import { useSessionPreferences } from './use-session-preferences.ts';
+import { useMessageSender } from './use-message-sender.ts';
 
 export { useAppState, reportError } from './context.ts';
 export type { StreamingState } from './live-types.ts';
@@ -89,6 +64,15 @@ export function AppStateProvider({ children }: { children: ReactNode }) {
   const [settings, setSettings] = useState<Settings>(DEFAULT_SETTINGS);
   const [providers, setProviders] = useState<ProviderPublic[]>([]);
   const [catalog, setCatalog] = useState<CatalogEntry[]>([]);
+  const {
+    addCatalogModel,
+    configuredModels,
+    refreshModels,
+    removeCatalogModel,
+    saveProvider,
+    updateCatalogContextLimit,
+    updateCatalogMaxContextMode,
+  } = useModelSettings({ providers, setProviders, catalog, setCatalog });
   const [agents, setAgents] = useState<AgentPublic[]>([]);
   const [settingsOpen, setSettingsOpen] = useState(false);
   const [migrationOpen, setMigrationOpen] = useState(() => readLocation().kind === 'migration');
@@ -109,18 +93,7 @@ export function AppStateProvider({ children }: { children: ReactNode }) {
   const [streams, setStreams] = useState<Record<string, StreamingState>>({});
   const [queuedMessagesBySession, setQueuedMessagesBySession] = useState<Record<string, QueuedMessage[]>>({});
   const [drainingQueuedSessions, setDrainingQueuedSessions] = useState<Record<string, true>>({});
-  const [plans, setPlans] = useState<Record<string, PlanSnapshot>>({});
   const [policyBusy, setPolicyBusy] = useState(false);
-  const [planPanelOpen, setPlanPanelOpen] = useState(false);
-  const [planView, setPlanView] = useState<PlanView | null>(null);
-
-  const [changedFileList, setChangedFileList] = useState<ChangedFile[]>([]);
-  const [artifactTab, setArtifactTab] = useState<ArtifactTab>('plans');
-  const [planPanelLoading, setPlanPanelLoading] = useState(false);
-  // Chats whose plan pane the user closed. A plan is opened automatically, but
-  // only until the user puts it away; after that it stays away for that chat.
-  const [planPanelDismissed, setPlanPanelDismissed] = useState<Record<string, true>>({});
-  const [terminals, setTerminals] = useState<Record<string, TerminalEntry>>({});
   const [error, setError] = useState<string | null>(null);
 
   useEffect(() => {
@@ -128,6 +101,24 @@ export function AppStateProvider({ children }: { children: ReactNode }) {
   }, [ready, settings.language]);
 
   const activeId = useRef<string | null>(null);
+  const {
+    artifactTab,
+    changedFileList,
+    closePlanPanel,
+    loadPlanPanel,
+    openPlanPanel,
+    planPanelDismissedRef,
+    planPanelLoading,
+    planPanelOpen,
+    planView,
+    plans,
+    setArtifactTab,
+    setChangedFileList,
+    setPlanPanelOpen,
+    setPlanView,
+    setPlans,
+    togglePlanTodo,
+  } = useArtifactsState({ activeId, setError });
   const draftProjectIdRef = useRef<string | null>(null);
   const nextQueuedMessageId = useRef(FIRST_QUEUED_MESSAGE_ID);
   const settingsOpenRef = useRef(false);
@@ -142,15 +133,34 @@ export function AppStateProvider({ children }: { children: ReactNode }) {
   const draftAgentIdRef = useRef(draftAgentId);
   const draftPolicyIdRef = useRef(draftPolicyId);
   const agentsRef = useRef(agents);
-  const streamsRef = useRef(streams);
   const activeMessagesRef = useRef(0);
-  const terminalsRef = useRef(terminals);
-  const terminalTimersRef = useRef(new Map<string, ReturnType<typeof setTimeout>>());
   const catalogRef = useRef(catalog);
-  const abortsRef = useRef(new Map<string, AbortController>());
-  // Read by the stream applier, which must not be re-created when the user
-  // closes a pane, so it reads the current value instead of capturing one.
-  const planPanelDismissedRef = useRef(planPanelDismissed);
+  const senderSessionRefs = useMemo(() => ({
+    activeId,
+    activeMessages: activeMessagesRef,
+    agents: agentsRef,
+    catalog: catalogRef,
+  }), []);
+  const senderDraftRefs = useMemo(() => ({
+    content: draftRef,
+    profile: draftProfileRef,
+    effort: draftEffortRef,
+    serviceTier: draftServiceTierRef,
+    projectId: draftProjectIdRef,
+    agentId: draftAgentIdRef,
+    policyId: draftPolicyIdRef,
+  }), []);
+  const senderSetters = useMemo(() => ({
+    setDraft,
+    setDraftProjectId,
+    setDraftProfile,
+    setDraftEffort,
+    setDraftServiceTier,
+    setSessions,
+    setActive,
+    setStreams,
+    setError,
+  }), []);
 
   settingsOpenRef.current = settingsOpen || migrationOpen;
   draftRef.current = draft;
@@ -161,65 +171,10 @@ export function AppStateProvider({ children }: { children: ReactNode }) {
   draftPolicyIdRef.current = draftPolicyId;
   draftProjectIdRef.current = draftProjectId;
   agentsRef.current = agents;
-  streamsRef.current = streams;
-  terminalsRef.current = terminals;
   catalogRef.current = catalog;
   sessionsRef.current = sessions;
   projectPageIdRef.current = projectPageId;
   projectsRef.current = projects;
-  planPanelDismissedRef.current = planPanelDismissed;
-
-  const markTerminal = useCallback((sessionId: string, mood: TerminalMood) => {
-    const existing = terminalTimersRef.current.get(sessionId);
-    if (existing) clearTimeout(existing);
-    setTerminals((current) => ({ ...current, [sessionId]: { mood, expiresAt: Date.now() + terminalDuration(mood) } }));
-    const timer = setTimeout(() => {
-      terminalTimersRef.current.delete(sessionId);
-      setTerminals((current) => {
-        if (!current[sessionId]) return current;
-        const next = { ...current };
-        delete next[sessionId];
-        return next;
-      });
-    }, terminalDuration(mood));
-    terminalTimersRef.current.set(sessionId, timer);
-  }, []);
-  const clearTerminal = useCallback((sessionId: string) => {
-    const existing = terminalTimersRef.current.get(sessionId);
-    if (existing) {
-      clearTimeout(existing);
-      terminalTimersRef.current.delete(sessionId);
-    }
-    setTerminals((current) => {
-      if (!current[sessionId]) return current;
-      const next = { ...current };
-      delete next[sessionId];
-      return next;
-    });
-  }, []);
-
-  // Reads the active plan and changed files for the artifacts pane.
-  const loadPlanPanel = useCallback(async (sessionId: string) => {
-    setPlanPanelLoading(true);
-    try {
-      const [activePlan, files] = await Promise.all([getPlan(sessionId), getChangedFiles(sessionId)]);
-      setChangedFileList(files);
-      setPlanView(activePlan);
-      setPlans((existing) => {
-        const next = { ...existing };
-        if (activePlan) next[sessionId] = activePlan;
-        else delete next[sessionId];
-        return next;
-      });
-    } catch (cause) {
-      setPlanView(null);
-      setError(reportError(cause));
-    } finally {
-      setPlanPanelLoading(false);
-    }
-  }, []);
-
-
   useEffect(() => {
     const media = window.matchMedia('(prefers-color-scheme: dark)');
     const apply = () => {
@@ -243,6 +198,39 @@ export function AppStateProvider({ children }: { children: ReactNode }) {
     setActive((current) => (current?.id === session.id ? session : current));
     if (activeId.current === session.id) activeMessagesRef.current = session.messages.length;
   }, []);
+
+  const { setSessionEffort, setSessionModel, setSessionServiceTier } = useSessionPreferences({
+    active,
+    activeId,
+    setDraftProfile,
+    setDraftEffort,
+    setDraftServiceTier,
+    setSessions,
+    setError,
+    rememberSummary,
+  });
+
+  const { abortsRef, applyStreamEvent, clearTerminal, markTerminal, resumeLive, streamsRef, terminals } = useStreamRuntime({
+    activeId,
+    streams,
+    setStreams,
+    setSessions,
+    setActive,
+    setError,
+    setPlans,
+    setPlanPanelOpen,
+    planPanelDismissedRef,
+    rememberSummary,
+    loadPlanPanel,
+  });
+  const senderStreamRuntime = useMemo(() => ({
+    aborts: abortsRef,
+    streams: streamsRef,
+    applyEvent: applyStreamEvent,
+    clearTerminal,
+    markTerminal,
+    resumeLive,
+  }), [abortsRef, streamsRef, applyStreamEvent, clearTerminal, markTerminal, resumeLive]);
 
   /**
    * Re-reads the session after the local stream was torn down before the host's
@@ -271,111 +259,6 @@ export function AppStateProvider({ children }: { children: ReactNode }) {
     },
     [active, rememberSummary],
   );
-
-  // Reduces one host stream event into the live view. Shared by the send path and
-  // by reattaching to a turn that is already running (e.g. after a refresh).
-  const applyStreamEvent = useMemo(
-    () =>
-      createStreamEventApplier({
-        readActiveId: () => activeId.current,
-        setSessions,
-        setActive,
-        setStreams,
-        setError,
-        rememberSummary,
-        markTerminal,
-        setPlan: (sessionId, plan) => {
-          setPlans((current) => (current[sessionId]?.revision === plan.revision ? current : { ...current, [sessionId]: plan }));
-          // A rewritten plan is the thing the pane exists to show, so it opens
-          // itself and reloads. A chat the user closed keeps it closed.
-          if (activeId.current !== sessionId || planPanelDismissedRef.current[sessionId]) return;
-          setPlanPanelOpen(true);
-          void loadPlanPanel(sessionId);
-        },
-      }),
-    [rememberSummary, markTerminal, loadPlanPanel],
-  );
-
-  // Reattach to a turn the host is still running (page refreshed mid-turn, or a
-  // send raced an already-running turn). Opens the replay stream only when a
-  // turn is live, so opening a finished chat does not flash an empty bubble.
-  const resumeLive = useCallback(async (sessionId: string): Promise<boolean> => {
-    // abortsRef tracks every live stream synchronously, so a send or another
-    // attach that is already running is never duplicated.
-    if (abortsRef.current.has(sessionId)) return true;
-    const controller = new AbortController();
-    abortsRef.current.set(sessionId, controller);
-    let opened = false;
-    let finished = false;
-    let terminalReceived = false;
-    let startedAt = Date.now();
-    try {
-      return await attachToStream(
-        sessionId,
-        controller.signal,
-        (event) => {
-          // Mark this before applying the terminal snapshot: the initial GET
-          // may resolve between `done` and the stream connection closing.
-          if (event.event === 'done' || event.event === 'error') terminalReceived = true;
-          applyStreamEvent(sessionId, startedAt, event);
-        },
-        () => {
-          opened = true;
-          startedAt = Date.now();
-          clearTerminal(sessionId);
-          setStreams((current) => ({
-            ...current,
-            [sessionId]: {
-              sessionId,
-              userContent: '',
-              content: '',
-              reasoning: '',
-              phase: null,
-              activity: [],
-              blocks: [],
-            },
-          }));
-          // The running turn's user message is already persisted; reload it so it
-          // shows next to the streamed assistant blocks.
-          void getSession(sessionId)
-            .then((session) => {
-              if (!finished && !terminalReceived && activeId.current === sessionId) rememberSummary(session);
-            })
-            .catch(() => undefined);
-        },
-      );
-    } catch (cause) {
-      if (!terminalReceived && !controller.signal.aborted && activeId.current === sessionId) {
-        setError(reportError(cause));
-      }
-      return false;
-    } finally {
-      finished = true;
-      // The turn can finish after the first GET but before attaching (404), or
-      // the connection can close without a terminal event. Read its persisted
-      // transcript once so opening a child never freezes the earlier snapshot.
-      if (!terminalReceived && !controller.signal.aborted && activeId.current === sessionId) {
-        try {
-          const session = await getSession(sessionId);
-          if (activeId.current === sessionId) rememberSummary(session);
-          if (session.subagentStatus === 'running' && activeId.current === sessionId) {
-            setError('Live connection closed. Reopen this chat to reconnect.');
-          }
-        } catch (cause) {
-          if (activeId.current === sessionId) setError(reportError(cause));
-        }
-      }
-      if (opened) {
-        setStreams((current) => {
-          if (!current[sessionId]) return current;
-          const next = { ...current };
-          delete next[sessionId];
-          return next;
-        });
-      }
-      if (abortsRef.current.get(sessionId) === controller) abortsRef.current.delete(sessionId);
-    }
-  }, [applyStreamEvent, clearTerminal, rememberSummary]);
 
   const setDraftAgentId = useCallback((id: string) => {
     setDraftAgentIdState(id);
@@ -512,6 +395,36 @@ export function AppStateProvider({ children }: { children: ReactNode }) {
     await applyLocation({ kind: 'chat', id });
   }, [applyLocation]);
 
+  const {
+    assignChatToProject,
+    createBot,
+    createChat,
+    createProject,
+    deleteChat,
+    deleteProject,
+    renameChat,
+    renameProject,
+    updateBotProfile,
+  } = useProjectChatActions({
+    activeId,
+    sessionsRef,
+    draftProjectIdRef,
+    projectPageIdRef,
+    settingsOpenRef,
+    streamsRef,
+    abortsRef,
+    setSessions,
+    setProjects,
+    setActive,
+    setDraftProjectId,
+    setSidebarOpen,
+    setError,
+    showDraft,
+    openChat,
+    rememberSummary,
+    clearTerminal,
+  });
+
   useEffect(() => {
     let cancelled = false;
     void bootApp()
@@ -561,286 +474,16 @@ export function AppStateProvider({ children }: { children: ReactNode }) {
     void applyLocation({ kind: 'bots' });
   }, [applyLocation]);
 
-  const createBot = useCallback(async (bot: import('../../../shared/types.ts').XeckBotCreateInput) => {
-    const session = await createSession({ bot });
-    rememberSummary(session);
-    await openChat(session.id);
-  }, [rememberSummary, openChat]);
-
-  const createProject = useCallback(async (name: string) => {
-    const project = await createProjectRequest(name);
-    setProjects((existing) => [...existing, project]);
-    return project;
-  }, []);
-
-  const renameProject = useCallback(async (id: string, name: string) => {
-    const project = await renameProjectRequest(id, name);
-    setProjects((existing) => existing.map((item) => item.id === project.id ? project : item));
-    return project;
-  }, []);
-
-  const deleteProject = useCallback(async (id: string) => {
-    await deleteProjectRequest(id);
-    const updatedAt = new Date().toISOString();
-    setProjects((existing) => existing.filter((project) => project.id !== id));
-    setSessions((existing) => existing.map((session) => session.projectId === id
-      ? { ...session, projectId: undefined, updatedAt }
-      : session));
-    setActive((existing) => existing?.projectId === id
-      ? { ...existing, projectId: undefined, updatedAt }
-      : existing);
-    if (draftProjectIdRef.current === id) setDraftProjectId(null);
-    if (projectPageIdRef.current === id) {
-      // The page of a deleted project has nothing left to show, and showDraft
-      // releases the pane the page owned.
-      showDraft();
-      writeLocation({ kind: 'draft' }, 'replace');
-    }
-  }, [showDraft]);
-
-  const assignChatToProject = useCallback(async (sessionId: string, projectId: string | null) => {
-    const session = await patchSession(sessionId, { projectId });
-    rememberSummary(session);
-  }, [rememberSummary]);
-
-  const createChat = useCallback((projectId?: string) => {
-    setSidebarOpen(false);
-    writeLocation({ kind: 'draft' }, 'push');
-    showDraft(projectId ?? null);
-  }, [showDraft]);
-
-  const renameChat = useCallback(async (id: string, title: string) => {
-    try {
-      const session = await patchSession(id, { title });
-      rememberSummary(session);
-    } catch (cause) {
-      setError(cause instanceof Error ? cause.message : t("Could not rename the chat"));
-    }
-  }, [rememberSummary]);
-
-  const updateBotProfile = useCallback(async (id: string, systemPrompt: string, badges: string[]) => {
-    const session = await patchSession(id, { botSystemPrompt: systemPrompt, botBadges: badges });
-    rememberSummary(session);
-  }, [rememberSummary]);
-
-  const deleteChat = useCallback(async (id: string) => {
-    try {
-      if (streamsRef.current[id]) {
-        abortsRef.current.get(id)?.abort();
-        void cancelChat(id);
-      }
-      clearTerminal(id);
-      await deleteSession(id);
-      const remaining = sessionsRef.current.filter((item) => item.id !== id && !item.botConversation?.participants.includes(id));
-      setSessions(remaining);
-      if (activeId.current && !remaining.some((item) => item.id === activeId.current)) {
-        if (remaining[0]) {
-          const nextId = remaining[0].id;
-          activeId.current = nextId;
-          const next = await getSession(nextId);
-          if (activeId.current !== nextId) return;
-          setActive(next);
-          if (!settingsOpenRef.current) writeLocation({ kind: 'chat', id: nextId }, 'push');
-        } else {
-          activeId.current = null;
-          setActive(null);
-          if (!settingsOpenRef.current) writeLocation({ kind: 'draft' }, 'push');
-        }
-      }
-    } catch (cause) {
-      setError(cause instanceof Error ? cause.message : t("Could not delete the chat"));
-    }
-  }, [clearTerminal]);
-
-  const setSessionModel = useCallback(async (provider: ProviderKind, model: string) => {
-    if (!active) {
-      setDraftProfile({ provider, model, host: '' });
-      return;
-    }
-    try {
-      const session = await patchSession(active.id, { profile: { provider, model } });
-      if (activeId.current !== session.id) {
-        setSessions((current) =>
-          [toSummary(session), ...current.filter((item) => item.id !== session.id)].sort((left, right) =>
-            right.updatedAt.localeCompare(left.updatedAt),
-          ),
-        );
-        return;
-      }
-      rememberSummary(session);
-    } catch (cause) {
-      setError(cause instanceof Error ? cause.message : t("Could not change the model"));
-    }
-  }, [active, rememberSummary]);
-
-  const setSessionEffort = useCallback(async (effort: ReasoningEffort | null) => {
-    if (!active) {
-      setDraftEffort(effort);
-      return;
-    }
-    try {
-      const session = await patchSession(active.id, { reasoningEffort: effort });
-      if (activeId.current !== session.id) return;
-      rememberSummary(session);
-    } catch (cause) {
-      setError(cause instanceof Error ? cause.message : t("Could not change reasoning effort"));
-    }
-  }, [active, rememberSummary]);
-
-  const setSessionServiceTier = useCallback(async (tier: ServiceTier | null) => {
-    if (!active) {
-      setDraftServiceTier(tier);
-      return;
-    }
-    try {
-      const session = await patchSession(active.id, { serviceTier: tier });
-      if (activeId.current !== session.id) return;
-      rememberSummary(session);
-    } catch (cause) {
-      setError(cause instanceof Error ? cause.message : t("Could not change service tier"));
-    }
-  }, [active, rememberSummary]);
-
-  const runSend = useCallback(async (content: string, clearDraft = true) => {
-    const trimmed = content.trim();
-    if (!trimmed || active?.botConversation) return;
-    if (active && streamsRef.current[active.id]) return;
-    setError(null);
-
-    let session = active;
-    try {
-      if (!session) {
-        const chosen = draftProfileRef.current?.model ? draftProfileRef.current : settings.defaultProfile;
-        if (!chosen?.model) {
-          setError(t("Choose a model for this chat"));
-          setDraft(trimmed);
-          return;
-        }
-        const effort = draftEffortRef.current;
-        const reasoningEffort =
-          effort && catalogSupportsEffort(chosen.provider, chosen.model, catalogRef.current) ? effort : undefined;
-        const serviceTier = draftServiceTierRef.current ?? undefined;
-        session = await createSession({
-          provider: chosen.provider,
-          model: chosen.model,
-          reasoningEffort,
-          serviceTier,
-          projectId: draftProjectIdRef.current ?? undefined,
-          // Picker choice, applied once when the session is born.
-          agentId: draftAgentIdRef.current || undefined,
-          policyId: (() => {
-            const chosen = agentsRef.current.find((agent) => agent.id === draftAgentIdRef.current);
-            if (!chosen || chosen.policies.length < 2) return undefined;
-            return draftPolicyIdRef.current || chosen.defaultPolicy;
-          })(),
-        });
-        setDraftProjectId(null);
-        setDraftProfile(null);
-        setDraftEffort(null);
-        setDraftServiceTier(null);
-        setSessions((current) => [toSummary(session as StoredSession), ...current]);
-        if (activeId.current !== null) return;
-        activeId.current = session.id;
-        setActive(session);
-        writeLocation({ kind: 'chat', id: session.id }, 'push');
-      }
-    } catch (cause) {
-      setError(cause instanceof Error ? cause.message : t("Could not start a chat"));
-      return;
-    }
-    if (!session.profile.model.trim()) {
-      setError(t("Choose a model for this chat"));
-      setDraft(trimmed);
-      return;
-    }
-
-    const sessionId = session.id;
-    const startedAt = Date.now();
-    const contextSummary = isContextSummary(trimmed);
-    activeMessagesRef.current = session.messages.length;
-    const controller = new AbortController();
-    abortsRef.current.set(sessionId, controller);
-    clearTerminal(sessionId);
-    if (clearDraft) setDraft('');
-    setStreams((current) => ({
-      ...current,
-      [sessionId]: {
-        sessionId,
-        userContent: contextSummary ? '' : trimmed,
-        content: '',
-        reasoning: '',
-        phase: contextSummary ? 'summarizing' : null,
-        activity: [],
-        blocks: [],
-      },
-    }));
-
-    let resume = false;
-    let stoppedByUser = false;
-
-    try {
-      // Failures mid-turn are handled by applyStreamEvent; the host persists the
-      // partial turn so the transcript never resets to the start of the turn.
-      await streamMessage(sessionId, trimmed, controller.signal, (event) => {
-        if (event.event === 'done' && event.data.aborted) stoppedByUser = true;
-        applyStreamEvent(sessionId, startedAt, event);
-      });
-    } catch (cause) {
-      if (controller.signal.aborted) {
-        // The local fetch was torn down (navigation, chat delete, or the
-        // force-stop escape hatch) before the host's `done {aborted}` arrived,
-        // so that authoritative event was missed. Poll the persisted session
-        // instead of trusting a single read: the host may still be writing the
-        // partial turn, and one immediate read usually returns the pre-turn
-        // snapshot - which is exactly the "rewound to my last prompt" bug.
-        markTerminal(sessionId, 'cancelled');
-        try {
-          await reloadAfterAbort(sessionId);
-        } catch {
-          // the stopped turn stays in memory until the next open
-        }
-      } else if (cause instanceof ApiError && cause.status === 409) {
-        // A turn is already running for this session (the page was refreshed
-        // mid-turn before reattaching). Keep the typed message and resume the
-        // running turn instead of surfacing "Chat already running".
-        resume = true;
-        setDraft((current) => current || trimmed);
-      } else {
-        markTerminal(sessionId, 'error');
-        if (activeId.current === sessionId) setError(cause instanceof Error ? cause.message : 'Chat failed');
-        try {
-          const fresh = await getSession(sessionId);
-          rememberSummary(fresh);
-        } catch {
-          // keep the optimistic view if the reload fails
-        }
-      }
-    } finally {
-      // `done`/`error` already removed the live bubble via applyStreamEvent, so
-      // this is a no-op for a normally finished turn. It only clears the
-      // optimistic entry when we detached early (force-stop, navigation) or when
-      // reattaching to an already-running turn (the resume path recreates it).
-      setStreams((current) => {
-        if (!current[sessionId]) return current;
-        const next = { ...current };
-        delete next[sessionId];
-        return next;
-      });
-      if (abortsRef.current.get(sessionId) === controller) abortsRef.current.delete(sessionId);
-      // A generated title may land after the turn closed its live chat, so the
-      // catalog is re-read once from the host index.
-      void listSessions().then(setSessions).catch(() => undefined);
-    }
-
-    // Reattach outside the send lifecycle so the cleanup above does not cancel
-    // the resumed stream.
-    if (resume) await resumeLive(sessionId);
-  }, [active, agents, applyStreamEvent, rememberSummary, reloadAfterAbort, resumeLive, settings.defaultProfile, markTerminal, clearTerminal]);
-
-  const send = useCallback(async (content?: string) => {
-    await runSend(typeof content === 'string' ? content : draftRef.current);
-  }, [runSend]);
-
+  const { runSend, send } = useMessageSender({
+    active,
+    settings,
+    sessionRefs: senderSessionRefs,
+    draftRefs: senderDraftRefs,
+    streamRuntime: senderStreamRuntime,
+    setters: senderSetters,
+    rememberSummary,
+    reloadAfterAbort,
+  });
   const enqueueMessage = useCallback((content: string) => {
     const sessionId = activeId.current;
     const trimmed = content.trim();
@@ -994,60 +637,6 @@ export function AppStateProvider({ children }: { children: ReactNode }) {
     return saving;
   }, []);
 
-  const saveProvider = useCallback(async (kind: ProviderKind, patch: ProviderUpdate) => {
-    const updated = await putProvider(kind, patch);
-    setProviders((current) => current.map((item) => (item.kind === kind ? updated : item)));
-  }, []);
-
-  const addCatalogModel = useCallback(async (
-    provider: ProviderKind,
-    model: string,
-    name: string,
-    contextLength?: number,
-    supportsReasoningEffort?: boolean,
-  ) => {
-    setCatalog(await addCatalogEntry(provider, model, name, contextLength, supportsReasoningEffort));
-  }, []);
-
-  const removeCatalogModel = useCallback(async (slug: string) => {
-    setCatalog(await removeCatalogEntry(slug));
-  }, []);
-
-  const updateCatalogContextLimit = useCallback(async (slug: string, contextLength: number | null) => {
-    setCatalog(await updateCatalogContextLength(slug, contextLength));
-  }, []);
-
-  const updateCatalogMaxContextMode = useCallback(async (slug: string, enabled: boolean) => {
-    setCatalog(await updateCatalogMaxContext(slug, enabled));
-  }, []);
-
-  const refreshModels = useCallback(async (kind: ProviderKind, draftKeys?: { apiKey?: string; host?: string }) => {
-    const models = await listProviderModels(kind, draftKeys);
-    if (kind === 'ollama') {
-      const refreshedProviders = await listProviders();
-      setProviders(refreshedProviders);
-    }
-    setCatalog(await listCatalog());
-    return models;
-  }, []);
-
-  const configuredModels = useMemo(() => {
-    const rows: ModelProfile[] = [];
-    for (const provider of providers) {
-      if (!provider.enabled) continue;
-      if (isLocalProvider(provider.kind)) {
-        if (!provider.model.trim()) continue;
-        rows.push({ provider: provider.kind, model: provider.model, host: provider.host });
-        continue;
-      }
-      for (const entry of catalog) {
-        if (entry.provider !== provider.kind) continue;
-        rows.push({ provider: entry.provider, model: entry.model, host: provider.host });
-      }
-    }
-    return rows;
-  }, [providers, catalog]);
-
   const openSettings = useCallback((tab: SettingsTab = 'general') => {
     // Like any navigation, opening settings closes the mobile drawer so it never covers the page.
     setSidebarOpen(false);
@@ -1085,58 +674,6 @@ export function AppStateProvider({ children }: { children: ReactNode }) {
       setPolicyBusy(false);
     }
   }, [policyBusy, rememberSummary]);
-
-  const togglePlanTodo = useCallback(async (todoId: string, status: PlanStatus) => {
-    const current = activeId.current;
-    const snapshot = current ? plans[current] : null;
-    if (!current || !snapshot) return;
-
-    try {
-      const next = await putPlanTodo(current, todoId, { status, revision: snapshot.revision });
-      setPlans((existing) => ({ ...existing, [current]: next }));
-    } catch (cause) {
-      setError(reportError(cause));
-      // A stale revision means the model or another window moved the plan on. The
-      // local snapshot is now behind, so re-read it: without this the next click
-      // would send the same stale revision and fail the same way, leaving the
-      // checkbox unusable until the chat was reopened.
-      if (cause instanceof ApiError && cause.status === 409) {
-        try {
-          const view = await getPlan(current);
-          if (activeId.current === current) {
-            if (view) setPlans((existing) => ({ ...existing, [current]: view }));
-            else setPlans((existing) => {
-              const next = { ...existing };
-              delete next[current];
-              return next;
-            });
-          }
-        } catch {
-          // The plan could not be re-read; the message above already says what went wrong.
-        }
-      }
-    }
-  }, [plans]);
-
-  const openPlanPanel = useCallback(async () => {
-    const current = activeId.current;
-    if (!current) return;
-    setPlanPanelOpen(true);
-    setPlanPanelDismissed((dismissed) => {
-      const next = { ...dismissed };
-      delete next[current];
-      return next;
-    });
-    await loadPlanPanel(current);
-  }, [loadPlanPanel]);
-
-  const closePlanPanel = useCallback(() => {
-    const current = activeId.current;
-    setPlanPanelOpen(false);
-    // Closing is remembered per chat, so the panel does not keep re-opening
-    // itself on the next plan write of a chat the user has put away.
-    if (current) setPlanPanelDismissed((existing) => ({ ...existing, [current]: true }));
-  }, []);
 
   const buildPlan = useCallback(async () => {
     const current = activeId.current;
