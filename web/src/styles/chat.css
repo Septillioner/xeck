@@ -105,22 +105,21 @@
    generated todo block included, so the plan can be read as a file. */
 .plan-source { margin: 0; white-space: pre-wrap; word-break: break-word; font-family: ui-monospace, SFMono-Regular, Menlo, Consolas, monospace; font-size: var(--text-body); line-height: 1.65; color: var(--color-ink); }
 .plan-panel-status { margin: 0; font-size: var(--text-ui); color: var(--color-muted); }
-/* The policy combobox keeps its own capsule. The list opens upward from the
-   composer so it never falls off the bottom of the screen. */
-.mode-combobox { display: flex; align-items: center; --policy-trigger-tint-strength: 8%; --policy-trigger-surface: var(--color-field); }
-.mode-combobox > .menu > .mode-trigger { display: inline-flex; height: 28px; align-items: center; gap: 6px; border-radius: 999px; background: color-mix(in srgb, var(--policy-accent-color, var(--policy-trigger-surface)) var(--policy-trigger-tint-strength), var(--policy-trigger-surface)); padding: 0 10px; font-size: var(--text-small); color: var(--color-muted); }
-.mode-combobox > .menu > .mode-trigger:hover:not(:disabled) { --policy-trigger-surface: var(--color-hover); }
+/* Policy and model triggers share a baseline. Policy color stays in its dot. */
+.mode-combobox { display: flex; align-items: center; }
+.mode-combobox > .menu > .mode-trigger { display: inline-flex; height: var(--spacing-control-sm); align-items: center; gap: 6px; border-radius: var(--radius-tile); background: transparent; padding: 0 7px; font-size: var(--text-small); color: var(--color-muted); }
+.mode-combobox > .menu > .mode-trigger:hover:not(:disabled) { background: var(--color-hover); color: var(--color-ink); }
 .mode-combobox > .menu > .mode-trigger:disabled { cursor: default; opacity: 0.7; }
 .mode-combobox .mode-trigger .chevron { transition: transform 0.15s ease; }
 .menu[data-open='true'] > .mode-trigger .chevron { transform: rotate(225deg); }
-.mode-dot { display: block; width: 7px; height: 7px; flex: none; border-radius: 999px; background: var(--policy-accent-color, var(--color-muted)); }
+.mode-dot { display: block; width: 5px; height: 5px; flex: none; border-radius: 999px; background: var(--policy-accent-color, var(--color-muted)); }
 
 .mode-combobox .control-spinner { width: 10px; height: 10px; border-width: 1.5px; }
-.composer-foot { gap: 8px; }
 /* The mode pill keeps its label; the model pill shrinks and truncates instead of pushing the row wider than the composer. */
 .composer-foot > .mode-combobox { flex: none; }
-.composer-foot > .menu { flex: 0 1 auto; min-width: 0; }
-.composer-actions { display: flex; align-items: center; gap: 6px; flex: none; }
+.composer-foot > .menu { position: static; flex: 0 1 auto; min-width: 0; max-width: 55%; }
+.composer-actions { display: flex; align-items: center; gap: 6px; flex: none; margin-left: auto; }
+.composer-actions > button { border-radius: var(--radius-tile); }
 
 .menu[data-placement='top'] > .menu-list { top: auto; bottom: calc(100% + 6px); }
 .mode-combobox .menu-list { min-width: 9rem; }
@@ -176,23 +175,23 @@
 .context-block { display: block; width: 100%; max-width: 100%; min-width: 0; margin: 0; overflow: auto; white-space: pre-wrap; overflow-wrap: anywhere; word-break: break-word; border-radius: var(--radius-control); background: var(--color-code); padding: 8px 10px; font-family: ui-monospace, SFMono-Regular, Menlo, Consolas, monospace; font-size: var(--text-small); line-height: 1.45; color: var(--color-ink); }
 .context-empty { margin: 0 8px 12px; font-size: var(--text-ui); color: var(--color-muted); }
 .center-stage { flex: 1; min-height: 0; display: flex; align-items: safe center; justify-content: center; overflow-y: auto; padding: 16px; }
-.display-title { margin: 0; max-width: 18ch; font-size: var(--text-display); font-weight: 600; line-height: 1.15; letter-spacing: -0.03em; text-wrap: balance; }
+.display-title { margin: 0; max-width: 28ch; font-size: var(--text-display); font-weight: 500; line-height: 1.3; letter-spacing: -0.03em; text-wrap: balance; }
 .hero-stage { display: flex; align-items: flex-start; gap: 16px; max-width: 38rem; margin: 0 0 28px; text-align: left; }
 .hero-mark { flex: none; margin-top: 0.22em; color: var(--color-accent); }
 .starter-list { display: flex; flex-direction: column; margin: 0 0 28px; }
-.starter-row { display: block; width: 100%; padding: 8px 0; text-align: left; font-size: var(--text-lead); line-height: 1.45; color: var(--color-muted); }
+.starter-row { display: block; width: 100%; padding: 7px 0; text-align: left; font-size: var(--text-ui); line-height: 1.55; color: var(--color-muted); }
 .starter-row:hover { color: var(--color-ink); }
 .bot-purpose { display: -webkit-box; -webkit-line-clamp: 2; -webkit-box-orient: vertical; overflow: hidden; }
 /* Debug pane identity: agent + workspace@version, monospace reads as tech. */
 .context-identity { margin: 0 12px 8px; font-family: ui-monospace, SFMono-Regular, Menlo, Consolas, monospace; font-size: var(--text-micro); color: var(--color-muted); }
 .column { width: 100%; max-width: var(--spacing-transcript-max); margin: 0 auto; }
 .transcript-area { position: relative; flex: 1; min-height: 0; }
-.transcript-scroll { position: absolute; inset: 0; overflow: auto; padding: 24px 16px; }
+.transcript-scroll { position: absolute; inset: 0; overflow: auto; scrollbar-gutter: stable both-edges; padding: 24px 16px; }
 .chat-stage[data-agent-header='true'] .transcript-scroll { padding-top: calc(var(--spacing) * 20); }
-.composer-dock { flex: none; padding: 0 0 20px; }
+.composer-dock { flex: none; padding: 0 16px 20px; }
 .messages { display: flex; flex-direction: column; gap: 28px; }
 .user-row { display: flex; justify-content: flex-end; }
-.user-bubble { max-width: min(72%, 36rem); border-radius: var(--radius-card); border-bottom-right-radius: var(--radius-tile); background: var(--color-user); color: var(--color-ink); padding: 10px 14px; font-size: var(--text-lead); line-height: 1.5; white-space: pre-wrap; }
+.user-bubble { max-width: min(88%, 38rem); border-radius: var(--radius-control); background: var(--color-user); color: var(--color-ink); padding: 11px 14px; font-size: var(--text-body); line-height: 1.6; white-space: pre-wrap; overflow-wrap: anywhere; }
 .assistant { font-size: var(--text-lead); line-height: 1.65; }
 .message-actions { position: relative; }
 .message-actions-trigger { display: none; }
@@ -222,16 +221,21 @@
 .reasoning p { margin: 8px 0 0; white-space: pre-wrap; }
 .activity-icon { width: 18px; height: 18px; flex: none; color: var(--color-muted); }
 .activity-line-label { min-width: 0; overflow-wrap: anywhere; }
-.tool-usage { margin-bottom: 8px; min-width: 0; font-size: var(--text-ui); color: var(--color-muted); }
-.tool-usage > summary { display: flex; align-items: flex-start; gap: 8px; min-width: 0; padding: 4px 0; line-height: 1.4; cursor: pointer; list-style: none; }
+.tool-usage { margin: 10px 0 16px; min-width: 0; font-size: var(--text-small); color: var(--color-muted); }
+.tool-usage > summary { display: flex; align-items: center; gap: 8px; min-width: 0; min-height: 30px; padding: 4px 0; line-height: 1.5; cursor: pointer; list-style: none; }
 .tool-usage > summary::-webkit-details-marker { display: none; }
 .tool-usage > summary:hover { color: var(--color-ink); }
 .tool-usage > summary:focus-visible { outline: 2px solid var(--color-ink); outline-offset: 2px; border-radius: var(--radius-tile); }
 .tool-usage[data-active='true'] > summary { color: var(--color-ink); }
 .tool-usage[data-failed='true'] > summary { color: var(--color-danger); }
+.tool-usage > summary > .activity-icon { width: 15px; height: 15px; color: inherit; }
+.tool-usage .activity-line-label { flex: 1; min-width: 0; }
+.tool-target { margin-left: 7px; font-family: ui-monospace, SFMono-Regular, Consolas, monospace; font-size: var(--text-micro); color: var(--color-ink); overflow-wrap: anywhere; }
+.tool-usage[data-failed='true'] .tool-target { color: inherit; }
+.tool-failure-label { flex: none; font-size: var(--text-micro); }
 .tool-chevron { width: 18px; height: 18px; margin-left: auto; flex: none; transition: transform 160ms ease; }
 .tool-usage[open] > summary > .tool-chevron { transform: rotate(90deg); }
-.tool-usage-body { min-width: 0; margin: 4px 0 8px; padding-left: 24px; }
+.tool-usage-body { min-width: 0; margin: 4px 0 8px; padding-left: 23px; }
 .tool-usage:not([open]) > .tool-usage-body { display: none; }
 .tool-summary-text { min-width: 0; overflow: hidden; text-overflow: ellipsis; white-space: nowrap; font-variant-numeric: tabular-nums; }
 .tool-running-dot { align-self: center; width: 6px; height: 6px; flex: none; border-radius: 50%; background: var(--color-muted); animation: mood-pulse 1.4s ease-in-out infinite; }

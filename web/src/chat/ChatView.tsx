@@ -302,12 +302,12 @@ export function ChatView() {
             </div>
           {awayFromBottom && <div className="absolute bottom-3 left-1/2 z-10 -translate-x-1/2"><button type="button" className={BUTTON.secondary} onClick={() => { const node = scrollRef.current; if (node) node.scrollTop = node.scrollHeight; followBottom.current = true; setAwayFromBottom(false); }}>{t('Jump to latest')}</button></div>}
           </div>
-          {!isSubagent && !isBotConversation && <div className="column composer-dock">
+          {!isSubagent && !isBotConversation && <div className="composer-dock"><div className="column">
             <div data-mood={activeMood}>
               <Composer modelMenu={modelMenu} />
             </div>
             <ContextMeter />
-          </div>}
+          </div></div>}
         </>
       )}
       {isBotConversation && <p className="px-gutter py-4 text-center text-small text-muted">{t('This conversation belongs to the bots. Your personal chats stay separate.')}</p>}

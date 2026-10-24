@@ -4,7 +4,7 @@
  * That covers engine specific properties, pseudo-elements and rules that group
  * many class-named controls under one set of tokens. Anything that is a plain
  * box is a utility in the JSX instead. Surfaces are flat: solid token tones,
- * no borders, gradients, shadows, blur or glow. */
+ * structural borders only, no gradients, shadows, blur or glow. */
 
 /* Buttons. One height, radius, tone fill and type size for every labelled button
    that is styled by class. Rules elsewhere only add a tone (danger text, an
@@ -60,6 +60,19 @@
 .chat-column {
   overflow: clip;
 }
+
+/* Workspace navigation and conversation rows have different selection cues. */
+.sidebar-workspaces { display: flex; gap: 20px; margin: 0 12px 12px; border-bottom: 1px solid var(--color-border); }
+.sidebar-workspaces button { position: relative; display: flex; min-height: var(--spacing-control); align-items: center; gap: 7px; padding: 0 0 9px; font-size: var(--text-small); color: var(--color-muted); }
+.sidebar-workspaces button svg { width: 15px; height: 15px; }
+.sidebar-workspaces button:hover, .sidebar-workspaces button[aria-pressed='true'] { color: var(--color-ink); }
+.sidebar-workspaces button[aria-pressed='true']::after { content: ''; position: absolute; left: 0; right: 0; bottom: -1px; height: 2px; background: var(--color-ink); }
+.sidebar-session { display: flex; align-items: flex-start; gap: 2px; padding-right: 4px; border-radius: var(--radius-tile); }
+.sidebar-session:hover { background: var(--color-hover); }
+.sidebar-session-main { display: flex; min-width: 0; min-height: 52px; flex: 1; align-items: center; gap: 8px; padding: 8px 10px; border-radius: var(--radius-tile); text-align: left; }
+.sidebar-session > button:last-child { flex: none; margin-top: 5px; }
+.sidebar-session-meta { display: flex; align-items: center; gap: 6px; min-width: 0; margin-top: 3px; color: var(--color-subtle); font-size: var(--text-micro); line-height: 1.45; }
+.sidebar-session-state { display: inline-flex; align-items: center; gap: 5px; margin-left: auto; color: var(--color-muted); white-space: nowrap; }
 
 /* Settings keeps its own background tone. */
 .settings {

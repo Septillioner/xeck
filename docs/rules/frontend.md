@@ -2,34 +2,34 @@
 
 This is the canonical frontend rulebook for Xeck. Keep documentation in English. Product copy may remain localized through the translation catalogs.
 
-The visual direction is a calm, warm-neutral workspace: a distinct stone-toned sidebar rail, a soft ivory working surface, and clear field/card layers. Keep large surfaces free of blue casts and avoid stark whites or blacks. The user chooses one of eight curated accents (olive, clay, ochre, forest, azure, violet, rose, or teal); give each accent a matched light/dark pair and keep it out of large surfaces. Use tone, spacing, and typography to establish hierarchy.
+The visual direction is a calm, neutral workspace: a quiet sidebar rail, a continuous reading surface, and distinct input and menu boundaries. Light mode uses warm paper neutrals; dark mode uses restrained neutral surfaces. The user chooses one of eight curated accents (olive, clay, ochre, forest, azure, violet, rose, or teal); give each accent a matched light/dark pair and keep it out of large surfaces. Use component anatomy, alignment, spacing, and typography to establish hierarchy.
 
 ## Design tokens and Tailwind
 
 - Use Tailwind CSS v4 and the tokens defined in `web/src/styles/theme.css`. Put shared CSS in `web/src/styles/`; do not introduce a second styling system.
 - Define colors only in `theme.css`. Components and other stylesheets must use semantic tokens rather than hex, RGB, or locally invented palettes.
 - Use the same token names in both themes. Add a light and dark value for every new theme-dependent color. Components must not branch on the active theme.
-- Use the existing type scale: `text-nano` (10px), `text-micro` (11px), `text-small` (12px), `text-ui` (13px), `text-body` (14px), `text-lead` (15px), `text-brand` (16px), `text-large` (17px), `text-heading` (22px), and `text-display` (40px). Display size is only for the empty-chat question and the XeckBot page title. In CSS, use the corresponding custom property. Do not use arbitrary text sizes such as `text-[13px]`.
-- Use `rounded-tile` (8px), `rounded-control` (10px), `rounded-row` (12px), and `rounded-card` (14px). Small badges may use `rounded-full`; do not introduce arbitrary radius values.
+- Use the existing type scale: `text-nano` (10px), `text-micro` (11px), `text-small` (12px), `text-ui` (13px), `text-body` (14px), `text-lead` (15px), `text-brand` (16px), `text-large` (17px), `text-heading` (22px), and `text-display` (24px). Display size is only for the empty-chat question and the XeckBot page title. In CSS, use the corresponding custom property. Do not use arbitrary text sizes such as `text-[13px]`.
+- Use `rounded-tile` (4px), `rounded-control` (6px), `rounded-row` (6px), and `rounded-card` (8px). Small badges may use `rounded-full`; do not introduce arbitrary radius values.
 - Reuse control and spacing tokens: `h-control` (34px), `size-control-sm` (28px), `px-control-pad` (12px), `min-h-row` (40px), `px-gutter` (24px), and `mb-section` (32px). Use `gap-2` for an 8px row gap.
 - When adding a utility token, update the relevant `tailwind-merge` groups in `web/src/lib/cn.ts`. Text size and text color utilities must coexist without removing one another.
 - Modify the existing component or CSS rule that owns a behavior. Avoid duplicate selectors, accumulating overrides, and a new stylesheet for each small change.
 
 ## Surfaces and visual hierarchy
 
-- Do not add decorative borders, rings, dividers, shadows, gradients, glow, blur, glass panels, or `backdrop-filter`.
+- Do not add decorative borders, rings, dividers, shadows, gradients, glow, blur, glass panels, or `backdrop-filter`. A token-based structural border is appropriate for the composer, popovers, and the workspace navigation baseline.
 - Separate regions with background tone, spacing, and font weight. Adjacent neutral surfaces should differ gently, approximately 1.05-1.10 in contrast; this is a surface hierarchy guideline, not a text readability target.
 - Fit the application panels edge to edge. Do not wrap the shell in a rounded outer frame or add gutters between its main panels.
 - Use `bg-field` for inputs, `bg-chip` for cards and menus, and `bg-user` for message bubbles. Treat the current token definitions as the source for exact palette values; do not duplicate palette tables in components.
-- Use `bg-chat-active` for selected rows and cards. Selected segments and tabs may use `bg-accent` with `text-on-accent`. A selected theme tile uses the soft selected tone, an accent icon, and semibold text.
+- Use neutral `bg-chat-active` for selected rows and cards. The Chats/XeckBot selector uses an ink underline rather than two filled capsules. Selected settings segments and tabs may use `bg-accent` with `text-on-accent`. A selected theme tile uses the soft selected tone, an accent icon, and semibold text.
 - Transparency is limited to the `bg-scrim` overlay and token-defined hover or selection fills. Panels remain opaque.
 - `track` is a soft fill for progress tracks and disabled controls, not a decorative separator. A switch uses `control` for its off track and `knob` for its thumb.
-- Exceptions to the border-free rule are functional symbols such as checkboxes, arrows, loading spinners, color-swatch selection marks, and the keyboard focus indicator.
+- Functional symbols such as checkboxes, arrows, loading spinners, color-swatch selection marks, and the keyboard focus indicator may also use borders.
 
 ## Accent, semantic colors, and contrast
 
-- Use one user-selected `accent`; the default is Deep blue. Do not tint large surfaces with it.
-- Reserve accent for the send button, enabled switches, logo badge, project icon, selected-row tint, and selected segments, tabs, or theme tiles.
+- Use one user-selected `accent`; the default is olive. Do not tint large surfaces with it.
+- Reserve accent for enabled switches, logo badge, project icon, and selected settings segments, tabs, or theme tiles. Chat selection stays neutral and the send action uses the primary ink fill.
 - Standard primary actions use `bg-primary`, not an accent fill. Destructive actions use the danger tokens. Reserve warning and danger colors for their semantic purpose.
 - Pair filled controls with `text-on-primary`, `text-on-accent`, or `text-on-danger` as appropriate. Text must reach at least 4.5:1 contrast on every supported surface and state. Controls and meaningful graphical marks must reach at least 3:1 against adjacent surfaces.
 - Keep terminal, ANSI, diff, syntax, context-meter, and window-close palettes as named tokens in `theme.css`.
@@ -38,6 +38,10 @@ The visual direction is a calm, warm-neutral workspace: a distinct stone-toned s
 
 ## Shared controls
 
+- Conversation rows reserve the first line for the title and a second line for project, timestamp, and status. Keep the More action visible in its own fixed-width slot. Do not make the timestamp compete with the title for horizontal space.
+- The composer has one text surface followed by one control row. Policy and model triggers and the send action share a 28px baseline on desktop. Keep the model flexible so it truncates before policy or send controls. Model effort and tier remain in the existing settings menu and the trigger tooltip.
+- Model menus remain anchored to the composer, with their existing settings and model-list panes side by side on desktop and stacked on narrow screens. Keep long values truncated with their full value available on hover.
+- Tool summaries separate the translated action from the monospace technical target. Preserve expansion behavior and show failures with explicit text as well as semantic color.
 - Use `BUTTON.secondary`, `BUTTON.ghost`, `BUTTON.primary`, `BUTTON.danger`, and the `ICON_BUTTON` variants from `web/src/ui/button-styles.ts`.
 - Keep class-based button sizing in the owning rule in `web/src/styles/components.css`. Use at most one visually dominant primary action in a view.
 - Use `TextField` for single-line inputs rather than a bare input. Use `width="wide"` for the standard 16rem field, `width="block"` for full width, and `bare` when a parent owns the field surface. Field height comes from the field token: 36px normally and 40px on touch devices.

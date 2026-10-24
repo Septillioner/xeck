@@ -12,8 +12,9 @@ import { groupSessions } from '../lib/group-sessions.ts';
 import { formatChatTime } from '../lib/session-time.ts';
 import { SidebarSearchOverlay } from './SidebarSearchOverlay.tsx';
 import { SessionActions } from './SessionActions.tsx';
+import { moodLabel } from '../state/mood.ts';
 
-const ROW = 'flex min-h-9 hover-none:min-h-11 w-full items-center gap-2.5 rounded-control px-3 text-left text-body hover:bg-hover';
+const ROW = 'flex min-h-9 hover-none:min-h-11 w-full items-center gap-2.5 rounded-control px-3 text-left text-small text-muted hover:bg-hover hover:text-ink';
 
 export function Sidebar() {
   const { sessions, projects, active, botsOpen, settingsOpen, projectPageId, createChat, openChat, openBots, openProjectPage, createProject, renameProject, setProjectPinned, deleteProject, openSettings, sessionMoods, workspace, openChats, setBotCreateOpen } = useAppState();
@@ -55,12 +56,17 @@ export function Sidebar() {
     const selected = !settingsOpen && !projectPageId && !botsOpen && active?.id === session.id;
     const mood = sessionMoods[session.id] ?? 'idle';
     const project = projects.find((item) => item.id === session.projectId);
-    return <li key={session.id} className={cn('chat-row flex items-center gap-1 rounded-control pr-1', selected && 'bg-chat-active')} data-mood={mood}>
-      <button type="button" className={cn(ROW, 'min-w-0 flex-1')} aria-current={selected ? 'page' : undefined} onClick={() => void openChat(session.id)}>
+    return <li key={session.id} className={cn('chat-row sidebar-session', selected && 'bg-chat-active')} data-mood={mood}>
+      <button type="button" className="sidebar-session-main" title={session.title} aria-current={selected ? 'page' : undefined} onClick={() => void openChat(session.id)}>
         {session.pinned ? <IconStar className="shrink-0 text-muted" /> : null}
-        <span className="min-w-0 flex-1"><span className="block truncate text-ui">{session.title}</span>{project && <span className="block truncate text-micro text-muted">{project.name}</span>}</span>
-        <time className="shrink-0 text-micro tabular-nums text-muted" dateTime={session.updatedAt}>{formatChatTime(session.updatedAt)}</time>
-        {mood !== 'idle' && <span className="chat-mood-dot size-1.5 shrink-0 rounded-full bg-mood" aria-label={t(mood)} />}
+        <span className="min-w-0 flex-1">
+          <span className="block truncate text-small text-ink">{session.title}</span>
+          <span className="sidebar-session-meta">
+            {project && <><span className="truncate">{project.name}</span><span aria-hidden="true">·</span></>}
+            <time className="shrink-0 tabular-nums" dateTime={session.updatedAt}>{formatChatTime(session.updatedAt)}</time>
+            {mood !== 'idle' && <span className="sidebar-session-state" aria-label={moodLabel(mood)}><i className="chat-mood-dot size-1.5 shrink-0 rounded-full bg-mood" aria-hidden="true" />{moodLabel(mood)}</span>}
+          </span>
+        </span>
       </button>
       <SessionActions session={session} />
     </li>;
@@ -69,9 +75,9 @@ export function Sidebar() {
     <aside id="sidebar" className="panel-shell z-drawer flex w-sidebar flex-none flex-col bg-sidebar max-lg:fixed max-lg:inset-y-0 max-lg:left-0 max-lg:w-[min(84vw,320px)] max-lg:-translate-x-full max-lg:transition-transform group-data-[sidebar-open='true']/shell:max-lg:translate-x-0">
       <div className="flex items-center gap-2 px-5 pt-5 pb-4 text-brand font-semibold"><IconXeck size={20} />Xeck</div>
       <nav className="flex flex-col gap-1 px-2.5">
-        <div className="mb-2 grid grid-cols-2 gap-1" role="group" aria-label={t('Workspaces')}>
-          <button type="button" className={cn('flex min-h-9 items-center justify-center gap-2 rounded-control text-ui', !botContext && 'bg-chat-active text-ink')} aria-pressed={!botContext} onClick={openChats}><IconChat />{t('Chats')}</button>
-          <button type="button" className={cn('flex min-h-9 items-center justify-center gap-2 rounded-control text-ui', botContext && 'bg-chat-active text-ink')} aria-pressed={botContext} onClick={openBots}><IconXeck />XeckBot</button>
+        <div className="sidebar-workspaces" role="group" aria-label={t('Workspaces')}>
+          <button type="button" aria-pressed={!botContext} onClick={openChats}><IconChat />{t('Chats')}</button>
+          <button type="button" aria-pressed={botContext} onClick={openBots}><IconXeck />XeckBot</button>
         </div>
         <button type="button" className={ROW} onClick={() => { if (botContext) { setBotCreateOpen(true); } else createChat(); }}><IconPlus />{t(botContext ? 'XeckBot oluştur' : 'New chat')}</button>
         <button ref={searchButtonRef} type="button" className={ROW} onClick={() => search()}><IconSearch /><span className="flex-1">{t('Search')}</span><kbd className="text-micro text-muted">Ctrl K</kbd></button>

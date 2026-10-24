@@ -2,22 +2,24 @@
 
 .menu { position: relative; }
 .menu > .field { display: inline-flex; align-items: center; justify-content: space-between; gap: 8px; text-align: left; }
-.model-pill { display: inline-flex; max-width: 100%; height: 28px; align-items: center; gap: 6px; border: 0; background: transparent; padding: 0 2px; font-size: var(--text-ui); color: var(--color-ink); }
-.model-pill .model-effort { color: var(--color-muted); }
+.model-pill { display: inline-flex; max-width: 100%; height: var(--spacing-control-sm); align-items: center; gap: 6px; border: 0; border-radius: var(--radius-tile); background: transparent; padding: 0 7px; font-size: var(--text-small); color: var(--color-muted); }
+.model-pill:hover:not(:disabled) { background: var(--color-hover); color: var(--color-ink); }
+.model-pill:disabled { cursor: default; opacity: 0.7; }
+.model-pill .model-effort { display: none; }
 .model-pill .chevron { transition: transform 0.15s ease; }
 .menu[data-open='true'] .model-pill .chevron { transform: rotate(225deg); }
 .model-pill > span { min-width: 0; max-width: 14rem; overflow: hidden; text-overflow: ellipsis; white-space: nowrap; }
 .menu > .field > span { flex: 1; min-width: 0; overflow: hidden; text-overflow: ellipsis; white-space: nowrap; }
 .model-pill svg { width: 16px; height: 16px; flex: none; }
 .chevron { display: inline-block; width: 6px; height: 6px; flex: none; border-right: 1.5px solid currentColor; border-bottom: 1.5px solid currentColor; transform: rotate(45deg) translateY(-1px); }
-.menu-list { position: absolute; z-index: 5; top: calc(100% + 6px); left: 0; min-width: 100%; border-radius: var(--radius-card); padding: 4px; }
-.menu.model .menu-popover { position: absolute; z-index: 20; top: auto; bottom: calc(100% + 6px); left: 0; display: flex; align-items: flex-end; gap: 8px; }
-.menu.model .menu-list { position: static; display: flex; width: 18rem; max-height: 320px; flex-direction: column; overflow: hidden; padding: 0; border-radius: var(--radius-card); transform: none; }
-.menu-rail { width: 15rem; flex: none; border-radius: var(--radius-card); background: var(--color-chip); padding: 4px; }
-.config-row { display: flex; align-items: center; gap: 8px; width: 100%; height: 32px; border-radius: var(--radius-tile); padding: 0 10px; text-align: left; font-size: var(--text-ui); color: var(--color-ink); }
+.menu-list { position: absolute; z-index: 5; top: calc(100% + 6px); left: 0; min-width: 100%; border: 1px solid var(--color-border); border-radius: var(--radius-control); padding: 4px; }
+.menu.model .menu-popover { position: absolute; z-index: 20; top: auto; bottom: calc(100% + 8px); left: 0; display: flex; align-items: flex-end; gap: 6px; width: max-content; max-width: 100%; }
+.menu.model .menu-list { position: static; display: flex; width: 18rem; min-width: 0; flex: 0 1 18rem; max-height: min(360px, 50dvh); flex-direction: column; overflow: hidden; padding: 4px; border-radius: var(--radius-control); transform: none; }
+.menu-rail { width: 16rem; min-width: 0; flex: 0 1 16rem; border: 1px solid var(--color-border); border-radius: var(--radius-control); background: var(--color-chip); padding: 5px; }
+.config-row { display: flex; align-items: center; gap: 10px; width: 100%; min-height: var(--spacing-control); border-radius: var(--radius-tile); padding: 6px 8px; text-align: left; font-size: var(--text-small); color: var(--color-ink); }
 .config-row:hover, .config-row[data-active='true'] { background: var(--color-hover); }
-.config-row > span:first-child { flex: 1; min-width: 0; overflow: hidden; text-overflow: ellipsis; white-space: nowrap; }
-.config-value { color: var(--color-muted); min-width: 0; overflow: hidden; text-overflow: ellipsis; white-space: nowrap; }
+.config-row > span:first-child { flex: 1 0 auto; min-width: 0; white-space: nowrap; }
+.config-value { flex: 0 1 auto; color: var(--color-muted); min-width: 0; overflow: hidden; text-overflow: ellipsis; white-space: nowrap; }
 .config-row .chevron { transform: rotate(-45deg); }
 .config-separator { height: 1px; margin: 4px 8px; background: var(--color-control); }
 .menu-search { display: flex; align-items: center; gap: 8px; height: 36px; flex: none; padding: 0 12px; }
@@ -26,15 +28,16 @@
 .menu-search input:focus { outline: none; }
 .menu-search:has(input:focus-visible) { outline: 2px solid var(--color-ink); outline-offset: -2px; }
 .menu-scroll { min-height: 0; flex: 1; overflow: auto; padding: 4px; }
-.menu-group-title { margin: 6px 10px 2px; font-size: var(--text-nano); font-weight: 600; letter-spacing: 0.06em; text-transform: uppercase; color: var(--color-muted); }
-.menu-item { display: flex; align-items: center; gap: 8px; width: 100%; border-radius: var(--radius-tile); padding: 6px 10px; text-align: left; font-size: var(--text-ui); }
+.menu-group-title { margin: 8px 10px 4px; font-size: var(--text-micro); font-weight: 500; color: var(--color-muted); }
+.menu-item { display: flex; align-items: center; gap: 8px; width: 100%; min-height: 36px; border-radius: var(--radius-tile); padding: 7px 10px; text-align: left; font-size: var(--text-small); }
 .menu-item > span:not(.menu-check) { flex: 1; min-width: 0; overflow: hidden; text-overflow: ellipsis; white-space: nowrap; }
 .menu-item > span.menu-item-copy { display: flex; flex-direction: column; gap: 1px; white-space: normal; }
 .menu-item-title, .menu-item-subtitle { min-width: 0; overflow: hidden; text-overflow: ellipsis; white-space: nowrap; }
 .menu-item-subtitle { font-size: var(--text-micro); color: var(--color-muted); }
 .menu-item svg { width: 16px; height: 16px; flex: none; }
 .menu-check { display: flex; margin-left: auto; flex: none; }
-.menu-item:hover, .menu-item[data-active='true'], .menu-item[data-focused='true'] { background: var(--color-hover); }
+.menu-item:hover, .menu-item[data-focused='true'] { background: var(--color-hover); }
+.menu-item[data-active='true'] { background: var(--color-chat-active); }
 .menu-empty { padding: 16px; font-size: var(--text-ui); color: var(--color-muted); }
 .menu-footer { display: flex; align-items: center; gap: 8px; height: 32px; flex: none; padding: 0 12px; font-size: var(--text-ui); color: var(--color-muted); }
 .menu-footer svg { width: 16px; height: 16px; flex: none; }

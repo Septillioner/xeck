@@ -30,25 +30,28 @@
   --text-brand: 16px;
   --text-large: 17px;
   --text-heading: 22px;
-  --text-display: 40px;
+  --text-display: 24px;
 
   /* Radius scale. */
-  --radius-tile: 8px;
-  --radius-control: 10px;
-  --radius-row: 12px;
-  --radius-card: 14px;
+  --radius-tile: 4px;
+  --radius-control: 6px;
+  --radius-row: 6px;
+  --radius-card: 8px;
 
   /* Warm stone surfaces: rail is the sidebar and window, desk is the working pane, sheet is a composer, menu, or user bubble. */
-  --color-bg: #ebe9e3;
-  --color-sidebar: #e5e2db;
-  --color-main: #f4f2ed;
-  --color-ink: #292823;
-  --color-muted: #626057;
-  --color-icon: #626057;
+  --color-bg: #ecece6;
+  --color-sidebar: #ecece6;
+  --color-main: #f5f4f0;
+  --color-ink: #242621;
+  --color-muted: #5b6056;
+  --color-subtle: #5c6157;
+  --color-icon: #5b6056;
+  --color-border: #d3d5cb;
+  --color-composer: #fbfbf8;
   --color-logo: #59683b;
   --color-track: #d6d2c8;
   --color-hover: color-mix(in srgb, var(--color-ink) 5%, transparent);
-  --color-chip: #f9f8f4;
+  --color-chip: #fbfbf8;
   --color-popover: var(--color-chip);
   --color-control: #716e64;
   --color-field: #eeece6;
@@ -56,7 +59,7 @@
   --color-field-border: #cbc7bd;
   --color-focus: #59683b;
   --color-code: #eeece6;
-  --color-user: #f9f8f4;
+  --color-user: #ecece6;
 
   /* The user-selected accent. docs/rules/frontend.md lists where it may appear.
      `--accent` is the switchable variable the `data-accent` rules write, and
@@ -68,7 +71,7 @@
   --color-on-accent: #ffffff;
 
   /* Primary action: a solid ink fill, never the accent (see docs/rules/frontend.md). Buttons read these through `bg-primary`. */
-  --color-primary: #292823;
+  --color-primary: #242621;
   --color-primary-hover: #3a3933;
   --color-on-primary: #ffffff;
   --color-swatch-coral: #a94e3c;
@@ -91,7 +94,7 @@
   --color-pressure-alert: #b42318;
   /* Chat row and meter surfaces. */
   --color-chat-hover: color-mix(in srgb, var(--color-ink) 5%, transparent);
-  --color-chat-active: color-mix(in srgb, var(--accent) 11%, transparent);
+  --color-chat-active: color-mix(in srgb, var(--color-ink) 7%, transparent);
   --color-mood: #cbc8bf;
 
   /* Fixed-purpose palettes. These do not follow the theme: a terminal, a diff
@@ -175,21 +178,24 @@
   --spacing-scrollbar-size: 8px;
   --spacing-composer-max: 40dvh;
 
-  /* Flat surfaces: no shadow or border tokens exist. Tone separates a popover. */
+  /* Flat surfaces. Borders only identify control and popover boundaries. */
 }
 
 /* Dark palette. Same variable names, so every light-palette utility follows. */
 .dark {
   color-scheme: dark;
-  --color-bg: #171715;
-  --color-sidebar: #1c1b18;
-  --color-main: #24231f;
-  --color-ink: #eeece4;
-  --color-muted: #b2afa4;
-  --color-icon: #b2afa4;
+  --color-bg: #242622;
+  --color-sidebar: #242622;
+  --color-main: #1d1f1c;
+  --color-ink: #e8eae3;
+  --color-muted: #a6ada0;
+  --color-subtle: #9aa292;
+  --color-icon: #a6ada0;
+  --color-border: #3c4437;
+  --color-composer: #292d26;
   --color-logo: #c4d29a;
   --color-track: #393831;
-  --color-chip: #2b2a25;
+  --color-chip: #292d26;
   --color-field: #1d1c19;
   --color-control: #777469;
   --color-knob: #1c1b18;
@@ -206,7 +212,7 @@
   --color-swatch-rose: #e4a2b8;
   --color-swatch-teal: #86c8bb;
 
-  --color-user: #302f29;
+  --color-user: #292d26;
   --color-diff-add-ink: #9be5b7;
   --color-diff-del-ink: #f2aaaa;
   --color-syntax-comment: #8b949e;

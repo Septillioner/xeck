@@ -65,6 +65,7 @@ export function Menu({
   const [query, setQuery] = useState('');
   const [focusIndex, setFocusIndex] = useState(0);
   const rootRef = useRef<HTMLDivElement>(null);
+  const triggerRef = useRef<HTMLButtonElement>(null);
   const inputRef = useRef<HTMLInputElement>(null);
   const onOpenChangeRef = useRef(onOpenChange);
   const listId = useId();
@@ -95,6 +96,7 @@ export function Menu({
       if (event.key !== 'Escape') return;
       event.stopPropagation();
       setOpen(false);
+      triggerRef.current?.focus();
     };
     document.addEventListener('mousedown', onPointer);
     document.addEventListener('keydown', onKey);
@@ -107,6 +109,7 @@ export function Menu({
   const choose = (next: string) => {
     onChange(next);
     setOpen(false);
+    triggerRef.current?.focus();
   };
 
   const onSearchKey = (event: ReactKeyboardEvent<HTMLInputElement>) => {
@@ -178,10 +181,12 @@ export function Menu({
     <div className={menuClass} {...{ [MENU_MARKER]: '' }} data-open={open ? 'true' : 'false'} data-placement={placement} ref={rootRef}>
       <button
         type="button"
+        ref={triggerRef}
         className={triggerClass}
         aria-label={t(label)}
         aria-expanded={open}
         aria-controls={listId}
+        title={variant === 'model' ? [current?.group, current?.label, detail].filter(Boolean).join(' · ') : undefined}
         disabled={disabled}
         onClick={() => setOpen((currentOpen) => !currentOpen)}
       >

@@ -12,6 +12,10 @@
    buttons would be unreachable. The sidebar shows them for the whole row
    instead; the title already reserves room for them (padding-right: 4.25rem). */
 @media (hover: none), (pointer: coarse) {
+  .sidebar-workspaces button { min-height: 44px; }
+  .mode-combobox > .menu > .mode-trigger, .model-pill { min-height: 36px; }
+  .send-orb { width: 36px; height: 36px; }
+  .sidebar-session > button:last-child { margin-top: 8px; }
   /* Compact controls keep their size and gain a larger invisible tap area, so
      the switch knob geometry above stays intact. */
   .icon-button,
@@ -212,6 +216,29 @@
   .menu.model .menu-list {
     width: min(18rem, calc(100vw - 24px));
   }
+
+  /* Anchor the model controls to the composer and stack their existing panes. */
+  .menu.model .menu-popover {
+    width: min(32rem, 100%);
+    max-height: min(60dvh, 32rem);
+    flex-direction: column;
+    align-items: stretch;
+    overflow-y: auto;
+  }
+
+  .menu.model .menu-popover > .menu-rail,
+  .menu.model .menu-popover > .menu-list {
+    width: 100%;
+    flex: none;
+  }
+
+  .menu.model .menu-popover > .menu-list { max-height: 28dvh; }
+
+  .composer { padding: 12px 10px 8px; }
+  .composer-dock { padding-right: 12px; padding-left: 12px; }
+  .composer-foot { gap: 2px; }
+  .composer-foot > .menu { flex: 1; max-width: none; }
+  .mode-combobox > .menu > .mode-trigger, .model-pill { padding-right: 5px; padding-left: 5px; }
 
   /* Modal as a bottom sheet, scrollable so the skill editor never overflows. */
   .modal-layer {

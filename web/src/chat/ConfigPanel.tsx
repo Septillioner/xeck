@@ -86,7 +86,7 @@ export function ConfigPanel({
           }}
         >
           <span>{t(MODEL_ROW_LABEL)}</span>
-          <span className="config-value">{modelLabel}</span>
+          <span className="config-value" title={modelLabel}>{modelLabel}</span>
           <i className="chevron" />
         </button>
       </div>

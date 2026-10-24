@@ -206,7 +206,6 @@ export function Composer({ modelMenu }: { modelMenu: ReactNode }) {
           </details>
         )}
         <div className="composer">
-        <div className="composer-main">
           <TextareaAutosize
             ref={inputRef}
             minRows={1}
@@ -251,8 +250,6 @@ export function Composer({ modelMenu }: { modelMenu: ReactNode }) {
             {canChooseAssistant && <button type="button" className={ICON_BUTTON} aria-label={t('Chat options')} title={t('Chat options')} onClick={() => setOptionsOpen(true)}><IconSliders /></button>}
             <ModeSwitch />
             {modelMenu}
-          </div>
-        </div>
             <div className="composer-actions">
               <button
                 type="submit"
@@ -269,6 +266,7 @@ export function Composer({ modelMenu }: { modelMenu: ReactNode }) {
                 </button>
               )}
             </div>
+          </div>
       </div>
 
       {optionsOpen && <Dialog title={t('Chat options')} onClose={() => setOptionsOpen(false)}>

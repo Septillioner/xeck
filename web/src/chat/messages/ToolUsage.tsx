@@ -51,11 +51,17 @@ export function ToolUsage({ tool, call, mode, debug, selectedCallId, onSelectCal
   const ToolIcon = activityIcon(tool.label);
   const failed = toolFailed(enrichedTool);
   const result = call?.result;
+  // Separate the technical target visually; translation preserves paths and tool names.
+  const [category, action, ...target] = translateActivityLabel(activityBaseLabel(tool.label)).split(' · ');
   return (
     <details className="tool-usage" open={open} data-failed={failed ? 'true' : undefined} data-active={selectedCallId === tool.callId ? 'true' : undefined}>
       <summary onClick={(event) => { event.preventDefault(); setUserOpen(!open); }}>
         <ToolIcon className="activity-icon" />
-        <span className={tool.pending ? 'activity-line-label shimmer-text' : 'activity-line-label'}>{translateActivityLabel(tool.label)}</span>
+        <span className={tool.pending ? 'activity-line-label shimmer-text' : 'activity-line-label'}>
+          {action ? `${category} · ${action}` : category}
+          {target.length > 0 && <>{' '}<span className="tool-target">{target.join(' · ')}</span></>}
+        </span>
+        {failed && <span className="tool-failure-label">{t('Tool failed')}</span>}
         <IconChevron className="tool-chevron" />
       </summary>
       <div className="tool-usage-body">
