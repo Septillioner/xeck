@@ -2,7 +2,7 @@
 
 This is the canonical frontend rulebook for Xeck. Keep documentation in English. Product copy may remain localized through the translation catalogs.
 
-The visual direction is a neutral two-plane desk: a rail for the sidebar and window, a lighter working surface for chat and settings, and one user-selected accent. Surfaces carry no hue, so coral, amber, green, and violet accents sit on the same ground as blue. Use spacing, typography, and those surface tones to establish hierarchy. Keep large surfaces neutral.
+The visual direction is a calm, warm-neutral workspace: a distinct stone-toned sidebar rail, a soft ivory working surface, and clear field/card layers. Keep large surfaces free of blue casts and avoid stark whites or blacks. The user chooses one of eight curated accents (olive, clay, ochre, forest, azure, violet, rose, or teal); give each accent a matched light/dark pair and keep it out of large surfaces. Use tone, spacing, and typography to establish hierarchy.
 
 ## Design tokens and Tailwind
 

@@ -33,17 +33,20 @@
 .meter-stats dt { font-size: var(--text-ui); color: var(--color-muted); }
 .meter-stats dd { margin: 0; font-size: var(--text-ui); color: var(--color-ink); }
 textarea.field-area { display: block; width: 100%; height: auto; padding: 10px var(--spacing-control-pad); resize: none; overflow-y: auto; line-height: 1.5; }
-.accent-swatches { display: flex; gap: 10px; }
-.default-accent-option { position: relative; display: flex; align-items: center; gap: 6px; margin-right: 8px; padding-right: 14px; }
-.default-accent-option::after { position: absolute; top: 2px; right: 0; width: 1px; height: 24px; background: var(--color-track); content: ''; }
-.swatch { width: 28px; height: 28px; border-radius: 999px; border: 2px solid transparent; }
-.swatch[data-active='true'] { border-color: var(--color-ink); }
+.accent-swatches { display: grid; grid-template-columns: repeat(auto-fit, minmax(68px, 1fr)); gap: 6px; max-width: 340px; }
+.accent-option { display: flex; min-width: 0; min-height: 68px; flex-direction: column; align-items: center; justify-content: center; gap: 5px; border-radius: var(--radius-control); color: var(--color-muted); font-size: var(--text-small); }
+.accent-option:hover { background: var(--color-chat-hover); color: var(--color-ink); }
+.accent-option[data-active='true'] { background: var(--color-chat-active); color: var(--color-ink); font-weight: 600; }
+.swatch { width: 24px; height: 24px; border-radius: 999px; outline: 2px solid transparent; outline-offset: 2px; }
+.accent-option[data-active='true'] .swatch { outline-color: var(--color-ink); }
 .swatch-default { background: var(--color-swatch-default); }
 .swatch-coral { background: var(--color-swatch-coral); }
 .swatch-amber { background: var(--color-swatch-amber); }
 .swatch-green { background: var(--color-swatch-green); }
 .swatch-blue { background: var(--color-swatch-blue); }
 .swatch-violet { background: var(--color-swatch-violet); }
+.swatch-rose { background: var(--color-swatch-rose); }
+.swatch-teal { background: var(--color-swatch-teal); }
 .stack .menu > .field { width: 100%; }
 .field-password-wrap { position: relative; width: 16rem; max-width: 100%; }
 .field-password-wrap .field { width: 100%; padding-right: 40px; }

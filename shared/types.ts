@@ -18,7 +18,7 @@ export type TextSizeSetting = (typeof TEXT_SIZES)[number];
 export const TOOL_USAGE_VIEW_MODES = ['compact', 'balanced', 'detailed'] as const;
 export type ToolUsageViewMode = (typeof TOOL_USAGE_VIEW_MODES)[number];
 
-export const ACCENT_COLORS = ['default', 'coral', 'amber', 'green', 'blue', 'violet'] as const;
+export const ACCENT_COLORS = ['default', 'coral', 'amber', 'green', 'blue', 'violet', 'rose', 'teal'] as const;
 export type AccentColor = (typeof ACCENT_COLORS)[number];
 
 export type HexColor = `#${string}`;

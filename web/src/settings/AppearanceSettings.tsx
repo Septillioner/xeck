@@ -18,12 +18,14 @@ const TEXT_LABELS: Record<TextSizeSetting, string> = {
 };
 
 const ACCENT_LABELS: Record<AccentColor, string> = {
-  default: 'Deep blue',
-  coral: 'Coral',
-  amber: 'Amber',
-  green: 'Green',
-  blue: 'Blue',
+  default: 'Olive',
+  coral: 'Clay',
+  amber: 'Ochre',
+  green: 'Forest',
+  blue: 'Azure',
   violet: 'Violet',
+  rose: 'Rose',
+  teal: 'Teal',
 };
 
 const TOOL_MODE_LABELS: Record<ToolUsageViewMode, string> = {
@@ -62,21 +64,22 @@ export function AppearanceSettings() {
       </section>
       <section className="appearance-block">
         <h3 className="setting-label">{t("Color")}</h3>
-        <div className="accent-swatches">
+        <div className="accent-swatches" role="group" aria-label={t("Color")}>
           {ACCENT_COLORS.map((accent) => (
-            <div key={accent} className={accent === 'default' ? 'default-accent-option' : undefined}>
-              <button
-                type="button"
-                className={`swatch swatch-${accent}`}
-                data-active={settings.accent === accent ? 'true' : 'false'}
-                aria-label={t(ACCENT_LABELS[accent])}
-                title={t(ACCENT_LABELS[accent])}
-                onClick={() => {
-                  void saveSettings({ accent });
-                }}
-              />
-              {accent === 'default' && <span className="text-small text-muted">{t("Default")}</span>}
-            </div>
+            <button
+              key={accent}
+              type="button"
+              className="accent-option"
+              data-active={settings.accent === accent ? 'true' : 'false'}
+              aria-label={t(ACCENT_LABELS[accent])}
+              aria-pressed={settings.accent === accent}
+              title={t(ACCENT_LABELS[accent])}
+              onClick={() => void saveSettings({ accent })}
+            >
+              <span className={`swatch swatch-${accent}`} aria-hidden="true" />
+              <span>{t(ACCENT_LABELS[accent])}</span>
+              {accent === 'default' && <span className="text-nano text-muted">{t("Default")}</span>}
+            </button>
           ))}
         </div>
       </section>
