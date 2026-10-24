@@ -73,7 +73,7 @@ export function Sidebar() {
   };
   return <>
     <aside id="sidebar" className="panel-shell z-drawer flex w-sidebar flex-none flex-col bg-sidebar max-lg:fixed max-lg:inset-y-0 max-lg:left-0 max-lg:w-[min(84vw,320px)] max-lg:-translate-x-full max-lg:transition-transform group-data-[sidebar-open='true']/shell:max-lg:translate-x-0">
-      <div className="flex items-center gap-2 px-5 pt-5 pb-4 text-brand font-semibold"><IconXeck size={20} />Xeck</div>
+      <div className="flex items-center gap-2 px-5 pt-5 pb-4 text-brand font-semibold"><IconXeck size={20} className="text-logo" />Xeck</div>
       <nav className="flex flex-col gap-1 px-2.5">
         <div className="sidebar-workspaces" role="group" aria-label={t('Workspaces')}>
           <button type="button" aria-pressed={!botContext} onClick={openChats}><IconChat />{t('Chats')}</button>

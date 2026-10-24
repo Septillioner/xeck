@@ -29,7 +29,8 @@ The visual direction is a calm, neutral workspace: a quiet sidebar rail, a conti
 ## Accent, semantic colors, and contrast
 
 - Use one user-selected `accent`; the default is olive. Do not tint large surfaces with it.
-- Reserve accent for enabled switches, logo badge, project icon, and selected settings segments, tabs, or theme tiles. Chat selection stays neutral and the send action uses the primary ink fill.
+- The Xeck brand mark uses the fixed `logo` token from `web/public/logo.svg` in both themes, independently of the user-selected accent. Apply it to the sidebar brand, empty-chat mark, and Xeck agent header. Navigation glyphs stay neutral and the live status mark keeps its semantic mood color.
+- Reserve accent for enabled switches, project icon, and selected settings segments, tabs, or theme tiles. Chat selection stays neutral and the send action uses the primary ink fill.
 - Standard primary actions use `bg-primary`, not an accent fill. Destructive actions use the danger tokens. Reserve warning and danger colors for their semantic purpose.
 - Pair filled controls with `text-on-primary`, `text-on-accent`, or `text-on-danger` as appropriate. Text must reach at least 4.5:1 contrast on every supported surface and state. Controls and meaningful graphical marks must reach at least 3:1 against adjacent surfaces.
 - Keep terminal, ANSI, diff, syntax, context-meter, and window-close palettes as named tokens in `theme.css`.

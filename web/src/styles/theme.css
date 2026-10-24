@@ -48,7 +48,8 @@
   --color-icon: #5b6056;
   --color-border: #d3d5cb;
   --color-composer: #fbfbf8;
-  --color-logo: #59683b;
+  /* Fixed brand blue from public/logo.svg, independent of the selected accent. */
+  --color-logo: #4f7bce;
   --color-track: #d6d2c8;
   --color-hover: color-mix(in srgb, var(--color-ink) 5%, transparent);
   --color-chip: #fbfbf8;
@@ -193,7 +194,7 @@
   --color-icon: #a6ada0;
   --color-border: #3c4437;
   --color-composer: #292d26;
-  --color-logo: #c4d29a;
+  --color-logo: #4f7bce;
   --color-track: #393831;
   --color-chip: #292d26;
   --color-field: #1d1c19;

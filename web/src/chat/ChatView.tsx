@@ -218,7 +218,7 @@ export function ChatView() {
       {active && !isSubagent && (
         <header className="shrink-0 px-4 py-3" aria-label={t('Chat details')}>
           <div className="flex min-w-0 flex-wrap items-center gap-2">
-            {active.bot ? <BotAvatar name={active.title} color={active.bot.color} /> : <AgentIcon className="shrink-0 text-muted" />}
+            {active.bot ? <BotAvatar name={active.title} color={active.bot.color} /> : <AgentIcon className={AgentIcon === IconXeck ? 'shrink-0 text-logo' : 'shrink-0 text-muted'} />}
             <div className="min-w-0 flex-1"><h1 className="m-0 truncate text-body font-medium">{active.title}</h1>{detail && <p className="truncate text-small text-muted">{detail}</p>}</div>
             <SessionActions session={active} extraActions={[
               ...(plan || changedFiles.length > 0 ? [{ label: t('Artifacts'), onClick: () => void openPlanPanel(), pressed: planPanelOpen }] : []),
