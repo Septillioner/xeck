@@ -735,5 +735,11 @@
   "Advanced profile settings": "Advanced profile settings",
   "Chat options": "Chat options",
   "Message actions": "Message actions",
-  "Create": "Create"
+  "Create": "Create",
+  "This message will be updated. Messages and replies after it will be replaced. Previous tool actions are not undone.": "This message will be updated. Messages and replies after it will be replaced. Previous tool actions are not undone.",
+  "Save and regenerate": "Save and regenerate",
+  "This message cannot be edited": "This message cannot be edited",
+  "Invalid message edit": "Invalid message edit",
+  "Edit message": "Edit message",
+  "The conversation changed. Reopen the chat and try again.": "The conversation changed. Reopen the chat and try again."
 }

@@ -26,6 +26,7 @@ export function createStreamEventApplier(deps: StreamEventDeps) {
   const { setSessions, setActive, setStreams, setError, rememberSummary, markTerminal } = deps;
   return function applyStreamEvent(sessionId: string, startedAt: number, event: StreamEvent): void {
     if (event.event === 'meta') {
+      if (event.data.session) rememberSummary(event.data.session);
       setSessions((current) =>
         current.map((item) => (item.id === event.data.id ? { ...item, title: event.data.title } : item)),
       );

@@ -1,3 +1,4 @@
+import type { MessageEdit } from '../../../shared/types.ts';
 import { useCallback, useRef, type Dispatch, type MutableRefObject, type SetStateAction } from 'react';
 import type {
   AgentPublic,
@@ -70,7 +71,7 @@ export function useMessageSender({
   reloadAfterAbort: (sessionId: string) => Promise<void>;
 }) {
   const creating = useRef(false);
-  const runSend = useCallback(async (content: string, clearDraft = true, feedback?: { onAccepted?: () => void; onError?: (message: string) => void }) => {
+  const runSend = useCallback(async (content: string, clearDraft = true, feedback?: { onAccepted?: () => void; onError?: (message: string) => void; edit?: MessageEdit }) => {
     if (creating.current || (active && sessionRefs.activeId.current !== active.id)) { feedback?.onError?.(t('Wait for the current reply to finish')); return; }
     const version = sessionRefs.navigationVersion.current;
     let draftCleared = false;
@@ -148,7 +149,7 @@ export function useMessageSender({
       ...current,
       [sessionId]: {
         sessionId,
-        userContent: contextSummary ? '' : trimmed,
+        userContent: contextSummary || feedback?.edit ? '' : trimmed,
         content: '',
         reasoning: '',
         phase: contextSummary ? 'summarizing' : null,
@@ -166,7 +167,7 @@ export function useMessageSender({
         if (!accepted) { accepted = true; feedback?.onAccepted?.(); }
         if (event.event === 'done' && event.data.aborted) stoppedByUser = true;
         streamRuntime.applyEvent(sessionId, startedAt, event);
-      });
+      }, feedback?.edit);
     } catch (cause) {
       if (!accepted) feedback?.onError?.(cause instanceof Error ? cause.message : t('Request failed'));
       if (controller.signal.aborted) {
@@ -176,7 +177,7 @@ export function useMessageSender({
         } catch {
           // Keep the stopped turn in memory when the persisted reload fails.
         }
-      } else if (cause instanceof ApiError && cause.status === 409) {
+      } else if (cause instanceof ApiError && cause.status === 409 && !feedback?.edit) {
         resume = true;
         if (clearDraft && sessionRefs.activeId.current === sessionId) setters.setDraft((current) => current || trimmed);
       } else {
@@ -184,11 +185,15 @@ export function useMessageSender({
         if (sessionRefs.activeId.current === sessionId) {
           setters.setError(cause instanceof Error ? cause.message : 'Chat failed');
         }
-        try {
-          const fresh = await getSession(sessionId);
-          rememberSummary(fresh);
-        } catch {
-          // Keep the optimistic view if the reload fails.
+        // A rejected edit must keep its editor mounted even if another client
+        // removed that message. Reopening the chat fetches the changed history.
+        if (!feedback?.edit || accepted) {
+          try {
+            const fresh = await getSession(sessionId);
+            rememberSummary(fresh);
+          } catch {
+            // Keep the optimistic view if the reload fails.
+          }
         }
       }
     } finally {
@@ -216,7 +221,7 @@ export function useMessageSender({
     reloadAfterAbort,
   ]);
 
-  const send = useCallback(async (content?: string, options?: { preserveDraft?: boolean; onAccepted?: () => void; onError?: (message: string) => void }) => {
+  const send = useCallback(async (content?: string, options?: { preserveDraft?: boolean; onAccepted?: () => void; onError?: (message: string) => void; edit?: MessageEdit }) => {
     await runSend(typeof content === 'string' ? content : draftRefs.content.current, !options?.preserveDraft, options);
   }, [runSend, draftRefs]);
 

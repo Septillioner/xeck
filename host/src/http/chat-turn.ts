@@ -4,6 +4,8 @@ import { SessionTurnInputError, startSessionTurn } from '../agent/runtime/sessio
 import { readSession } from '../stores/sessions.ts';
 import { readBody } from './request.ts';
 import { streamSessionTurn } from './session-stream.ts';
+import type { MessageEdit } from '../../../shared/types.ts';
+import { MessageEditConflict } from '../agent/runtime/sessions/edit-message.ts';
 
 /** HTTP starts the same session turn used by delegation and subscribes to it. */
 export async function postMessage(c: Context) {
@@ -13,12 +15,19 @@ export async function postMessage(c: Context) {
   if (session.origin?.by === 'agent') return c.json({ error: 'Subagent turns are managed by the parent agent' }, 403);
   const body = await readBody(c);
   const content = typeof body?.content === 'string' ? body.content.trim() : '';
+  let edit: MessageEdit | undefined;
+  if (body?.edit !== undefined) {
+    const value = body.edit as Partial<MessageEdit> | null;
+    if (!value || typeof value.messageId !== 'string' || typeof value.expectedContent !== 'string' || typeof value.lastMessageId !== 'string') return c.json({ error: 'Invalid message edit' }, 400);
+    edit = { messageId: value.messageId, expectedContent: value.expectedContent, lastMessageId: value.lastMessageId };
+  }
   try {
-    const { liveChat } = await startSessionTurn(session, content);
+    const { liveChat } = await startSessionTurn(session, content, undefined, undefined, edit);
     return streamSessionTurn(c, liveChat);
   } catch (error) {
     if (error instanceof SessionTurnInputError) return c.json({ error: error.message }, 400);
     if (error instanceof ChatInFlightError) return c.json({ error: error.message }, 409);
+    if (error instanceof MessageEditConflict) return c.json({ error: error.message }, 409);
     throw error;
   }
 }

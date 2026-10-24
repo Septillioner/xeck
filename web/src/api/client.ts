@@ -1,3 +1,4 @@
+import type { MessageEdit } from '../../../shared/types.ts';
 import type { BotGroup } from '../../../shared/bot-groups.ts';
 import type {
   AgentPublic,
@@ -53,7 +54,7 @@ export class ApiError extends Error {
 const API_BASE_URL = readApiBaseUrl();
 
 export type StreamEvent =
-  | { event: 'meta'; data: { id: string; title: string } }
+  | { event: 'meta'; data: { id: string; title: string; session?: StoredSession } }
   | { event: 'text.delta'; data: { delta: string } }
   | { event: 'reasoning.delta'; data: { delta: string } }
   | { event: 'subagent.update'; data: SubagentUpdate }
@@ -344,11 +345,12 @@ export async function streamMessage(
   content: string,
   signal: AbortSignal,
   onEvent: (event: StreamEvent) => void,
+  edit?: MessageEdit,
 ): Promise<void> {
   const response = await fetch(`${API_BASE_URL}/api/sessions/${sessionId}/messages`, {
     method: 'POST',
     headers: { 'Content-Type': 'application/json' },
-    body: JSON.stringify({ content }),
+    body: JSON.stringify({ content, ...(edit ? { edit } : {}) }),
     signal,
   });
 

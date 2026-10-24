@@ -1,3 +1,4 @@
+import type { MessageEdit } from '../../../shared/types.ts';
 import type { BotGroup } from '../../../shared/bot-groups.ts';
 import { createContext, useContext } from 'react';
 import { ApiError } from '../api/client.ts';
@@ -138,7 +139,7 @@ export interface AppStateValue {
   queuedMessages: QueuedMessage[];
   enqueueMessage: (content: string) => void;
   removeQueuedMessage: (id: string) => void;
-  send: (content?: string, options?: { preserveDraft?: boolean; onAccepted?: () => void; onError?: (message: string) => void }) => Promise<void>;
+  send: (content?: string, options?: { preserveDraft?: boolean; onAccepted?: () => void; onError?: (message: string) => void; edit?: MessageEdit }) => Promise<void>;
   retry: () => Promise<void>;
   stop: () => void;
   respondDialog: (dialogId: string, response: { approved?: boolean; response?: string; selections?: string[]; other?: string }) => Promise<void>;

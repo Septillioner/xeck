@@ -1,5 +1,5 @@
 import { useEffect, useId, useRef, useState } from 'react';
-import type { TranscriptMessage } from '../../../../shared/types.ts';
+import type { MessageEdit, TranscriptMessage } from '../../../../shared/types.ts';
 import { messageBlocks } from '../../../../shared/transcript.ts';
 import { t } from '../../i18n/index.ts';
 import { useAppState } from '../../state/AppState.tsx';
@@ -11,6 +11,7 @@ import { Textarea } from '../../ui/Textarea.tsx';
 export function MessageActions({ message }: { message: TranscriptMessage }) {
   const { active, streaming, queuedMessages, send } = useAppState();
   const [editing, setEditing] = useState(false);
+  const [editSnapshot, setEditSnapshot] = useState<MessageEdit | null>(null);
   const [content, setContent] = useState(message.content);
   const [submitting, setSubmitting] = useState(false);
   const [copied, setCopied] = useState(false);
@@ -50,16 +51,16 @@ export function MessageActions({ message }: { message: TranscriptMessage }) {
         void navigator.clipboard.writeText(text).then(() => { setCopied(true); setError(null); }).catch(() => setError(t('Could not copy message')));
         if (menuOpen) { setMenuOpen(false); triggerRef.current?.focus(); }
       }} onBlur={() => setCopied(false)}>{copied ? <IconCheck /> : <IconCopy />}</button>
-      {canEdit && <button data-message-action type="button" role={menuOpen ? 'menuitem' : undefined} className={ICON_BUTTON} aria-label={t('Edit and resend')} title={t(streaming || queuedMessages.length ? 'Wait for the current reply to finish' : 'Edit and resend')} disabled={Boolean(streaming) || queuedMessages.length > 0} onClick={() => { if (menuOpen) { setMenuOpen(false); triggerRef.current?.focus(); } setContent(message.content); setError(null); setEditing(true); }}><IconEdit /></button>}
+      {canEdit && <button data-message-action type="button" role={menuOpen ? 'menuitem' : undefined} className={ICON_BUTTON} aria-label={t('Edit message')} title={t(streaming || queuedMessages.length ? 'Wait for the current reply to finish' : 'Edit message')} disabled={Boolean(streaming) || queuedMessages.length > 0} onClick={() => { if (menuOpen) { setMenuOpen(false); triggerRef.current?.focus(); } setContent(message.content); setEditSnapshot({ messageId: message.id, expectedContent: message.content, lastMessageId: active!.messages.at(-1)!.id }); setError(null); setEditing(true); }}><IconEdit /></button>}
       </div>
-      {error && <span role="alert">{error}</span>}
+      {error && <span role="alert">{t(error)}</span>}
     </div>
-    {editing && <Dialog title={t('Edit and resend')} onClose={() => { if (!submitting) setEditing(false); }}>
-      <form className="flex flex-col gap-4 p-gutter" onSubmit={(event) => { event.preventDefault(); if (!content.trim() || submitting || streaming || queuedMessages.length > 0) return; setSubmitting(true); setError(null); void send(content.trim(), { preserveDraft: true, onAccepted: () => { setSubmitting(false); setEditing(false); }, onError: (message) => { setError(message); setSubmitting(false); } }).finally(() => setSubmitting(false)); }}>
-        <p className="text-ui text-muted">{t('Sent as a new message. Earlier replies stay in history.')}</p>
-        {error && <p role="alert" className="text-small text-danger">{error}</p>}
+    {editing && <Dialog title={t('Edit message')} onClose={() => { if (!submitting) setEditing(false); }}>
+      <form className="flex flex-col gap-4 p-gutter" onSubmit={(event) => { event.preventDefault(); if (!content.trim() || !editSnapshot || submitting || streaming || queuedMessages.length > 0) return; setSubmitting(true); setError(null); void send(content.trim(), { preserveDraft: true, edit: editSnapshot, onAccepted: () => { setSubmitting(false); setEditing(false); }, onError: (message) => { setError(message); setSubmitting(false); } }).finally(() => setSubmitting(false)); }}>
+        <p className="text-ui text-muted">{t('This message will be updated. Messages and replies after it will be replaced. Previous tool actions are not undone.')}</p>
+        {error && <p role="alert" className="text-small text-danger">{t(error)}</p>}
         <Textarea disabled={submitting} aria-label={t('Message')} minRows={3} maxRows={10} value={content} onChange={(event) => setContent(event.target.value)} />
-        <div className="flex justify-end gap-2"><button type="button" className={BUTTON.ghost} disabled={submitting} onClick={() => setEditing(false)}>{t('Cancel')}</button><button type="submit" className={BUTTON.primary} disabled={submitting || !content.trim() || Boolean(streaming) || queuedMessages.length > 0}>{t(submitting ? 'Sending' : 'Send')}</button></div>
+        <div className="flex justify-end gap-2"><button type="button" className={BUTTON.ghost} disabled={submitting} onClick={() => setEditing(false)}>{t('Cancel')}</button><button type="submit" className={BUTTON.primary} disabled={submitting || !content.trim() || Boolean(streaming) || queuedMessages.length > 0}>{t(submitting ? 'Sending' : 'Save and regenerate')}</button></div>
       </form>
     </Dialog>}
   </>;

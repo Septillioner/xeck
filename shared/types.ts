@@ -191,6 +191,8 @@ export interface AgentMessageSource {
 }
 
 export interface TranscriptMessage {
+  /** Verified model-history prefix immediately before this user turn. */
+  replayBoundary?: { length: number; digest: string };
   id: string;
   role: 'user' | 'assistant';
   content: string;
@@ -202,6 +204,12 @@ export interface TranscriptMessage {
   /** Chronological interleaving of reasoning, tool calls, and text. Present on new messages. */
   blocks?: TranscriptBlock[];
   createdAt: string;
+}
+
+export interface MessageEdit {
+  messageId: string;
+  expectedContent: string;
+  lastMessageId: string;
 }
 
 export type FileChangeOperation = 'write' | 'replace' | 'move' | 'delete' | 'create-directory';

@@ -735,5 +735,11 @@
   "Advanced profile settings": "Gelişmiş profil ayarları",
   "Chat options": "Sohbet seçenekleri",
   "Message actions": "Mesaj işlemleri",
-  "Create": "Oluştur"
+  "Create": "Oluştur",
+  "This message will be updated. Messages and replies after it will be replaced. Previous tool actions are not undone.": "Bu mesaj güncellenecek. Sonraki mesajlar ve yanıtlar kaldırılıp yanıt yeniden üretilecek. Önceki araç işlemleri geri alınmaz.",
+  "Save and regenerate": "Kaydet ve yeniden üret",
+  "This message cannot be edited": "Bu mesaj düzenlenemez",
+  "Invalid message edit": "Geçersiz mesaj düzenlemesi",
+  "Edit message": "Mesajı düzenle",
+  "The conversation changed. Reopen the chat and try again.": "Konuşma değişti. Sohbeti yeniden açıp tekrar dene."
 }
