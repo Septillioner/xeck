@@ -22,7 +22,8 @@ export function CustomizeSettings({ initialTab = 'skills' }: { initialTab?: Cust
 
   return (
     <div className="stack">
-      <AgentSettings />
+<h2>{t("Customize")}</h2>
+      <details className="rounded-card bg-chip px-4 py-3"><summary className="cursor-pointer text-ui font-medium">{t("Advanced assistant settings")}</summary><div className="mt-4"><AgentSettings /></div></details>
       <section className="stack" aria-label={t("Customize sections")}>
         <div className="customize-tabs" role="tablist" aria-label={t("Customize sections")}>
           <TabButton tab="skills" active={tab} onSelect={openSettings} icon={<IconSpark />} />

@@ -26,7 +26,7 @@ export type HexColor = `#${string}`;
 export const CUSTOMIZE_TABS = ['skills', 'rules', 'memories', 'mcp'] as const;
 export type CustomizeTab = (typeof CUSTOMIZE_TABS)[number];
 
-export const SETTINGS_TABS = ['general', 'appearance', 'customize', ...CUSTOMIZE_TABS, ...PROVIDER_KINDS] as const;
+export const SETTINGS_TABS = ['general', 'appearance', 'models', 'customize', ...CUSTOMIZE_TABS, ...PROVIDER_KINDS] as const;
 export type SettingsTab = (typeof SETTINGS_TABS)[number];
 
 export const REASONING_EFFORTS = ['none', 'minimal', 'low', 'medium', 'high', 'xhigh'] as const;
@@ -83,6 +83,7 @@ export interface ModelProfile {
 
 
 export interface Project {
+  pinned?: boolean;
   id: string;
   name: string;
   createdAt: string;
@@ -117,6 +118,8 @@ export interface SessionSummary {
   updatedAt: string;
   profile: ModelProfile;
   projectId?: string;
+  pinned?: boolean;
+  archived?: boolean;
   bot?: XeckBotProfile;
   botConversation?: BotConversation;
   /** Present only for a session created by another agent. */
@@ -357,6 +360,8 @@ export interface StoredSession {
   createdAt: string;
   updatedAt: string;
   projectId?: string;
+  pinned?: boolean;
+  archived?: boolean;
   bot?: XeckBotProfile;
   botConversation?: BotConversation;
   /** Missing on older sessions means a user-created root session. */

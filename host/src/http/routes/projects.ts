@@ -32,9 +32,12 @@ projectRoutes.patch('/api/projects/:id', async (c) => {
   if (!isProjectId(id)) return c.json({ error: 'Project not found' }, 404);
   const body = await readBody(c);
   if (!body) return c.json({ error: 'Invalid JSON' }, 400);
-  const name = typeof body.name === 'string' ? body.name : '';
+  const existing = await getProject(id);
+  if (!existing) return c.json({ error: 'Project not found' }, 404);
+  if ('pinned' in body && typeof body.pinned !== 'boolean') return c.json({ error: 'Invalid organization flag' }, 400);
+  const name = 'name' in body ? (typeof body.name === 'string' ? body.name : '') : existing.name;
   try {
-    const project = await renameProject(id, name);
+    const project = await renameProject(id, name, body.pinned as boolean | undefined);
     if (!project) return c.json({ error: 'Project not found' }, 404);
     return c.json(project);
   } catch (cause) {

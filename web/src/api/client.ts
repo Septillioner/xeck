@@ -1,3 +1,4 @@
+import type { BotGroup } from '../../../shared/bot-groups.ts';
 import type {
   AgentPublic,
   BuiltinMcpStatus,
@@ -116,6 +117,10 @@ export async function renameProject(id: string, name: string): Promise<Project> 
   return request(`/api/projects/${id}`, { method: 'PATCH', body: { name } });
 }
 
+export async function pinProject(id: string, pinned: boolean): Promise<Project> {
+  return request(`/api/projects/${id}`, { method: 'PATCH', body: { pinned } });
+}
+
 export async function deleteProject(id: string): Promise<void> {
   await request(`/api/projects/${id}`, { method: 'DELETE' });
 }
@@ -182,6 +187,10 @@ export async function patchSession(
     projectId?: string | null;
     botSystemPrompt?: string;
     botBadges?: string[];
+    botColor?: import('../../../shared/types.ts').BotColor;
+    botPurpose?: string;
+    pinned?: boolean;
+    archived?: boolean;
   },
 ): Promise<StoredSession> {
   return request(`/api/sessions/${id}`, { method: 'PATCH', body: patch });
@@ -429,3 +438,8 @@ function parseSse(chunk: string): StreamEvent | null {
   const data = JSON.parse(dataLines.join('\n')) as StreamEvent['data'];
   return { event: eventName, data } as StreamEvent;
 }
+
+export const listBotGroups = () => request<BotGroup[]>('/api/bot-groups');
+export const saveBotGroup = (id: string | null, name: string) => request<BotGroup[]>(id ? '/api/bot-groups/' + encodeURIComponent(id) : '/api/bot-groups', { method: id ? 'PATCH' : 'POST', body: { name } });
+export const deleteBotGroup = (id: string) => request<BotGroup[]>('/api/bot-groups/' + encodeURIComponent(id), { method: 'DELETE' });
+export const assignBotGroup = (botId: string, groupId: string | null) => request<BotGroup[]>('/api/bot-groups/membership/' + encodeURIComponent(botId), { method: 'PUT', body: { groupId } });

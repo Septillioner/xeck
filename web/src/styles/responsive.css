@@ -86,7 +86,6 @@
   }
 }
 
-/* --- Phone --------------------------------------------------------------- */
 @media (max-width: 767px) {
   /* Settings navigation becomes a horizontal strip. The h2 is clipped rather
      than `display: none` so `aria-labelledby="settings-title"` keeps working. */

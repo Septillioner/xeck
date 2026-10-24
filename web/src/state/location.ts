@@ -1,18 +1,19 @@
 import { isCustomizeTab, isProviderKind, type SettingsTab } from '../../../shared/types.ts';
 
-const SETTINGS_PAGES = ['general', 'appearance'] as const;
+const SETTINGS_PAGES = ['general', 'appearance', 'models'] as const;
 
 export type AppLocation =
   | { kind: 'draft' }
   | { kind: 'bots' }
   | { kind: 'migration' }
-  | { kind: 'chat'; id: string }
+  | { kind: 'chat'; id: string; workspace?: 'bots' }
   | { kind: 'settings'; tab: SettingsTab }
   | { kind: 'project'; id: string };
 
 export function readLocation(): AppLocation {
   const parts = routePath().split('/').filter(Boolean).map(decodeURIComponent);
   if (parts[0] === 'xeckbot' && parts.length === 1) return { kind: 'bots' };
+  if (parts[0] === 'xeckbot' && parts[1] === 'c' && parts[2]) return { kind: 'chat', id: parts[2], workspace: 'bots' };
   if (parts.length === 0) return { kind: 'draft' };
   if (parts[0] === 'migration' && parts.length === 1) return { kind: 'migration' };
   if (parts[0] === 'c' && parts[1]) return { kind: 'chat', id: parts[1] };
@@ -28,7 +29,7 @@ export function pathFor(location: AppLocation): string {
   if (location.kind === 'bots') return '/xeckbot';
   if (location.kind === 'draft') return '/';
   if (location.kind === 'migration') return '/migration';
-  if (location.kind === 'chat') return `/c/${encodeURIComponent(location.id)}`;
+  if (location.kind === 'chat') return `${location.workspace === 'bots' ? '/xeckbot' : ''}/c/${encodeURIComponent(location.id)}`;
   if (location.kind === 'project') return `/p/${encodeURIComponent(location.id)}`;
   return `/settings/${encodeURIComponent(location.tab)}`;
 }

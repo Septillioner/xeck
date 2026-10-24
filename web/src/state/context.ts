@@ -1,3 +1,4 @@
+import type { BotGroup } from '../../../shared/bot-groups.ts';
 import { createContext, useContext } from 'react';
 import { ApiError } from '../api/client.ts';
 import type {
@@ -45,6 +46,19 @@ export interface AppStateValue {
   settingsTab: SettingsTab;
   /** Project whose chat list page fills the main pane. Null on chats, draft and settings. */
   botsOpen: boolean;
+  workspace: 'chats' | 'bots';
+  openChats: () => void;
+  botProfileId: string | null;
+  setBotProfileId: (id: string | null) => void;
+  botCreateOpen: boolean;
+  setBotCreateOpen: (open: boolean) => void;
+  botGroups: BotGroup[];
+  botGroupsError: string | null;
+  botGroupsLoading: boolean;
+  refreshBotGroups: () => Promise<void>;
+  saveBotGroup: (id: string | null, name: string) => Promise<void>;
+  deleteBotGroup: (id: string) => Promise<void>;
+  assignBotGroup: (botId: string, groupId: string | null) => Promise<void>;
   openBots: () => void;
   createBot: (bot: import('../../../shared/types.ts').XeckBotCreateInput) => Promise<void>;
   projectPageId: string | null;
@@ -110,11 +124,13 @@ export interface AppStateValue {
   createChat: (projectId?: string) => void;
   createProject: (name: string) => Promise<Project>;
   renameProject: (id: string, name: string) => Promise<Project>;
+  setProjectPinned: (id: string, pinned: boolean) => Promise<void>;
   deleteProject: (id: string) => Promise<void>;
   assignChatToProject: (sessionId: string, projectId: string | null) => Promise<void>;
   openChat: (id: string) => Promise<void>;
   renameChat: (id: string, title: string) => Promise<void>;
-  updateBotProfile: (id: string, systemPrompt: string, badges: string[]) => Promise<void>;
+  updateBotProfile: (id: string, systemPrompt: string, badges: string[], details?: { title: string; botColor: import('../../../shared/types.ts').BotColor; botPurpose: string }) => Promise<void>;
+  updateChatOrganization: (id: string, patch: { pinned?: boolean; archived?: boolean }) => Promise<void>;
   deleteChat: (id: string) => Promise<void>;
   setSessionModel: (provider: ProviderKind, model: string) => Promise<void>;
   setSessionEffort: (effort: ReasoningEffort | null) => Promise<void>;
@@ -122,7 +138,7 @@ export interface AppStateValue {
   queuedMessages: QueuedMessage[];
   enqueueMessage: (content: string) => void;
   removeQueuedMessage: (id: string) => void;
-  send: (content?: string) => Promise<void>;
+  send: (content?: string, options?: { preserveDraft?: boolean; onAccepted?: () => void; onError?: (message: string) => void }) => Promise<void>;
   retry: () => Promise<void>;
   stop: () => void;
   respondDialog: (dialogId: string, response: { approved?: boolean; response?: string; selections?: string[]; other?: string }) => Promise<void>;

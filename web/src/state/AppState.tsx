@@ -44,6 +44,8 @@ import { useModelSettings } from './use-model-settings.ts';
 import { useProjectChatActions } from './use-project-chat-actions.ts';
 import { useSessionPreferences } from './use-session-preferences.ts';
 import { useMessageSender } from './use-message-sender.ts';
+import { useBotGroups } from './use-bot-groups.ts';
+import { useChatDrafts } from './use-chat-drafts.ts';
 
 export { useAppState, reportError } from './context.ts';
 export type { StreamingState } from './live-types.ts';
@@ -78,15 +80,26 @@ export function AppStateProvider({ children }: { children: ReactNode }) {
   const [migrationOpen, setMigrationOpen] = useState(() => readLocation().kind === 'migration');
   const [settingsTab, setSettingsTab] = useState<SettingsTab>('general');
   const [botsOpen, setBotsOpen] = useState(false);
+  const [workspace, setWorkspace] = useState<'chats' | 'bots'>(() => {
+    const place = readLocation();
+    if (place.kind === 'bots' || (place.kind === 'chat' && place.workspace === 'bots')) return 'bots';
+    if (place.kind === 'settings') { try { return localStorage.getItem('xeck.workspace') === 'bots' ? 'bots' : 'chats'; } catch {} }
+    return 'chats';
+  });
+  const [botCreateOpen, setBotCreateOpen] = useState(false);
+  const [botProfileId, setBotProfileId] = useState<string | null>(null);
+  const botGroupState = useBotGroups(ready && workspace === 'bots');
+  useEffect(() => { try { localStorage.setItem('xeck.workspace', workspace); } catch {} }, [workspace]);
+  const navigationVersion = useRef(0);
   const [projectPageId, setProjectPageId] = useState<string | null>(null);
   const [sidebarOpen, setSidebarOpen] = useState(false);
-  const [debugOpen, setDebugOpen] = useState(true);
-  const [draft, setDraft] = useState('');
+  const [debugOpen, setDebugOpenState] = useState(false);
+  const [draftProjectId, setDraftProjectId] = useState<string | null>(null);
+  const [draft, setDraft, removeDraft] = useChatDrafts(active?.id ?? `new:${draftProjectId ?? 'chat'}`);
   const [draftProfile, setDraftProfile] = useState<ModelProfile | null>(null);
   const [draftEffort, setDraftEffort] = useState<ReasoningEffort | null>(null);
   const [draftServiceTier, setDraftServiceTier] = useState<ServiceTier | null>(null);
-  // Project the draft will be created in; null for a plain new chat.
-  const [draftProjectId, setDraftProjectId] = useState<string | null>(null);
+
   // Picker selection for the empty state. Defaults to coder/build, the backend default.
   const [draftAgentId, setDraftAgentIdState] = useState('');
   const [draftPolicyId, setDraftPolicyId] = useState('');
@@ -119,9 +132,13 @@ export function AppStateProvider({ children }: { children: ReactNode }) {
     setPlans,
     togglePlanTodo,
   } = useArtifactsState({ activeId, setError });
+  const setDebugOpen = useCallback((open: boolean) => {
+    setDebugOpenState(open);
+    if (open) setPlanPanelOpen(false);
+  }, [setPlanPanelOpen]);
+  useEffect(() => { if (planPanelOpen) setDebugOpenState(false); }, [planPanelOpen]);
   const draftProjectIdRef = useRef<string | null>(null);
   const nextQueuedMessageId = useRef(FIRST_QUEUED_MESSAGE_ID);
-  const settingsOpenRef = useRef(false);
   const settingsSaveRef = useRef<Promise<void>>(Promise.resolve());
   const projectPageIdRef = useRef<string | null>(null);
   const projectsRef = useRef(projects);
@@ -138,6 +155,7 @@ export function AppStateProvider({ children }: { children: ReactNode }) {
   const senderSessionRefs = useMemo(() => ({
     activeId,
     activeMessages: activeMessagesRef,
+    navigationVersion,
     agents: agentsRef,
     catalog: catalogRef,
   }), []);
@@ -162,7 +180,6 @@ export function AppStateProvider({ children }: { children: ReactNode }) {
     setError,
   }), []);
 
-  settingsOpenRef.current = settingsOpen || migrationOpen;
   draftRef.current = draft;
   draftProfileRef.current = draftProfile;
   draftEffortRef.current = draftEffort;
@@ -273,6 +290,12 @@ export function AppStateProvider({ children }: { children: ReactNode }) {
   }, [agents, draftAgentId]);
 
   const showDraft = useCallback((projectId: string | null = null) => {
+    navigationVersion.current += 1;
+    setWorkspace('chats');
+    setBotCreateOpen(false);
+    setBotProfileId(null);
+    setPlanPanelOpen(false);
+    setDebugOpenState(false);
     setMigrationOpen(false);
     setSettingsOpen(false);
     // The project page owns the main pane, so opening a draft has to release it:
@@ -281,7 +304,6 @@ export function AppStateProvider({ children }: { children: ReactNode }) {
     setError(null);
     activeId.current = null;
     setActive(null);
-    setDraft('');
     setBotsOpen(false);
     setDraftProjectId(projectId);
     setDraftProfile(null);
@@ -300,8 +322,11 @@ export function AppStateProvider({ children }: { children: ReactNode }) {
   }, []);
 
   const applyLocation = useCallback(async (place: AppLocation) => {
+    const version = ++navigationVersion.current;
+    setBotCreateOpen(false);
     setBotsOpen(place.kind === 'bots');
     if (place.kind === 'bots') {
+      setWorkspace('bots');
       setSettingsOpen(false);
       setMigrationOpen(false);
       setProjectPageId(null);
@@ -318,6 +343,7 @@ export function AppStateProvider({ children }: { children: ReactNode }) {
     // Navigating away closes the mobile drawer, so it never covers the chat.
     setSidebarOpen(false);
     if (place.kind === 'project') {
+      setWorkspace('chats');
       // A project page shows no session; the chat stays loaded underneath and
       // the sidebar stops marking that chat row as the open one.
       setSettingsOpen(false);
@@ -345,18 +371,20 @@ export function AppStateProvider({ children }: { children: ReactNode }) {
     activeId.current = place.id;
     try {
       const session = await getSession(place.id);
-      if (activeId.current !== place.id) return;
+      if (activeId.current !== place.id || navigationVersion.current !== version) return;
       setDraftProfile(null);
       setDraftEffort(null);
       setDraftServiceTier(null);
       activeMessagesRef.current = session.messages.length;
       setActive(session);
+      setWorkspace(session.bot || session.botConversation ? 'bots' : 'chats');
+      writeLocation({ kind: 'chat', id: session.id, ...(session.bot || session.botConversation ? { workspace: 'bots' as const } : {}) }, 'replace');
       setPlanPanelOpen(false);
       setPlanView(null);
       setChangedFileList([]);
       void getPlan(place.id)
         .then((activePlan) => {
-          if (activeId.current !== place.id) return;
+          if (activeId.current !== place.id || navigationVersion.current !== version) return;
           setPlans((current) => {
             const next = { ...current };
             if (activePlan) next[place.id] = activePlan;
@@ -370,7 +398,7 @@ export function AppStateProvider({ children }: { children: ReactNode }) {
         })
         .catch(() => undefined);
       const dialogs = await listSessionDialogs(place.id);
-      if (activeId.current !== place.id) return;
+      if (activeId.current !== place.id || navigationVersion.current !== version) return;
       const pending = dialogs[0];
       if (pending) {
         setStreams((current) => {
@@ -391,8 +419,10 @@ export function AppStateProvider({ children }: { children: ReactNode }) {
 
   const openChat = useCallback(async (id: string) => {
     setDraftProjectId(null);
-    writeLocation({ kind: 'chat', id }, 'push');
-    await applyLocation({ kind: 'chat', id });
+    const bot = sessionsRef.current.find((session) => session.id === id);
+    const place: AppLocation = { kind: 'chat', id, ...(bot?.bot || bot?.botConversation ? { workspace: 'bots' as const } : {}) };
+    writeLocation(place, 'push');
+    await applyLocation(place);
   }, [applyLocation]);
 
   const {
@@ -404,13 +434,15 @@ export function AppStateProvider({ children }: { children: ReactNode }) {
     deleteProject,
     renameChat,
     renameProject,
+    setProjectPinned,
     updateBotProfile,
+    updateChatOrganization,
   } = useProjectChatActions({
+    removeDraft,
     activeId,
     sessionsRef,
     draftProjectIdRef,
     projectPageIdRef,
-    settingsOpenRef,
     streamsRef,
     abortsRef,
     setSessions,
@@ -420,6 +452,7 @@ export function AppStateProvider({ children }: { children: ReactNode }) {
     setSidebarOpen,
     setError,
     showDraft,
+    showBots: () => { writeLocation({ kind: 'bots' }, 'replace'); void applyLocation({ kind: 'bots' }); },
     openChat,
     rememberSummary,
     clearTerminal,
@@ -639,6 +672,7 @@ export function AppStateProvider({ children }: { children: ReactNode }) {
 
   const openSettings = useCallback((tab: SettingsTab = 'general') => {
     // Like any navigation, opening settings closes the mobile drawer so it never covers the page.
+    navigationVersion.current += 1;
     setSidebarOpen(false);
     setProjectPageId(null);
     writeLocation({ kind: 'settings', tab }, 'push');
@@ -655,11 +689,19 @@ export function AppStateProvider({ children }: { children: ReactNode }) {
     void applyLocation({ kind: 'migration' });
   }, [applyLocation]);
 
+  const openChats = useCallback(() => {
+    const current = activeId.current;
+    const existing = sessionsRef.current.find((session) => session.id === current && !session.bot && !session.botConversation);
+    if (existing) void openChat(existing.id);
+    else createChat();
+  }, [openChat, createChat]);
+
   const closeSettings = useCallback(() => {
     const id = activeId.current;
-    writeLocation(id ? { kind: 'chat', id } : { kind: 'draft' }, 'push');
-    setSettingsOpen(false);
-  }, []);
+    if (workspace === 'bots') openBots();
+    else if (id && !sessionsRef.current.find((session) => session.id === id)?.bot) void openChat(id);
+    else createChat();
+  }, [workspace, openBots, openChat, createChat]);
 
   const setPolicyId = useCallback(async (next: string) => {
     const current = activeId.current;
@@ -715,6 +757,13 @@ export function AppStateProvider({ children }: { children: ReactNode }) {
     settingsTab,
     openSettings,
     botsOpen,
+    workspace,
+    openChats,
+    botCreateOpen,
+    setBotCreateOpen,
+    botProfileId,
+    setBotProfileId,
+    ...botGroupState,
     openBots,
     createBot,
     projectPageId,
@@ -758,10 +807,12 @@ export function AppStateProvider({ children }: { children: ReactNode }) {
     createProject,
     renameProject,
     deleteProject,
+    setProjectPinned,
     assignChatToProject,
     openChat,
     renameChat,
     updateBotProfile,
+    updateChatOrganization,
     deleteChat,
     setSessionModel,
     setSessionEffort,

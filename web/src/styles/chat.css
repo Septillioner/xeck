@@ -179,27 +179,6 @@
 .hero-stage { max-width: 38rem; margin: 0 auto 20px; text-align: center; }
 .hero-stage h2 { max-width: 24ch; margin-inline: auto; font-size: var(--text-heading); font-weight: 600; line-height: 1.25; letter-spacing: -0.02em; text-wrap: balance; }
 .hero-stage p { max-width: 40ch; margin: 6px auto 0; font-size: var(--text-ui); line-height: 1.5; color: var(--color-muted); text-wrap: balance; }
-/* Empty-state agent picker: compact choice cards with a clear selected state. */
-.agent-picker { display: grid; grid-template-columns: repeat(2, minmax(0, 1fr)); gap: 10px; width: 100%; max-width: 38rem; margin: 0 auto 24px; }
-.agent-card { position: relative; display: grid; grid-template-columns: 40px minmax(0, 1fr) 20px; align-items: center; gap: 12px; min-height: 88px; padding: 14px; border-radius: var(--radius-card); background: var(--color-chip); text-align: left; cursor: pointer; transition: background 0.16s ease, transform 0.16s ease; }
-.agent-card:hover { background: var(--color-hover); }
-.agent-card:active { transform: scale(0.99); }
-.agent-card[data-selected='true'] { background: var(--color-chat-active); }
-.agent-card:focus-visible { outline: 2px solid var(--color-focus); outline-offset: 2px; }
-.agent-chip { display: flex; flex: none; align-items: center; justify-content: center; width: 40px; height: 40px; border-radius: var(--radius-control); }
-.agent-chip svg { width: 19px; height: 19px; }
-.agent-card-copy { display: flex; flex-direction: column; align-items: flex-start; gap: 3px; min-width: 0; }
-.agent-card-title { font-size: var(--text-body); font-weight: 600; color: var(--color-ink); }
-.agent-card-desc { font-size: var(--text-ui); line-height: 1.4; color: var(--color-muted); }
-.agent-card-check, .agent-card-add { display: flex; align-items: center; justify-content: center; width: 20px; height: 20px; color: var(--color-muted); opacity: 0; transform: scale(0.8); transition: opacity 0.16s ease, transform 0.16s ease; }
-.agent-card-check svg, .agent-card-add svg { width: 16px; height: 16px; }
-.agent-card[data-selected='true'] .agent-card-check { opacity: 1; transform: scale(1); color: var(--color-ink); }
-.agent-card[data-kind='new'] .agent-card-add { opacity: 1; transform: scale(1); }
-.agent-card[data-kind='new']:hover .agent-card-add { transform: translateX(2px); color: var(--color-ink); }
-@media (max-width: 520px) {
-  .agent-picker { grid-template-columns: minmax(0, 1fr); gap: 8px; }
-  .agent-card { min-height: 76px; }
-}
 /* Debug pane identity: agent + workspace@version, monospace reads as tech. */
 .context-identity { margin: 0 12px 8px; font-family: ui-monospace, SFMono-Regular, Menlo, Consolas, monospace; font-size: var(--text-micro); color: var(--color-muted); }
 .column { width: 100%; max-width: var(--spacing-transcript-max); margin: 0 auto; }
@@ -211,6 +190,26 @@
 .user-row { display: flex; justify-content: flex-end; }
 .user-bubble { max-width: min(72%, 36rem); border-radius: var(--radius-card); border-bottom-right-radius: var(--radius-tile); background: var(--color-user); color: var(--color-ink); padding: 10px 14px; font-size: var(--text-lead); line-height: 1.5; white-space: pre-wrap; }
 .assistant { font-size: var(--text-lead); line-height: 1.65; }
+.message-actions { position: relative; }
+.message-actions-trigger { display: none; }
+.message-action-buttons { display: flex; align-items: center; gap: 4px; }
+@media (hover: hover) and (pointer: fine) {
+  .message-actions { opacity: 0; pointer-events: none; }
+  .user-row:hover .message-actions,
+  .assistant:hover > .message-actions,
+  .message-actions:focus-within,
+  .message-actions[data-feedback='true'] { opacity: 1; pointer-events: auto; }
+}
+@media (max-width: 1023px), (hover: none), (pointer: coarse) {
+  .message-actions { opacity: 1; pointer-events: auto; }
+  .message-actions-trigger { display: flex; }
+  .message-action-buttons { display: none; }
+  .message-actions[data-open='true'] .message-action-buttons {
+    display: flex; position: absolute; bottom: 100%; left: 0; z-index: 10;
+    padding: 4px; border-radius: var(--radius-control); background: var(--color-chip);
+  }
+  .message-actions[data-open='true'][data-user='true'] .message-action-buttons { left: auto; right: 0; }
+}
 .reasoning { margin-bottom: 8px; font-size: var(--text-ui); color: var(--color-muted); }
 .reasoning summary { display: flex; align-items: center; gap: 8px; cursor: pointer; list-style: none; }
 .reasoning summary::-webkit-details-marker { display: none; }

@@ -119,11 +119,7 @@ export function GeneralSettings() {
           />
         </SettingRow>
       </SettingCard>
-      <SettingCard>
-        <SettingRow label={t("Migration")} detail={t("Move existing application data into Xeck.")}>
-          <button type="button" className={BUTTON.secondary} onClick={openMigration}>{t("Open migration")}</button>
-        </SettingRow>
-      </SettingCard>
+
       <SettingCard>
         <SettingRow label={t("Default model")} detail={t("Used when you start a new chat.")}>
           <Menu
@@ -165,15 +161,6 @@ export function GeneralSettings() {
             }}
           />
         </SettingRow>
-        <SettingRow label={t("Debug mode")} detail={t("Shows skill and MCP details and this chat's context tree.")}>
-          <Switch
-            checked={settings.debugMode}
-            label={t("Debug mode")}
-            onChange={(debugMode) => {
-              void saveSettings({ debugMode });
-            }}
-          />
-        </SettingRow>
         <SettingRow label={t("Show reasoning")} detail={t("Collapsed by default inside each reply.")}>
           <Switch
             checked={settings.showReasoning}
@@ -185,6 +172,23 @@ export function GeneralSettings() {
         </SettingRow>
         {notice && <p className="error-banner">{t(notice)}</p>}
       </SettingCard>
+      <details className="rounded-card bg-chip px-4 py-3"><summary className="cursor-pointer text-ui font-medium">{t("Advanced")}</summary><div className="stack mt-4">
+      <SettingCard>
+        <SettingRow label={t("Migration")} detail={t("Move existing application data into Xeck.")}>
+          <button type="button" className={BUTTON.secondary} onClick={openMigration}>{t("Open migration")}</button>
+        </SettingRow>
+      </SettingCard>
+<SettingCard>
+        <SettingRow label={t("Debug mode")} detail={t("Shows skill and MCP details and this chat's context tree.")}>
+          <Switch
+            checked={settings.debugMode}
+            label={t("Debug mode")}
+            onChange={(debugMode) => {
+              void saveSettings({ debugMode });
+            }}
+          />
+        </SettingRow>
+</SettingCard>
       {subagents.length > 0 && (
         <SettingCard>
           <div className="form-pad">
@@ -216,6 +220,7 @@ export function GeneralSettings() {
           })}
         </SettingCard>
       )}
+      </div></details>
     </div>
   );
 }

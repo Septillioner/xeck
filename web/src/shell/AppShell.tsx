@@ -1,3 +1,4 @@
+import { BotDialogs } from './BotDialogs.tsx';
 import { t, useI18n } from '../i18n/index.ts';
 import { useEffect, type ReactNode } from 'react';
 import { ChatView } from '../chat/ChatView.tsx';
@@ -61,7 +62,7 @@ export function AppShell() {
         data-sidebar-open={sidebarOpen ? 'true' : 'false'}
       >
         <nav
-          aria-label={t("Chat list and debug")}
+          aria-label={t("Navigation")}
           className={cn(
             // The bar is fixed so it takes no flex space; the shell reserves only
             // its height via padding-top. Hidden outright on wide screens.
@@ -72,7 +73,7 @@ export function AppShell() {
           <button
             type="button"
             className="flex h-10 w-10 flex-none items-center justify-center rounded-row text-ink active:bg-hover max-lg:flex"
-            aria-label={t("Toggle chat list")}
+            aria-label={t("Toggle sidebar")}
             aria-expanded={sidebarOpen}
             aria-controls="sidebar"
             onClick={() => setSidebarOpen(!sidebarOpen)}
@@ -80,7 +81,7 @@ export function AppShell() {
             <IconMenu />
           </button>
           <span className="flex-1 min-w-0 truncate text-lead font-semibold tracking-tight">{t("Xeck")}</span>
-          {settings.debugMode && active && (
+          {settings.debugMode && active?.origin?.by === 'agent' && (
             <button
               type="button"
               className={cn(
@@ -98,7 +99,7 @@ export function AppShell() {
         <button
           type="button"
           className="fixed inset-x-0 bottom-0 top-[48px] z-scrim hidden bg-scrim max-lg:block group-data-[sidebar-open='false']/shell:hidden"
-          aria-label={t("Close chat list")}
+          aria-label={t("Close sidebar")}
           tabIndex={-1}
           onClick={() => setSidebarOpen(false)}
         />
@@ -115,6 +116,7 @@ export function AppShell() {
         )}
         </div>
       )}
+      {ready && <BotDialogs />}
     </>
   );
 }

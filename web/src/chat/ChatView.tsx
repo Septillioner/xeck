@@ -4,8 +4,7 @@ import type { ContextTree, ProviderKind, TranscriptMessage } from '../../../shar
 import { maxContextThreshold } from '../../../shared/model-context.ts';
 import { getSessionContext } from '../api/client.ts';
 import { useAppState } from '../state/AppState.tsx';
-import { cn } from '../lib/cn.ts';
-import { IconChat, IconCheck, IconChevron, IconCode, IconFolder, IconPlus, IconStar, IconXeck } from '../ui/icons.tsx';
+import { IconChat, IconCode, IconFolder, IconStar, IconXeck } from '../ui/icons.tsx';
 import { useStreamRevealLength } from '../ui/use-typed-text.ts';
 import { callsForMessages, type ActivityCall } from './activity-calls.ts';
 import { Composer } from './Composer.tsx';
@@ -19,6 +18,7 @@ import { PlanPanel } from './PlanPanel.tsx';
 import { PlanMeter } from './PlanMeter.tsx';
 import { usePolicyCycle } from './policy-cycle.ts';
 import { BUTTON } from '../ui/button-styles.ts';
+import { SessionActions } from '../shell/SessionActions.tsx';
 
 const FIRST_PROVIDER_PAGE: ProviderKind = 'ollama';
 const OPENAI_PROVIDER: ProviderKind = 'openai';
@@ -27,6 +27,11 @@ export function ChatView() {
   const {
     active,
     activeMood,
+    debugOpen,
+    setDebugOpen,
+    planPanelOpen,
+    changedFiles,
+    setDraft,
     agents,
     catalog,
     configuredModels,
@@ -84,9 +89,13 @@ export function ChatView() {
   const messages = visibleMessages(active?.messages ?? [], live ? streaming?.userContent ?? '' : null);
   const liveBlocksKey = live ? live.blocks.map((block) => block.kind === 'tool' ? `t:${block.callId}:${block.pending ? '1' : '0'}:${block.label}` : block.kind === 'dialog' ? `d:${block.dialogId}:${block.resolved ? '1' : '0'}` : block.kind === 'subagent' ? `s:${block.sessionId}:${block.status}:${block.activity}` : `${block.kind}:${block.text.length}`).join('|') : '';
 
+  const followBottom = useRef(true);
+  const [awayFromBottom, setAwayFromBottom] = useState(false);
+  const userMessageCount = messages.filter((message) => message.role === 'user').length;
+  useEffect(() => { followBottom.current = true; setAwayFromBottom(false); }, [active?.id, userMessageCount]);
   useEffect(() => {
     const node = scrollRef.current;
-    if (!node) return;
+    if (!node || !followBottom.current) return;
     node.scrollTop = node.scrollHeight;
   }, [messages, live?.content, live?.reasoning, liveBlocksKey, revealedChars]);
 
@@ -186,7 +195,7 @@ export function ChatView() {
       revealChars={live ? revealedChars : undefined}
       debug={settings.debugMode}
       selectedCallId={selectedCallId}
-      onSelectCall={setSelectedCallId}
+      onSelectCall={(id) => { setSelectedCallId(id); setDebugOpen(true); }}
       onRespondDialog={isSubagent ? undefined : respondDialog}
       onOpenSubagent={(sessionId) => void openChat(sessionId)}
     />
@@ -194,22 +203,16 @@ export function ChatView() {
 
   return (
     <section className="chat-column" data-mood={activeMood} ref={surfaceRef}>
-      <div className="chat-stage relative" data-agent-header={active && !isSubagent ? 'true' : undefined}>
+      <div className="chat-stage relative">
       {active && !isSubagent && (
-        <header className="pointer-events-none absolute inset-x-0 top-4 z-10 flex justify-center px-4" aria-label={t("Chat agent")}>
-          <div className="flex h-10 min-w-0 max-w-xs items-center gap-2.5 rounded-full bg-chip py-1.5 pl-1.5 pr-4 text-ui text-ink">
-            {active.botConversation ? (
-              <span className="flex size-7 shrink-0 items-center justify-center rounded-full bg-field text-muted" aria-hidden="true"><IconChat /></span>
-            ) : active.bot ? (
-              <BotAvatar name={active.title} color={active.bot.color} />
-            ) : (
-              <span className="flex size-7 shrink-0 items-center justify-center rounded-full bg-field text-accent" aria-hidden="true">
-                <AgentIcon />
-              </span>
-            )}
-            <span className="min-w-0 truncate font-medium leading-tight" title={active.bot ? active.title : t(activeAgent?.label ?? active.agentId ?? 'Agent')}>
-              {active.bot ? active.title : t(activeAgent?.label ?? active.agentId ?? 'Agent')}
-            </span>
+        <header className="shrink-0 px-4 py-3" aria-label={t('Chat details')}>
+          <div className="flex min-w-0 flex-wrap items-center gap-2">
+            {active.bot ? <BotAvatar name={active.title} color={active.bot.color} /> : <AgentIcon className="shrink-0 text-muted" />}
+            <div className="min-w-0 flex-1"><h1 className="m-0 truncate text-body font-medium">{active.title}</h1>{(active.projectId || active.archived) && <p className="truncate text-small text-muted">{projects.find((project) => project.id === active.projectId)?.name}{active.archived ? ' · ' + t('Archived') : ''}</p>}</div>
+            <SessionActions session={active} extraActions={[
+              ...(plan || changedFiles.length > 0 ? [{ label: t('Artifacts'), onClick: () => void openPlanPanel(), pressed: planPanelOpen }] : []),
+              ...(settings.debugMode ? [{ label: t('Debug'), onClick: () => setDebugOpen(!debugOpen), pressed: debugOpen }] : []),
+            ]} />
           </div>
         </header>
       )}
@@ -242,11 +245,14 @@ export function ChatView() {
               <>
                 <div className="hero-stage">
                   <h2>{t("What are we working on today?")}</h2>
-                  <p>{t("Choose an agent to get started.")}</p>
+                  <p>{t("Write a message to get started.")}</p>
                 </div>
-                <AgentPicker />
+
               </>
             )}
+            {active?.bot && <div className="mb-5 flex flex-wrap justify-center gap-2" aria-label={t('Suggested tasks')}>
+              {['Help me get started with this task.', 'Make a step-by-step plan with me.', 'Help me review and improve my work.'].map((prompt) => <button key={prompt} type="button" className={BUTTON.secondary} onClick={() => { setDraft(t(prompt)); surfaceRef.current?.querySelector<HTMLTextAreaElement>('textarea')?.focus(); }}>{t(prompt)}</button>)}
+            </div>}
             <div data-mood={activeMood}>
               <Composer modelMenu={modelMenu} />
             </div>
@@ -272,7 +278,13 @@ export function ChatView() {
             </div>
           )}
           <div className="transcript-area">
-            <div ref={scrollRef} className="transcript-scroll">
+            <div ref={scrollRef} className="transcript-scroll" onScroll={() => {
+              const node = scrollRef.current;
+              if (!node) return;
+              const nearBottom = node.scrollHeight - node.clientHeight - node.scrollTop < 80;
+              followBottom.current = nearBottom;
+              setAwayFromBottom(!nearBottom);
+            }}>
               <div className="column" data-text-size={settings.textSize}>
                 {transcript}
                 <XeckPulse key={active?.id} signal={live && streaming ? streaming : null} />
@@ -282,6 +294,7 @@ export function ChatView() {
                 )}
               </div>
             </div>
+          {awayFromBottom && <div className="absolute bottom-3 left-1/2 z-10 -translate-x-1/2"><button type="button" className={BUTTON.secondary} onClick={() => { const node = scrollRef.current; if (node) node.scrollTop = node.scrollHeight; followBottom.current = true; setAwayFromBottom(false); }}>{t('Jump to latest')}</button></div>}
           </div>
           {!isSubagent && !isBotConversation && <div className="column composer-dock">
             <div data-mood={activeMood}>
@@ -295,8 +308,8 @@ export function ChatView() {
       </div>
       {/* The plan pane is docked, so it is a column beside the chat like the
           debug pane is, and never an overlay that hides the transcript. */}
-      {!isSubagent && !isBotConversation && <PlanPanel />}
-      {settings.debugMode && active && (
+      {!debugOpen && !isSubagent && !isBotConversation && <PlanPanel />}
+      {settings.debugMode && active && debugOpen && (
         <ContextSidebar tree={contextTree} parts={active.contextParts ?? null} error={contextError} selection={selection} />
       )}
     </section>
@@ -343,63 +356,6 @@ const AGENT_ICONS: Record<string, ComponentType<{ className?: string }>> = {
   chat: IconChat,
   star: IconStar,
 };
-
-/**
- * Soft tint chips behind the agent icons, straight from the settings nav
- * palette — no new color, icon stays `currentColor` (docs/rules/frontend.md).
- */
-const AGENT_TINT: Record<string, string> = {
-  code: 'bg-tint-customize-bg text-tint-customize-ink',
-  chat: 'bg-tint-remote-bg text-tint-remote-ink',
-  star: 'bg-tint-star-bg text-tint-star-ink',
-};
-
-/**
- * The empty state: pick the agent for the new chat. The choice lands in
- * `draftAgentId`; the session is created with it on the first send, so an
- * abandoned click never leaves an empty session behind.
- */
-function AgentPicker() {
-  const { agents, draftAgentId, setDraftAgentId, openSettings } = useAppState();
-  return (
-    <div className="agent-picker" role="radiogroup" aria-label={t("Agent")}>
-      {agents.filter((agent) => !agent.botOnly).map((agent) => {
-        const Icon = AGENT_ICONS[agent.id] ?? AGENT_ICONS[agent.icon] ?? IconChat;
-        const selected = draftAgentId === agent.id;
-        return (
-          <button
-            key={agent.id}
-            type="button"
-            role="radio"
-            aria-checked={selected}
-            data-selected={selected ? 'true' : 'false'}
-            className="agent-card"
-            onClick={() => setDraftAgentId(agent.id)}
-          >
-            <span className={cn('agent-chip', AGENT_TINT[agent.id] ?? AGENT_TINT[agent.icon] ?? 'bg-tint-general-bg text-tint-general-ink')}>
-              <Icon />
-            </span>
-            <span className="agent-card-copy">
-              <span className="agent-card-title">{t(agent.label)}</span>
-              <span className="agent-card-desc">{t(agent.description)}</span>
-            </span>
-            <span className="agent-card-check" aria-hidden="true"><IconCheck /></span>
-          </button>
-        );
-      })}
-      <button type="button" className="agent-card" data-kind="new" onClick={() => openSettings('customize')}>
-        <span className="agent-chip bg-tint-general-bg text-tint-general-ink">
-          <IconPlus />
-        </span>
-        <span className="agent-card-copy">
-          <span className="agent-card-title">{t("New agent")}</span>
-          <span className="agent-card-desc">{t("Customize rules, skills, and MCPs.")}</span>
-        </span>
-        <span className="agent-card-add" aria-hidden="true"><IconChevron /></span>
-      </button>
-    </div>
-  );
-}
 
 function ErrorBanner({ message, onRetry }: { message: string; onRetry?: () => void }) {
   return (

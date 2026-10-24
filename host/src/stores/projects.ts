@@ -54,13 +54,14 @@ export async function createProject(rawName: string): Promise<Project> {
   });
 }
 
-export async function renameProject(id: string, rawName: string): Promise<Project | null> {
+export async function renameProject(id: string, rawName: string, pinned?: boolean): Promise<Project | null> {
   if (!isProjectId(id)) return null;
   return exclusive(async () => {
     const index = await readIndex();
     const project = index.projects.find((entry) => entry.id === id);
     if (!project) return null;
     project.name = validateProjectName(rawName, index.projects, id);
+    if (pinned !== undefined) project.pinned = pinned;
     project.updatedAt = new Date().toISOString();
     await writeIndex(index);
     return project;

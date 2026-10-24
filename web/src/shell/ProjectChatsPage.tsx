@@ -7,6 +7,7 @@ import { isActiveMood, moodLabel, type BotMood } from '../state/mood.ts';
 import { IconBusy, IconChat, IconFolder, IconPlus } from '../ui/icons.tsx';
 import { BUTTON } from '../ui/button-styles.ts';
 import { TypingText } from '../ui/TypingText.tsx';
+import { SessionActions } from './SessionActions.tsx';
 
 /**
  * The full chat list of one project, shown in the main pane at `/p/<id>`.
@@ -25,7 +26,7 @@ export function ProjectChatsPage({ projectId }: { projectId: string }) {
   const project = projects.find((item) => item.id === projectId);
   if (!project) return null;
 
-  const projectSessions = sessions.filter((session) => session.projectId === projectId);
+  const projectSessions = sessions.filter((session) => session.projectId === projectId && !session.archived);
   const groups = groupSessions(projectSessions);
 
   return (
@@ -105,11 +106,11 @@ function ProjectChatRow({
 }) {
   const active = isActiveMood(mood);
   return (
-    <li data-mood={mood} className="chat-row overflow-hidden rounded-card bg-chip transition-colors hover:bg-chat-hover has-[button:focus-visible]:outline-2 has-[button:focus-visible]:outline-offset-2 has-[button:focus-visible]:outline-ink">
+    <li data-mood={mood} className="chat-row flex items-center gap-1 rounded-card bg-chip pr-3 transition-colors hover:bg-chat-hover has-[button:focus-visible]:outline-2 has-[button:focus-visible]:outline-offset-2 has-[button:focus-visible]:outline-ink">
       <button
         type="button"
         title={session.title}
-        className="relative flex min-h-14 w-full items-center gap-3 px-4 text-left text-body text-ink focus-visible:outline-none hover-none:min-h-14"
+        className="relative flex min-h-14 min-w-0 flex-1 items-center gap-3 px-4 text-left text-body text-ink focus-visible:outline-none hover-none:min-h-14"
         onClick={() => void onOpen(session.id)}
       >
         {active && <IconBusy mood={mood} />}
@@ -124,6 +125,7 @@ function ProjectChatRow({
           </time>
         </span>
       </button>
+      <SessionActions session={session} />
     </li>
   );
 }
@@ -132,9 +134,9 @@ function ProjectChatRow({
 function headerMeta(sessions: SessionSummary[]): string {
   const latest = sessions[0];
   if (!latest) return chatCount(0);
-  return `${chatCount(sessions.length)} · Updated ${formatChatDate(latest.updatedAt)}`;
+  return `${chatCount(sessions.length)} · ${t('Updated {0}', { 0: formatChatDate(latest.updatedAt) })}`;
 }
 
 function chatCount(count: number): string {
-  return count === 1 ? '1 chat' : `${count} chats`;
+  return t('{0} chats', { 0: count });
 }

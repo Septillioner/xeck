@@ -21,6 +21,8 @@ export function toSummary(session: StoredSession): SessionSummary {
     createdAt: session.createdAt,
     updatedAt: session.updatedAt,
     profile: session.profile,
+    pinned: session.pinned,
+    archived: session.archived,
     ...(session.projectId ? { projectId: session.projectId } : {}),
     ...(session.bot ? { bot: { color: session.bot.color, ...(session.bot.purpose ? { purpose: session.bot.purpose } : {}), ...(session.bot.badges ? { badges: session.bot.badges } : {}) } } : {}),
     ...(session.botConversation ? { botConversation: session.botConversation } : {}),

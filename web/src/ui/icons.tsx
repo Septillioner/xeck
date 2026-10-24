@@ -4,6 +4,7 @@ import {
   Check,
   ChevronRight,
   Code,
+  Copy,
   EllipsisVertical,
   Eye,
   EyeOff,
@@ -101,6 +102,7 @@ export const IconSearch = icon(Search);
 export const IconSettings = icon(Settings);
 export const IconSend = icon(ArrowRight);
 export const IconEdit = icon(Pencil);
+export const IconCopy = icon(Copy);
 export const IconTrash = icon(Trash2);
 export const IconPlay = icon(Play);
 export const IconAlert = icon(TriangleAlert);

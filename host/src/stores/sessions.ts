@@ -307,6 +307,10 @@ export async function saveSession(session: StoredSession): Promise<StoredSession
     session.profile = canonicalizeProfile(session.profile);
     await keepStoredActivePlan(session);
     await keepStoredTitle(session);
+    const organization = await readSessionFile(session.id);
+    session.pinned = organization?.pinned;
+    session.archived = organization?.archived;
+    if (organization?.bot) session.bot = organization.bot;
     for (const message of session.messages) {
       if (message.role !== 'assistant') continue;
       const blocks = messageBlocks(message);
@@ -437,6 +441,10 @@ export async function patchSession(
     projectId?: string | null;
     botSystemPrompt?: string;
     botBadges?: string[];
+    botColor?: import('../../../shared/types.ts').BotColor;
+    botPurpose?: string;
+    pinned?: boolean;
+    archived?: boolean;
   },
 ): Promise<StoredSession | null> {
   if (!isSessionId(id)) return null;
@@ -459,6 +467,10 @@ export async function patchSession(
     else if (patch.projectId !== undefined) session.projectId = patch.projectId;
     if (patch.botSystemPrompt !== undefined && session.bot) session.bot.systemPrompt = patch.botSystemPrompt;
     if (patch.botBadges !== undefined && session.bot) session.bot.badges = patch.botBadges;
+    if (patch.botColor !== undefined && session.bot) session.bot.color = patch.botColor;
+    if (patch.botPurpose !== undefined && session.bot) session.bot.purpose = patch.botPurpose;
+    if (patch.pinned !== undefined) session.pinned = patch.pinned;
+    if (patch.archived !== undefined) session.archived = patch.archived;
     session.updatedAt = new Date().toISOString();
     await writeSessionFile(session);
     await upsertSummary(session);
@@ -653,6 +665,8 @@ function toSummary(session: StoredSession): SessionSummary {
     createdAt: session.createdAt,
     updatedAt: session.updatedAt,
     profile: session.profile,
+    pinned: session.pinned,
+    archived: session.archived,
     ...(session.projectId ? { projectId: session.projectId } : {}),
     ...(session.bot ? { bot: { color: session.bot.color, ...(session.bot.purpose ? { purpose: session.bot.purpose } : {}), ...(session.bot.badges ? { badges: session.bot.badges } : {}) } } : {}),
     ...(session.botConversation ? { botConversation: session.botConversation } : {}),

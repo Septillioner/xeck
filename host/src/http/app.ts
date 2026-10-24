@@ -8,6 +8,7 @@ import { mcpRoutes } from './routes/mcp.ts';
 import { planRoutes } from './routes/plan.ts';
 import { providerRoutes } from './routes/providers.ts';
 import { sessionRoutes } from './routes/sessions.ts';
+import { botGroupRoutes } from './routes/bot-groups.ts';
 import { projectRoutes } from './routes/projects.ts';
 import { settingsRoutes } from './routes/settings.ts';
 import { migrationRoutes } from './routes/migrations.ts';
@@ -50,6 +51,7 @@ export function createApp(): Hono {
   app.route('/', migrationRoutes);
   app.route('/', sessionRoutes);
   app.route('/', projectRoutes);
+  app.route('/', botGroupRoutes);
   app.route('/', agentRoutes);
   app.route('/', instructionRoutes);
   app.route('/', mcpRoutes);

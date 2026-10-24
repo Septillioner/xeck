@@ -26,26 +26,6 @@
 @keyframes xeck-fade-out {
   to { opacity: 0; transform: translateY(6px) scale(0.98); }
 }
-@keyframes bot-progress-orbit {
-  0%, 100% { transform: translateY(0) rotate(-5deg) scale(1); }
-  50% { transform: translateY(-3px) rotate(5deg) scale(1.06); }
-}
-@keyframes bot-progress-sweep {
-  from { transform: translateX(-110%); }
-  to { transform: translateX(230%); }
-}
-@keyframes bot-progress-stage {
-  from { opacity: 0; transform: translateY(4px); }
-  to { opacity: 1; transform: translateY(0); }
-}
-.bot-create-progress-mark { animation: bot-progress-orbit 2.4s ease-in-out infinite; }
-.bot-create-progress-caption { animation: bot-progress-stage 320ms ease-out both; }
-.bot-create-loading-art { position: relative; background: var(--color-main); }
-.bot-create-loading-spark { position: absolute; top: 2px; right: 2px; animation: bot-progress-orbit 1.8s ease-in-out infinite reverse; }
-.bot-create-progress-track { height: 5px; overflow: hidden; border-radius: 999px; background: var(--color-track); }
-.bot-create-progress-track > span { display: block; width: 38%; height: 100%; border-radius: inherit; background: var(--accent); animation: bot-progress-sweep 1.7s ease-in-out infinite; }
-.bot-create-progress-step { height: 3px; flex: 1; border-radius: 999px; background: var(--color-track); transition: background-color 220ms ease, transform 220ms ease; }
-.bot-create-progress-step[data-active='true'] { background: var(--accent); transform: scaleY(1.5); }
 @media (prefers-reduced-motion: reduce) {
   .assistant.streaming .transcript > :last-child::after,
   .reasoning summary .chevron,
@@ -55,11 +35,6 @@
   .sidebar, .chat-column { transition: none; }
   .control-spinner { border-top-color: currentColor; }
   .chat-mood-dot { animation: none; }
-  .bot-create-progress-mark, .bot-create-progress-caption, .bot-create-loading-spark, .bot-create-progress-track > span { animation: none; }
-  .bot-create-progress-track > span { width: 38%; transform: translateX(0); }
-  .bot-create-progress-step { transition: none; }
-  .agent-card, .agent-card-check, .agent-card-add { transition: none; }
-  .agent-card:active { transform: none; }
   .xeck-pulse[data-exiting='true'] { animation: none; opacity: 0; }
 }
 
@@ -95,7 +70,7 @@
 .composer textarea { display: block; width: 100%; max-height: var(--spacing-composer-max); resize: none; overflow: auto; background: transparent; border: 0; padding: 6px 0; font-size: var(--text-lead); line-height: 1.5; }
 .composer textarea:focus { outline: none; }
 .composer:has(textarea:focus-visible) { outline: 2px solid var(--color-ink); outline-offset: 2px; }
-.composer-foot { display: flex; align-items: center; min-width: 0; }
+.composer-foot { display: flex; flex-wrap: wrap; align-items: center; min-width: 0; }
 .send-orb { display: flex; height: 32px; width: 32px; flex: none; align-items: center; justify-content: center; border-radius: var(--radius-control); background: var(--accent); color: var(--color-on-accent); transition: --accent 220ms ease, background 0.15s ease, color 0.15s ease, filter 0.15s ease; }
 .send-orb:disabled { opacity: 1; background: var(--color-track); color: var(--color-muted); }
 .send-orb:not(:disabled):hover { filter: brightness(1.08); }

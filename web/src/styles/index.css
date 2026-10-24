@@ -24,4 +24,8 @@
 @custom-variant dark (&:where(.dark, .dark *));
 
 /* Touch devices (`hover: none` or a coarse primary pointer): `:hover` never fires reliably, so rows grow and row actions stay visible. */
-@custom-variant hover-none (@media (hover: none), (pointer: coarse));
+@custom-variant hover-none {
+  @media (hover: none), (pointer: coarse) {
+    @slot;
+  }
+}

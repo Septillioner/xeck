@@ -1,4 +1,4 @@
-import { useCallback, type Dispatch, type MutableRefObject, type SetStateAction } from 'react';
+import { useCallback, useRef, type Dispatch, type MutableRefObject, type SetStateAction } from 'react';
 import type {
   AgentPublic,
   CatalogEntry,
@@ -34,6 +34,7 @@ export function useMessageSender({
   sessionRefs: {
     activeId: MutableRefObject<string | null>;
     activeMessages: MutableRefObject<number>;
+    navigationVersion: MutableRefObject<number>;
     agents: MutableRefObject<AgentPublic[]>;
     catalog: MutableRefObject<CatalogEntry[]>;
   };
@@ -68,19 +69,26 @@ export function useMessageSender({
   rememberSummary: (session: StoredSession) => void;
   reloadAfterAbort: (sessionId: string) => Promise<void>;
 }) {
-  const runSend = useCallback(async (content: string, clearDraft = true) => {
+  const creating = useRef(false);
+  const runSend = useCallback(async (content: string, clearDraft = true, feedback?: { onAccepted?: () => void; onError?: (message: string) => void }) => {
+    if (creating.current || (active && sessionRefs.activeId.current !== active.id)) { feedback?.onError?.(t('Wait for the current reply to finish')); return; }
+    const version = sessionRefs.navigationVersion.current;
+    let draftCleared = false;
     const trimmed = content.trim();
     if (!trimmed || active?.botConversation) return;
-    if (active && streamRuntime.streams.current[active.id]) return;
+    if (active && streamRuntime.streams.current[active.id]) { feedback?.onError?.(t('Wait for the current reply to finish')); return; }
     setters.setError(null);
 
     let session = active;
     try {
       if (!session) {
+        creating.current = true;
         const chosen = draftRefs.profile.current?.model ? draftRefs.profile.current : settings.defaultProfile;
         if (!chosen?.model) {
+          creating.current = false;
+          feedback?.onError?.(t('Choose a model for this chat'));
           setters.setError(t('Choose a model for this chat'));
-          setters.setDraft(trimmed);
+          if (clearDraft) setters.setDraft(trimmed);
           return;
         }
         const effort = draftRefs.effort.current;
@@ -100,23 +108,31 @@ export function useMessageSender({
             return draftRefs.policyId.current || chosenAgent.defaultPolicy;
           })(),
         });
+        creating.current = false;
+        setters.setSessions((current) => [toSummary(session as StoredSession), ...current]);
+        if (sessionRefs.navigationVersion.current !== version || sessionRefs.activeId.current !== null) return;
+        if (clearDraft) { setters.setDraft(''); draftCleared = true; }
         setters.setDraftProjectId(null);
         setters.setDraftProfile(null);
         setters.setDraftEffort(null);
         setters.setDraftServiceTier(null);
-        setters.setSessions((current) => [toSummary(session as StoredSession), ...current]);
-        if (sessionRefs.activeId.current !== null) return;
+
         sessionRefs.activeId.current = session.id;
         setters.setActive(session);
         writeLocation({ kind: 'chat', id: session.id }, 'push');
       }
     } catch (cause) {
-      setters.setError(cause instanceof Error ? cause.message : t('Could not start a chat'));
+      creating.current = false;
+      if (sessionRefs.navigationVersion.current !== version) return;
+      const message = cause instanceof Error ? cause.message : t('Could not start a chat');
+      feedback?.onError?.(message);
+      setters.setError(message);
       return;
     }
     if (!session.profile.model.trim()) {
+      feedback?.onError?.(t('Choose a model for this chat'));
       setters.setError(t('Choose a model for this chat'));
-      setters.setDraft(trimmed);
+      if (clearDraft) setters.setDraft(trimmed);
       return;
     }
 
@@ -127,7 +143,7 @@ export function useMessageSender({
     const controller = new AbortController();
     streamRuntime.aborts.current.set(sessionId, controller);
     streamRuntime.clearTerminal(sessionId);
-    if (clearDraft) setters.setDraft('');
+    if (clearDraft && !draftCleared) setters.setDraft('');
     setters.setStreams((current) => ({
       ...current,
       [sessionId]: {
@@ -143,13 +159,16 @@ export function useMessageSender({
 
     let resume = false;
     let stoppedByUser = false;
+    let accepted = false;
 
     try {
       await streamMessage(sessionId, trimmed, controller.signal, (event) => {
+        if (!accepted) { accepted = true; feedback?.onAccepted?.(); }
         if (event.event === 'done' && event.data.aborted) stoppedByUser = true;
         streamRuntime.applyEvent(sessionId, startedAt, event);
       });
     } catch (cause) {
+      if (!accepted) feedback?.onError?.(cause instanceof Error ? cause.message : t('Request failed'));
       if (controller.signal.aborted) {
         streamRuntime.markTerminal(sessionId, 'cancelled');
         try {
@@ -159,7 +178,7 @@ export function useMessageSender({
         }
       } else if (cause instanceof ApiError && cause.status === 409) {
         resume = true;
-        setters.setDraft((current) => current || trimmed);
+        if (clearDraft && sessionRefs.activeId.current === sessionId) setters.setDraft((current) => current || trimmed);
       } else {
         streamRuntime.markTerminal(sessionId, 'error');
         if (sessionRefs.activeId.current === sessionId) {
@@ -197,8 +216,8 @@ export function useMessageSender({
     reloadAfterAbort,
   ]);
 
-  const send = useCallback(async (content?: string) => {
-    await runSend(typeof content === 'string' ? content : draftRefs.content.current);
+  const send = useCallback(async (content?: string, options?: { preserveDraft?: boolean; onAccepted?: () => void; onError?: (message: string) => void }) => {
+    await runSend(typeof content === 'string' ? content : draftRefs.content.current, !options?.preserveDraft, options);
   }, [runSend, draftRefs]);
 
   return { runSend, send };

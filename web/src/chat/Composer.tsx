@@ -5,7 +5,9 @@ import { COMMAND_NAME_PATTERN, SUMMARY_COMMAND } from '../../../shared/commands.
 import { isSessionPolicyId, type PolicyChoice, type SkillRecord } from '../../../shared/types.ts';
 import { listSkills } from '../api/client.ts';
 import { useAppState } from '../state/AppState.tsx';
-import { IconSend, IconStop } from '../ui/icons.tsx';
+import { IconSend, IconSliders, IconStop } from '../ui/icons.tsx';
+import { BUTTON, ICON_BUTTON } from '../ui/button-styles.ts';
+import { Dialog } from '../ui/Dialog.tsx';
 import { Menu } from '../ui/Menu.tsx';
 import { resolveDraftPolicyId } from './policy-cycle.ts';
 
@@ -94,8 +96,13 @@ function ModeSwitch() {
   );
 }
 export function Composer({ modelMenu }: { modelMenu: ReactNode }) {
-  const { draft, setDraft, send, stop, streaming, settings, queuedMessages, enqueueMessage, removeQueuedMessage } = useAppState();
+  const { draft, setDraft, send, stop, streaming, settings, queuedMessages, enqueueMessage, removeQueuedMessage, active, agents, draftAgentId } = useAppState();
   const inputRef = useRef<HTMLTextAreaElement>(null);
+  const [optionsOpen, setOptionsOpen] = useState(false);
+  const selectedAgent = agents.find((agent) => agent.id === (active?.agentId || draftAgentId));
+  const canChooseAssistant = !active && agents.filter((agent) => !agent.botOnly).length > 1;
+  const hasPolicyOptions = (selectedAgent?.policies.length ?? 0) > 1;
+  useEffect(() => { setOptionsOpen(false); }, [active?.id]);
   const [skills, setSkills] = useState<SkillRecord[] | null>(null);
   const [closedPrefix, setClosedPrefix] = useState<string | null>(null);
   const [highlight, setHighlight] = useState(0);
@@ -172,14 +179,14 @@ export function Composer({ modelMenu }: { modelMenu: ReactNode }) {
         </div>
       )}
         {queuedMessages.length > 0 && (
-          <section className="mb-3 min-w-0 overflow-hidden rounded-card bg-chip p-3" aria-label={t("Queued messages")}>
-            <div className="mb-2 flex items-center justify-between gap-2">
-              <h2 className="text-xs font-semibold text-ink">{t("Queued messages")}</h2>
-              <span className="rounded-full bg-chip px-2 py-0.5 text-xs font-medium tabular-nums text-muted">
+          <details className="mb-3 min-w-0 px-1" aria-label={t("Queued messages")}>
+            <summary className="flex cursor-pointer items-center justify-between gap-2 text-small">
+              <span className="font-medium text-ink">{t("Queued messages")}</span>
+              <span className="text-small tabular-nums text-muted">
                 {queuedMessages.length}
               </span>
-            </div>
-            <ol className="flex max-h-40 flex-col gap-1.5 overflow-y-auto p-0" aria-label={t("Queued messages")}>
+            </summary>
+            <ol className="mt-3 flex max-h-40 flex-col gap-1.5 overflow-y-auto p-0" aria-label={t("Queued messages")}>
               {queuedMessages.map((message) => (
                 <li
                   className="flex min-w-0 items-start gap-2 rounded-control bg-field px-3 py-2"
@@ -198,7 +205,7 @@ export function Composer({ modelMenu }: { modelMenu: ReactNode }) {
                 </li>
               ))}
             </ol>
-          </section>
+          </details>
         )}
         <div className="composer">
         <div className="composer-main">
@@ -243,7 +250,7 @@ export function Composer({ modelMenu }: { modelMenu: ReactNode }) {
             }}
           />
           <div className="composer-foot">
-            <ModeSwitch />
+            {(canChooseAssistant || hasPolicyOptions) && <button type="button" className={ICON_BUTTON} aria-label={t('Chat options')} title={t('Chat options')} onClick={() => setOptionsOpen(true)}><IconSliders /></button>}
             {modelMenu}
           </div>
         </div>
@@ -251,19 +258,26 @@ export function Composer({ modelMenu }: { modelMenu: ReactNode }) {
               <button
                 type="submit"
                 className="send-orb"
+                title={t(generating || queuedMessages.length > 0 ? 'Queue message' : 'Send')}
                 aria-label={generating || queuedMessages.length > 0 ? t("Queue message") : t("Send")}
                 disabled={draft.trim().length === 0}
               >
                 <IconSend />
               </button>
               {generating && (
-                <button type="button" className="send-orb" aria-label={t("Stop")} onClick={stop}>
+                <button type="button" className={ICON_BUTTON} title={t(streaming?.stopping ? "Force stop" : "Stop")} aria-label={streaming?.stopping ? t("Force stop") : t("Stop")} onClick={stop}>
                   <IconStop />
                 </button>
               )}
             </div>
       </div>
 
+      {optionsOpen && <Dialog title={t('Chat options')} onClose={() => setOptionsOpen(false)}>
+        <div className="flex flex-col gap-4 p-gutter">
+          {canChooseAssistant && <div className="flex flex-wrap items-center justify-between gap-2"><span className="text-ui">{t('Assistant')}</span><AssistantPicker /></div>}
+          {hasPolicyOptions && <div className="flex flex-wrap items-center justify-between gap-2"><span className="text-ui">{t('Policy')}</span><ModeSwitch /></div>}
+        </div>
+      </Dialog>}
     </form>
   );
 }
@@ -286,4 +300,10 @@ function commandRows(prefix: string | null, skills: SkillRecord[]): { name: stri
     rows.push({ name: skill.name, detail: skill.description });
   }
   return rows;
+}
+
+function AssistantPicker() {
+  const { active, agents, draftAgentId, setDraftAgentId } = useAppState();
+  if (active) return null;
+  return <Menu label={t('Assistant')} value={draftAgentId} buttonClass={BUTTON.ghost} placement="top" options={agents.filter((agent) => !agent.botOnly).map((agent) => ({ value: agent.id, label: agent.label, subtitle: agent.description }))} onChange={setDraftAgentId} />;
 }

@@ -9,6 +9,7 @@ import { Reasoning } from './StatusLine.tsx';
 import { SubagentCard } from './SubagentCard.tsx';
 import { revealedBlockText } from './reveal-text.ts';
 import { CompactToolUsage, ToolUsage, type ToolInspectionProps } from './ToolUsage.tsx';
+import { MessageActions } from './MessageActions.tsx';
 
 export interface ToolViewProps {
   hideToolUsages?: boolean;
@@ -40,14 +41,14 @@ export function MessageView({
     const source = message.source;
     return (
       <article className="user-row">
-        <div className="user-bubble">
+        <div className="flex w-full min-w-0 flex-col items-end"><div className="user-bubble">
           {source && (
             <button type="button" className="mb-2 block max-w-full truncate text-small text-muted hover:text-ink" onClick={() => onOpenSubagent(source.sessionId)}>
               {t("From")} {source.title}
             </button>
           )}
           <p>{message.content}</p>
-        </div>
+        </div><MessageActions message={message} /></div>
       </article>
     );
   }
@@ -67,6 +68,7 @@ export function MessageView({
         toolUsageViewMode={toolUsageViewMode}
         toolCalls={toolCalls}
       />
+      <MessageActions message={message} />
     </article>
   );
 }

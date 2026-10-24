@@ -239,7 +239,15 @@ sessionRoutes.patch('/api/sessions/:id', async (c) => {
     }
     botBadges = [...new Set((body.botBadges as string[]).map((badge) => badge.trim()))];
   }
-  const session = await patchSession(id, { title, profile, reasoningEffort, serviceTier, projectId, botSystemPrompt, botBadges });
+  for (const key of ['pinned', 'archived']) {
+    if (key in body && typeof body[key] !== 'boolean') return c.json({ error: 'Invalid organization flag' }, 400);
+  }
+  if ('botColor' in body && (!existing.bot || !BOT_COLORS.includes(body.botColor as typeof BOT_COLORS[number]))) return c.json({ error: 'Invalid bot color' }, 400);
+  if ('botPurpose' in body && (!existing.bot || typeof body.botPurpose !== 'string' || !body.botPurpose.trim() || body.botPurpose.trim().length > MAX_BOT_PURPOSE_CHARS)) return c.json({ error: 'Invalid bot purpose' }, 400);
+  const session = await patchSession(id, { title, profile, reasoningEffort, serviceTier, projectId, botSystemPrompt, botBadges,
+    pinned: body.pinned as boolean | undefined, archived: body.archived as boolean | undefined,
+    botColor: body.botColor as typeof BOT_COLORS[number] | undefined, botPurpose: typeof body.botPurpose === 'string' ? body.botPurpose.trim() : undefined,
+  });
   if (!session) return c.json({ error: 'Session not found' }, 404);
   return c.json(session);
 });

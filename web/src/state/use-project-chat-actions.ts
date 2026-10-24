@@ -11,23 +11,22 @@ import {
   createSession,
   deleteProject as deleteProjectRequest,
   deleteSession,
-  getSession,
   patchSession,
+  pinProject,
   renameProject as renameProjectRequest,
 } from '../api/client.ts';
 import { t } from '../i18n/index.ts';
 import { writeLocation } from './location.ts';
 import type { StreamingState } from './live-types.ts';
-import { toSummary } from './session-summary.ts';
 
 type StateSetter<T> = Dispatch<SetStateAction<T>>;
 
 export function useProjectChatActions({
+  removeDraft,
   activeId,
   sessionsRef,
   draftProjectIdRef,
   projectPageIdRef,
-  settingsOpenRef,
   streamsRef,
   abortsRef,
   setSessions,
@@ -37,15 +36,16 @@ export function useProjectChatActions({
   setSidebarOpen,
   setError,
   showDraft,
+  showBots,
   openChat,
   rememberSummary,
   clearTerminal,
 }: {
+  removeDraft: (id: string) => void;
   activeId: MutableRefObject<string | null>;
   sessionsRef: MutableRefObject<SessionSummary[]>;
   draftProjectIdRef: MutableRefObject<string | null>;
   projectPageIdRef: MutableRefObject<string | null>;
-  settingsOpenRef: MutableRefObject<boolean>;
   streamsRef: MutableRefObject<Record<string, StreamingState>>;
   abortsRef: MutableRefObject<Map<string, AbortController>>;
   setSessions: StateSetter<SessionSummary[]>;
@@ -55,6 +55,7 @@ export function useProjectChatActions({
   setSidebarOpen: StateSetter<boolean>;
   setError: StateSetter<string | null>;
   showDraft: (projectId?: string | null) => void;
+  showBots: () => void;
   openChat: (id: string) => Promise<void>;
   rememberSummary: (session: StoredSession) => void;
   clearTerminal: (sessionId: string) => void;
@@ -75,6 +76,11 @@ export function useProjectChatActions({
     const project = await renameProjectRequest(id, name);
     setProjects((existing) => existing.map((item) => item.id === project.id ? project : item));
     return project;
+  }, [setProjects]);
+
+  const setProjectPinned = useCallback(async (id: string, pinned: boolean) => {
+    const project = await pinProject(id, pinned);
+    setProjects((existing) => existing.map((item) => item.id === id ? project : item));
   }, [setProjects]);
 
   const deleteProject = useCallback(async (id: string) => {
@@ -111,11 +117,17 @@ export function useProjectChatActions({
       rememberSummary(session);
     } catch (cause) {
       setError(cause instanceof Error ? cause.message : t('Could not rename the chat'));
+      throw cause;
     }
   }, [rememberSummary, setError]);
 
-  const updateBotProfile = useCallback(async (id: string, systemPrompt: string, badges: string[]) => {
-    const session = await patchSession(id, { botSystemPrompt: systemPrompt, botBadges: badges });
+  const updateBotProfile = useCallback(async (id: string, systemPrompt: string, badges: string[], details?: { title: string; botColor: import('../../../shared/types.ts').BotColor; botPurpose: string }) => {
+    const session = await patchSession(id, { botSystemPrompt: systemPrompt, botBadges: badges, ...details });
+    rememberSummary(session);
+  }, [rememberSummary]);
+
+  const updateChatOrganization = useCallback(async (id: string, patch: { pinned?: boolean; archived?: boolean }) => {
+    const session = await patchSession(id, patch);
     rememberSummary(session);
   }, [rememberSummary]);
 
@@ -127,26 +139,21 @@ export function useProjectChatActions({
       }
       clearTerminal(id);
       await deleteSession(id);
+      removeDraft(id);
       const remaining = sessionsRef.current.filter((item) => item.id !== id && !item.botConversation?.participants.includes(id));
       setSessions(remaining);
       if (activeId.current && !remaining.some((item) => item.id === activeId.current)) {
-        if (remaining[0]) {
-          const nextId = remaining[0].id;
-          activeId.current = nextId;
-          const next = await getSession(nextId);
-          if (activeId.current !== nextId) return;
-          setActive(next);
-          if (!settingsOpenRef.current) writeLocation({ kind: 'chat', id: nextId }, 'push');
-        } else {
-          activeId.current = null;
-          setActive(null);
-          if (!settingsOpenRef.current) writeLocation({ kind: 'draft' }, 'push');
-        }
+        const wasBot = sessionsRef.current.find((session) => session.id === id)?.bot;
+        activeId.current = null;
+        setActive(null);
+        if (wasBot) showBots();
+        else { showDraft(); writeLocation({ kind: 'draft' }, 'replace'); }
       }
     } catch (cause) {
       setError(cause instanceof Error ? cause.message : t('Could not delete the chat'));
+      throw cause;
     }
-  }, [clearTerminal, streamsRef, abortsRef, sessionsRef, setSessions, activeId, setActive, settingsOpenRef, setError]);
+  }, [clearTerminal, streamsRef, abortsRef, sessionsRef, setSessions, activeId, setActive, setError, removeDraft, showDraft, showBots]);
 
   return {
     assignChatToProject,
@@ -157,6 +164,8 @@ export function useProjectChatActions({
     deleteProject,
     renameChat,
     renameProject,
+    setProjectPinned,
     updateBotProfile,
+    updateChatOrganization,
   };
 }

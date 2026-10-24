@@ -74,7 +74,7 @@ export async function prepareSessionAgent(sessionId: string, input: AgentSetupIn
   const [skills, mcp, systemPrompt] = await Promise.all([
     includeTools ? readSkills() : [],
     includeTools ? refreshMcp() : { tools: {} },
-    buildHostSystemPrompt(agentDef.id, storedSession?.bot ? { name: storedSession.botConversation?.responderTitle ?? storedSession.title, systemPrompt: storedSession.bot.systemPrompt } : undefined),
+    buildHostSystemPrompt(agentDef.id, storedSession?.bot ? { name: storedSession.botConversation?.responderTitle ?? storedSession.title, systemPrompt: storedSession.bot.systemPrompt, purpose: storedSession.bot.purpose } : undefined),
   ]);
   const availableTools = includeTools
     ? [
