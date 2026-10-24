@@ -14,7 +14,7 @@
 @property --accent {
   syntax: '<color>';
   inherits: true;
-  initial-value: #59683b;
+  initial-value: #35628a;
 }
 
 @theme {
@@ -58,7 +58,7 @@
   --color-field: #eeece6;
   --color-field-hover: #e7e4dc;
   --color-field-border: #cbc7bd;
-  --color-focus: #59683b;
+  --color-focus: #35628a;
   --color-code: #eeece6;
   --color-user: #ecece6;
 
@@ -66,8 +66,8 @@
      `--accent` is the switchable variable the `data-accent` rules write, and
      `--color-accent` is the one utilities read. `@theme` does not emit a token
      whose value is another variable, so this alias is declared by hand. */
-  --accent: #59683b;
-  --color-accent: #59683b;
+  --accent: #35628a;
+  --color-accent: #35628a;
   /* Text on the accent. Each accent rule below sets a matching foreground so every pair stays >= 4.5:1. */
   --color-on-accent: #ffffff;
 
@@ -203,7 +203,7 @@
   --color-code: #1d1c19;
   --color-field-hover: #302f29;
   --color-field-border: #444239;
-  --color-focus: #c4d29a;
+  --color-focus: #91b9dc;
   --color-swatch-coral: #e0957c;
   --color-swatch-default: #c4d29a;
   --color-swatch-amber: #e0bc70;

@@ -8,6 +8,27 @@ import { settingsRoutes } from '../http/routes/settings.ts';
 import { settingsPath } from '../infra/data-dir.ts';
 import { writeJson } from '../infra/json-file.ts';
 
+test('Azure defaults for missing or invalid accents without replacing saved color choices', async () => {
+  const previousAppData = process.env.APPDATA;
+  const directory = await mkdtemp(path.join(os.tmpdir(), 'xeck-accent-settings-'));
+  process.env.APPDATA = directory;
+  try {
+    assert.equal((await readSettings()).accent, 'blue');
+    await writeJson(settingsPath(), { theme: 'dark' });
+    assert.equal((await readSettings()).accent, 'blue');
+    await writeSettings({ accent: 'default' });
+    await writeSettings({ theme: 'light' });
+    assert.equal((await readSettings()).accent, 'default');
+    await writeSettings({ accent: 'violet' });
+    assert.equal((await readSettings()).accent, 'violet');
+    assert.equal((await writeSettings({ accent: 'invalid' })).accent, 'blue');
+  } finally {
+    if (previousAppData === undefined) delete process.env.APPDATA;
+    else process.env.APPDATA = previousAppData;
+    await rm(directory, { recursive: true, force: true });
+  }
+});
+
 test('tool usage preferences default for old settings, persist, and reject invalid modes', async () => {
   const previousAppData = process.env.APPDATA;
   const testDirectory = await mkdtemp(path.join(os.tmpdir(), 'xeck-tool-settings-'));

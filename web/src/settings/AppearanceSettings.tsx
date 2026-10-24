@@ -1,6 +1,6 @@
 import { t } from '../i18n/index.ts';
 import type { AccentColor, TextSizeSetting, ThemeSetting, ToolUsageViewMode } from '../../../shared/types.ts';
-import { ACCENT_COLORS, TEXT_SIZES, THEMES, TOOL_USAGE_VIEW_MODES } from '../../../shared/types.ts';
+import { ACCENT_COLORS, DEFAULT_SETTINGS, TEXT_SIZES, THEMES, TOOL_USAGE_VIEW_MODES } from '../../../shared/types.ts';
 import { IconMonitor, IconMoon, IconSun } from '../ui/icons.tsx';
 import { useAppState } from '../state/AppState.tsx';
 import { SettingRow, Switch } from '../ui/SettingRow.tsx';
@@ -78,7 +78,7 @@ export function AppearanceSettings() {
             >
               <span className={`swatch swatch-${accent}`} aria-hidden="true" />
               <span>{t(ACCENT_LABELS[accent])}</span>
-              {accent === 'default' && <span className="text-nano text-muted">{t("Default")}</span>}
+              {accent === DEFAULT_SETTINGS.accent && <span className="text-nano text-muted">{t("Default")}</span>}
             </button>
           ))}
         </div>

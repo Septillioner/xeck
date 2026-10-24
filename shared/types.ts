@@ -438,7 +438,7 @@ export const DEFAULT_SETTINGS: Settings = {
   showReasoning: false,
   theme: 'dark',
   textSize: 'default',
-  accent: 'default',
+  accent: 'blue',
   showUsage: true,
   showTokenSpeed: true,
   hideToolUsages: false,

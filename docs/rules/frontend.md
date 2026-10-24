@@ -28,7 +28,7 @@ The visual direction is a calm, neutral workspace: a quiet sidebar rail, a conti
 
 ## Accent, semantic colors, and contrast
 
-- Use one user-selected `accent`; the default is olive. Do not tint large surfaces with it.
+- Use one user-selected `accent`; the default is Azure (`blue`). Preserve saved accent choices, including the legacy `default` value which represents Olive. Do not tint large surfaces with it.
 - The Xeck brand mark uses the fixed `logo` token from `web/public/logo.svg` in both themes, independently of the user-selected accent. Apply it to the sidebar brand, empty-chat mark, and Xeck agent header. Navigation glyphs stay neutral and the live status mark keeps its semantic mood color.
 - Reserve accent for enabled switches, project icon, and selected settings segments, tabs, or theme tiles. Chat selection stays neutral and the send action uses the primary ink fill.
 - Standard primary actions use `bg-primary`, not an accent fill. Destructive actions use the danger tokens. Reserve warning and danger colors for their semantic purpose.
