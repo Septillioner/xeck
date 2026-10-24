@@ -2,14 +2,14 @@
 
 This is the canonical frontend rulebook for Xeck. Keep documentation in English. Product copy may remain localized through the translation catalogs.
 
-The visual direction is quiet, flat, and restrained: warm neutral surfaces in light mode, neutral near-black surfaces in dark mode, and one user-selected accent. Use spacing, typography, and surface tones to establish hierarchy. Keep large surfaces neutral.
+The visual direction is a neutral two-plane desk: a rail for the sidebar and window, a lighter working surface for chat and settings, and one user-selected accent. Surfaces carry no hue, so coral, amber, green, and violet accents sit on the same ground as blue. Use spacing, typography, and those surface tones to establish hierarchy. Keep large surfaces neutral.
 
 ## Design tokens and Tailwind
 
 - Use Tailwind CSS v4 and the tokens defined in `web/src/styles/theme.css`. Put shared CSS in `web/src/styles/`; do not introduce a second styling system.
 - Define colors only in `theme.css`. Components and other stylesheets must use semantic tokens rather than hex, RGB, or locally invented palettes.
 - Use the same token names in both themes. Add a light and dark value for every new theme-dependent color. Components must not branch on the active theme.
-- Use the existing type scale: `text-nano` (10px), `text-micro` (11px), `text-small` (12px), `text-ui` (13px), `text-body` (14px), `text-lead` (15px), `text-brand` (16px), `text-large` (17px), and `text-heading` (22px). In CSS, use the corresponding custom property. Do not use arbitrary text sizes such as `text-[13px]`.
+- Use the existing type scale: `text-nano` (10px), `text-micro` (11px), `text-small` (12px), `text-ui` (13px), `text-body` (14px), `text-lead` (15px), `text-brand` (16px), `text-large` (17px), `text-heading` (22px), and `text-display` (40px). Display size is only for the empty-chat question and the XeckBot page title. In CSS, use the corresponding custom property. Do not use arbitrary text sizes such as `text-[13px]`.
 - Use `rounded-tile` (8px), `rounded-control` (10px), `rounded-row` (12px), and `rounded-card` (14px). Small badges may use `rounded-full`; do not introduce arbitrary radius values.
 - Reuse control and spacing tokens: `h-control` (34px), `size-control-sm` (28px), `px-control-pad` (12px), `min-h-row` (40px), `px-gutter` (24px), and `mb-section` (32px). Use `gap-2` for an 8px row gap.
 - When adding a utility token, update the relevant `tailwind-merge` groups in `web/src/lib/cn.ts`. Text size and text color utilities must coexist without removing one another.

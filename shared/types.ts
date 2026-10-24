@@ -92,6 +92,7 @@ export interface Project {
 
 export const BOT_COLORS = ['blue', 'violet', 'pink', 'gray'] as const;
 export type BotColor = (typeof BOT_COLORS)[number];
+export const MAX_BOT_NAME_CHARS = 80;
 export const MAX_BOT_PURPOSE_CHARS = 4000;
 export const MAX_BOT_SYSTEM_PROMPT_CHARS = 16_000;
 export const MAX_XECKBOT_BADGES = 12;

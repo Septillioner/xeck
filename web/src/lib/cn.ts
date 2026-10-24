@@ -10,7 +10,7 @@ import { extendTailwindMerge } from 'tailwind-merge';
 const twMerge = extendTailwindMerge({
   extend: {
     theme: {
-      text: ['nano', 'micro', 'small', 'ui', 'body', 'lead', 'brand', 'large', 'heading'],
+      text: ['nano', 'micro', 'small', 'ui', 'body', 'lead', 'brand', 'large', 'heading', 'display'],
       radius: ['tile', 'control', 'row', 'card'],
       spacing: ['control', 'control-sm', 'field', 'control-pad', 'row'],
     },

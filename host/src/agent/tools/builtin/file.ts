@@ -133,6 +133,7 @@ async function executeDeleteWithApproval(args: Record<string, unknown>, context:
     title: 'Delete file',
     prompt: `Do you want to delete "${filePath}"${recursive ? ' recursively' : ''}?`,
     details: { path: filePath, recursive },
+    toolName: DELETE_FILE_TOOL,
   });
   if (!approved) {
     return { content: JSON.stringify({ path: filePath, deleted: false, rejected: true }), isError: true };

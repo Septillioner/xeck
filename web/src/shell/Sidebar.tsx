@@ -8,6 +8,8 @@ import { BUTTON, ICON_BUTTON } from '../ui/button-styles.ts';
 import { Dialog } from '../ui/Dialog.tsx';
 import { TextField } from '../ui/TextField.tsx';
 import { MAX_PROJECT_NAME_CHARS } from '../../../shared/limits.ts';
+import { groupSessions } from '../lib/group-sessions.ts';
+import { formatChatTime } from '../lib/session-time.ts';
 import { SidebarSearchOverlay } from './SidebarSearchOverlay.tsx';
 import { SessionActions } from './SessionActions.tsx';
 
@@ -57,6 +59,7 @@ export function Sidebar() {
       <button type="button" className={cn(ROW, 'min-w-0 flex-1')} aria-current={selected ? 'page' : undefined} onClick={() => void openChat(session.id)}>
         {session.pinned ? <IconStar className="shrink-0 text-muted" /> : null}
         <span className="min-w-0 flex-1"><span className="block truncate text-ui">{session.title}</span>{project && <span className="block truncate text-micro text-muted">{project.name}</span>}</span>
+        <time className="shrink-0 text-micro tabular-nums text-muted" dateTime={session.updatedAt}>{formatChatTime(session.updatedAt)}</time>
         {mood !== 'idle' && <span className="chat-mood-dot size-1.5 shrink-0 rounded-full bg-mood" aria-label={t(mood)} />}
       </button>
       <SessionActions session={session} />
@@ -84,8 +87,9 @@ export function Sidebar() {
           <button type="button" className={ICON_BUTTON} aria-label={t('Project actions for {0}', { 0: project.name })} onClick={() => openProjectDialog({ id: project.id, name: project.name })}><IconMoreVertical /></button>
         </li>)}</ul>}
         {pinned.length > 0 && <section className="mb-4"><h2 className="px-3 py-2 text-micro font-medium text-muted">{t('Pinned')}</h2><ul className="flex flex-col gap-1">{pinned.map(renderSession)}</ul></section>}
-        <section><h2 className="px-3 py-2 text-micro font-medium text-muted">{t('Recent chats')}</h2><ul className="flex flex-col gap-1">{recent.map(renderSession)}</ul>
-        </section>
+        {[...groupSessions(recent).entries()].map(([label, items]) => items.length === 0 ? null : (
+          <section key={label} className="mb-4"><h2 className="px-3 py-2 text-micro font-medium text-muted">{t(label)}</h2><ul className="flex flex-col gap-1">{items.map(renderSession)}</ul></section>
+        ))}
         </>}
       </div>
       <nav className="flex flex-col gap-1 p-2.5">

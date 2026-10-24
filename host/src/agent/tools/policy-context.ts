@@ -3,6 +3,7 @@ import { CODING_WORKSPACE } from '../catalog/workspaces.ts';
 import { POLICY_BY_ID } from '../catalog/policies.ts';
 import { explainTool, type ExplainContext } from '../core/explain.ts';
 import { readSession, readSessionPolicyId } from '../../stores/sessions.ts';
+import { hooksRegistered, permissionDecision } from '../runtime/hooks.ts';
 import { getToolLabel } from './tool-labels.ts';
 import { isBuiltinHostTool, serverSideName } from './builtin/identity.ts';
 
@@ -63,6 +64,11 @@ export function blocksToolInPolicy(toolName: string, policyId: string): boolean 
  * Ret metni o policy satırının `deniedReason` değeridir.
  */
 export async function policyRejection(toolName: string, sessionId?: string): Promise<string | null> {
+  if (sessionId && hooksRegistered('PermissionRequest')) {
+    const permission = await permissionDecision(sessionId, toolName);
+    if (permission.kind === 'deny') return permission.reason ?? 'Permission denied.';
+    if (permission.kind === 'allow') return null;
+  }
   if (!sessionId) return null;
   const session = await readSession(sessionId);
   if (session?.origin?.by === 'agent' && !session.origin.grant.tools.includes(toolName)) {

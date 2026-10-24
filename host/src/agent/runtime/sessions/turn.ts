@@ -19,6 +19,7 @@ import { runChat, summarizeChat, ChatTurnFailure, type ChatTurnResult } from '..
 import { expandCommand } from './commands.ts';
 import { startChatTitle } from './title.ts';
 import { abortDialogsForSession, subscribeDialog, subscribeDialogResolved } from '../events/dialogs.ts';
+import { hooksRegistered, notifyInterrupted, submittedPrompt } from '../hooks.ts';
 import { closeLiveChat, getLiveChat, publishLive, startLiveChat, subscribeLive, type LiveChat } from '../events/live-chat.ts';
 import { parseToolResult } from '../events/tool-results.ts';
 import { assistantMessage, createTimeline, finalizeBlocks, persistPartial } from '../events/timeline.ts';
@@ -46,6 +47,10 @@ export async function startSessionTurn(session: StoredSession, content: string, 
   if (content.length > MAX_MESSAGE_CHARS) throw new SessionTurnInputError('Message is too long');
   if (session.agentId && !AGENT_BY_ID[session.agentId]) throw new SessionTurnInputError('This session uses an unavailable agent. Start a new chat.');
   if (!session.profile.model.trim()) throw new SessionTurnInputError('Choose a model for this chat');
+  if (hooksRegistered('UserPromptSubmit')) {
+    const blockedPrompt = await submittedPrompt(session.id, content, session.agentId);
+    if (blockedPrompt) throw new SessionTurnInputError(blockedPrompt);
+  }
   const turn = acquireAgentTurn(session.id, parentSignal, messageSource);
   let apiKey: string;
   const contextSummary = !messageSource && !childOrigin && isContextSummary(content);
@@ -165,6 +170,7 @@ export async function startSessionTurn(session: StoredSession, content: string, 
           onEvent: (event) => emit(event.type, event),
         });
         const aborted = result.aborted || turn.signal.aborted;
+        if (aborted && hooksRegistered('Interrupt')) await notifyInterrupted(session.id, turn.signal);
         if (!aborted) {
           session.libraryMessages = result.libraryMessages;
           if (session.lastUsage) session.contextParts = result.contextParts;
@@ -206,6 +212,7 @@ export async function startSessionTurn(session: StoredSession, content: string, 
         if (stored) emit('plan.updated', { plan: planSnapshot(stored.plan) });
       }
       const aborted = result.aborted || turn.signal.aborted;
+      if (aborted && hooksRegistered('Interrupt')) await notifyInterrupted(session.id, turn.signal);
       updateUsage(result);
       session.lastDurationMs = Date.now() - startedAt;
       finishChild(aborted);
@@ -226,6 +233,7 @@ export async function startSessionTurn(session: StoredSession, content: string, 
       if (partial) updateUsage(partial);
       session.lastDurationMs = Date.now() - startedAt;
       const aborted = turn.signal.aborted;
+      if (aborted && hooksRegistered('Interrupt')) await notifyInterrupted(session.id, turn.signal);
       finishChild(aborted, aborted && !timedOut ? undefined : message);
       let saved = session;
       try { saved = await persistPartial(session, finalizeBlocks(timeline.blocks, ''), partial?.libraryMessages ?? session.libraryMessages); }

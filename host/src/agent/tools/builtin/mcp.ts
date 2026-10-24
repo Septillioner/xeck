@@ -60,6 +60,7 @@ async function executeEnableMcp(args: Record<string, unknown>, context: ToolCall
     title: 'Enable MCP Server',
     prompt: `Do you want to enable the MCP server "${id}"?`,
     details: { id },
+    toolName: ENABLE_MCP_TOOL,
   });
   if (!approved) {
     return {

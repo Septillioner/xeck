@@ -17,6 +17,7 @@ import { selectedBuiltinNames } from '../../workspaces/definitions.ts';
 import { agentWorkspaceRef } from '../../workspaces/resolve.ts';
 import { abortChat } from '../agents/pool.ts';
 import { startSessionTurn } from './turn.ts';
+import { hooksRegistered, notifySubagentStopped, subagentMayStart } from '../hooks.ts';
 import { readSettings } from '../../../stores/settings-store.ts';
 import { readSkills } from '../../../stores/instruction-store.ts';
 
@@ -76,9 +77,14 @@ export async function delegateAgents(parentId: string, tasks: DelegatedTask[], s
   return Promise.all(tasks.map(async (item): Promise<DelegatedResult> => {
     let child: StoredSession | undefined;
     try {
+      if (hooksRegistered('SubagentStart')) {
+        const blocked = await subagentMayStart(parentId, item.agentId, item.task.trim(), signal);
+        if (blocked) return { sessionId: '', agentId: item.agentId, status: 'failed', error: blocked };
+      }
       child = await createSubagentSession({ parentId, agentId: item.agentId, task: item.task.trim(), toolGrant });
       const { completion } = await startSessionTurn(child, item.task.trim(), signal);
       const outcome = await completion;
+      if (hooksRegistered('SubagentStop')) await notifySubagentStopped(child.id, item.agentId, outcome.error);
       return {
         sessionId: child.id,
         agentId: item.agentId,
@@ -92,6 +98,7 @@ export async function delegateAgents(parentId: string, tasks: DelegatedTask[], s
         child.subagentStatus = 'failed';
         child.subagentError = message;
         try { await saveSession(child); } catch { /* One failed save must not discard sibling results. */ }
+        if (hooksRegistered('SubagentStop')) await notifySubagentStopped(child.id, item.agentId, message);
         const live = getLiveChat(parentId);
         if (live) publishLive(live, 'subagent.update', {
           sessionId: child.id, agentId: item.agentId, task: item.task,

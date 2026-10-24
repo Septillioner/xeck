@@ -1,6 +1,6 @@
 import { t } from '../i18n/index.ts';
 import { useEffect, useMemo, useRef, useState, type ComponentType } from 'react';
-import type { ContextTree, ProviderKind, TranscriptMessage } from '../../../shared/types.ts';
+import type { ContextTree, Project, ProviderKind, StoredSession, TranscriptMessage } from '../../../shared/types.ts';
 import { maxContextThreshold } from '../../../shared/model-context.ts';
 import { getSessionContext } from '../api/client.ts';
 import { useAppState } from '../state/AppState.tsx';
@@ -22,6 +22,16 @@ import { SessionActions } from '../shell/SessionActions.tsx';
 
 const FIRST_PROVIDER_PAGE: ProviderKind = 'ollama';
 const OPENAI_PROVIDER: ProviderKind = 'openai';
+const CHAT_STARTERS = [
+  'Review what I was working on last.',
+  'Make a short plan before changing anything.',
+  'Look through this project and tell me what is unfinished.',
+] as const;
+const BOT_STARTERS = [
+  'Help me get started with this task.',
+  'Make a step-by-step plan with me.',
+  'Help me review and improve my work.',
+] as const;
 
 export function ChatView() {
   const {
@@ -184,6 +194,7 @@ export function ChatView() {
     />
   );
 
+  const detail = active ? chatDetail(active, projects) : null;
   const transcript = (
     <MessageList
       messages={messages}
@@ -208,7 +219,7 @@ export function ChatView() {
         <header className="shrink-0 px-4 py-3" aria-label={t('Chat details')}>
           <div className="flex min-w-0 flex-wrap items-center gap-2">
             {active.bot ? <BotAvatar name={active.title} color={active.bot.color} /> : <AgentIcon className="shrink-0 text-muted" />}
-            <div className="min-w-0 flex-1"><h1 className="m-0 truncate text-body font-medium">{active.title}</h1>{(active.projectId || active.archived) && <p className="truncate text-small text-muted">{projects.find((project) => project.id === active.projectId)?.name}{active.archived ? ' · ' + t('Archived') : ''}</p>}</div>
+            <div className="min-w-0 flex-1"><h1 className="m-0 truncate text-body font-medium">{active.title}</h1>{detail && <p className="truncate text-small text-muted">{detail}</p>}</div>
             <SessionActions session={active} extraActions={[
               ...(plan || changedFiles.length > 0 ? [{ label: t('Artifacts'), onClick: () => void openPlanPanel(), pressed: planPanelOpen }] : []),
               ...(settings.debugMode ? [{ label: t('Debug'), onClick: () => setDebugOpen(!debugOpen), pressed: debugOpen }] : []),
@@ -242,17 +253,12 @@ export function ChatView() {
         <div className="center-stage">
           <div className="column">
             {!active?.bot && (
-              <>
-                <div className="hero-stage">
-                  <h2>{t("What are we working on today?")}</h2>
-                  <p>{t("Write a message to get started.")}</p>
-                </div>
-
-              </>
+              <div className="hero-stage">
+                <IconXeck size={28} className="hero-mark" />
+                <h2 className="display-title">{t("What are we working on today?")}</h2>
+              </div>
             )}
-            {active?.bot && <div className="mb-5 flex flex-wrap justify-center gap-2" aria-label={t('Suggested tasks')}>
-              {['Help me get started with this task.', 'Make a step-by-step plan with me.', 'Help me review and improve my work.'].map((prompt) => <button key={prompt} type="button" className={BUTTON.secondary} onClick={() => { setDraft(t(prompt)); surfaceRef.current?.querySelector<HTMLTextAreaElement>('textarea')?.focus(); }}>{t(prompt)}</button>)}
-            </div>}
+            <StarterRows prompts={active?.bot ? BOT_STARTERS : CHAT_STARTERS} onPick={(prompt) => { setDraft(t(prompt)); surfaceRef.current?.querySelector<HTMLTextAreaElement>('textarea')?.focus(); }} />
             <div data-mood={activeMood}>
               <Composer modelMenu={modelMenu} />
             </div>
@@ -356,6 +362,23 @@ const AGENT_ICONS: Record<string, ComponentType<{ className?: string }>> = {
   chat: IconChat,
   star: IconStar,
 };
+
+function chatDetail(session: StoredSession, projects: Project[]): string | null {
+  const project = projects.find((item) => item.id === session.projectId)?.name;
+  const purpose = session.bot?.purpose?.trim();
+  const parts = [purpose || project, session.archived ? t('Archived') : null].filter((part): part is string => Boolean(part));
+  return parts.length ? parts.join(' · ') : null;
+}
+
+function StarterRows({ prompts, onPick }: { prompts: readonly string[]; onPick: (prompt: string) => void }) {
+  return (
+    <div className="starter-list" aria-label={t('Suggested tasks')}>
+      {prompts.map((prompt) => (
+        <button key={prompt} type="button" className="starter-row" onClick={() => onPick(prompt)}>{t(prompt)}</button>
+      ))}
+    </div>
+  );
+}
 
 function ErrorBanner({ message, onRetry }: { message: string; onRetry?: () => void }) {
   return (

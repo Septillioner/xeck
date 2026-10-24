@@ -1,116 +1,51 @@
 import { Hono } from 'hono';
 import { scaleCategoriesToTotal } from 'poyraz';
-import {
-  isSessionPolicyId,
-  BOT_COLORS,
-  MAX_BOT_PURPOSE_CHARS,
-  MAX_BOT_SYSTEM_PROMPT_CHARS,
-  MAX_XECKBOT_BADGES,
-  MAX_XECKBOT_BADGE_LENGTH,
-  type BotColor,
-  type ContextParts,
-  type StoredSession,
-  type ReasoningEffort,
-  type ServiceTier,
-} from '../../../../shared/types.ts';
-import { readProfileBody } from '../../domain/profiles.ts';
+import { isSessionPolicyId, type ContextParts, type StoredSession } from '../../../../shared/types.ts';
 import { abortChat, dropAgent } from '../../agent/runtime/agents/pool.ts';
 import { inspectContext } from '../../agent/runtime/agents/execution.ts';
 import { buildContextTree } from '../../agent/runtime/context/tree.ts';
 import { abortDialogsForSession, listPendingDialogs, resolveDialog } from '../../agent/runtime/events/dialogs.ts';
 import { getLiveChat } from '../../agent/runtime/events/live-chat.ts';
-import { alignProfile, apiKeyForProfile, providerIsEnabled } from '../../stores/provider-store.ts';
-import { readRules, readSkills } from '../../stores/instruction-store.ts';
-import { readSettings } from '../../stores/settings-store.ts';
-import { AGENT_BY_ID, XECKBOT_AGENT } from '../../agent/catalog/agents.ts';
 import { POLICY_BY_ID } from '../../agent/catalog/policies.ts';
-import { agentWorkspaceRef, defaultAgentId } from '../../agent/workspaces/resolve.ts';
 import { WORKSPACE_BY_REF } from '../../agent/catalog/workspaces.ts';
+import { alignProfile, apiKeyForProfile } from '../../stores/provider-store.ts';
+import { readRules, readSkills } from '../../stores/instruction-store.ts';
 import {
   createSession,
   deleteSession,
   isSessionId,
-  listChildSessions,
   listBotConversations,
+  listChildSessions,
   listSessions,
   patchSession,
   readSession,
   setSessionContextParts,
   setSessionPolicyId,
 } from '../../stores/sessions.ts';
-import { getProject } from '../../stores/projects.ts';
 import { postMessage } from '../chat-turn.ts';
 import { streamSessionTurn } from '../session-stream.ts';
-import { readBody, readEffort, readServiceTier } from '../request.ts';
-import { BotIdentityError, createBotIdentity } from '../../agent/runtime/agents/create-bot-identity.ts';
+import { readBody } from '../request.ts';
+import { loadEditableSession, readNewSession, readSessionPatch } from '../session-input.ts';
 
 /** Session lifecycle plus the SSE endpoints a turn streams through. */
 export const sessionRoutes = new Hono();
 
-sessionRoutes.get('/api/sessions', async (c) => c.json(await listSessions(c.req.query('includeBotConversations') === 'true')));
+sessionRoutes.get('/api/sessions', async (c) => {
+  const includeBotConversations = c.req.query('includeBotConversations') === 'true';
+  return c.json(await listSessions(includeBotConversations));
+});
 
 sessionRoutes.post('/api/sessions', async (c) => {
-  const body = await readBody(c);
-  const requested = body && 'profile' in body ? readProfileBody(body.profile) : null;
-  const settings = await readSettings();
-  let profile = requested?.model ? requested : settings.defaultProfile;
-  if (profile && !(await providerIsEnabled(profile.provider))) profile = null;
-  if (profile) profile = await alignProfile(profile);
-  const effort = body ? readEffort(body.reasoningEffort) : undefined;
-  if (effort === false) return c.json({ error: 'Invalid reasoning effort' }, 400);
-  const tier = body ? readServiceTier(body.serviceTier) : undefined;
-  if (tier === false) return c.json({ error: 'Invalid service tier' }, 400);
-  const agentId = body?.bot !== undefined ? XECKBOT_AGENT.id : typeof body?.agentId === 'string' ? body.agentId.trim() : '';
-  if (agentId && !AGENT_BY_ID[agentId]) {
-    return c.json({ error: 'Unknown agent' }, 400);
-  }
-  if (agentId && !AGENT_BY_ID[agentId]?.startableBy.includes(body?.bot !== undefined ? 'bot' : 'user')) {
-    return c.json({ error: 'This agent can only be started by another agent' }, 400);
-  }
-  let policyId: string | undefined;
-  if (body?.policyId !== undefined) {
-    if (!isSessionPolicyId(body.policyId)) return c.json({ error: 'Invalid policy' }, 400);
-    policyId = body.policyId;
-    const workspace = WORKSPACE_BY_REF[agentWorkspaceRef(agentId || defaultAgentId())];
-    if (!workspace?.policies.includes(policyId)) {
-      return c.json({ error: 'Policy is not available for this agent' }, 400);
-    }
-  }
-  let projectId: string | undefined;
-  if (body?.projectId !== undefined) {
-    if (typeof body.projectId !== 'string' || !(await getProject(body.projectId))) {
-      return c.json({ error: 'Unknown project' }, 400);
-    }
-    projectId = body.projectId;
-  }
-  let bot: { name: string; color: BotColor; purpose: string; systemPrompt: string } | undefined;
-  if (body?.bot !== undefined) {
-    const value = body.bot as { name?: unknown; color?: unknown; purpose?: unknown } | null;
-    if (!value || typeof value.name !== 'string' || !value.name.trim() || value.name.trim().length > 80 || !BOT_COLORS.includes(value.color as BotColor)) {
-      return c.json({ error: 'Enter a name (up to 80 characters) and a valid color' }, 400);
-    }
-    if (projectId) return c.json({ error: 'XeckBots cannot belong to a project' }, 400);
-    if (typeof value.purpose !== 'string' || !value.purpose.trim() || value.purpose.trim().length > MAX_BOT_PURPOSE_CHARS) {
-      return c.json({ error: `XeckBot'un ne yapacağını yaz (en fazla ${MAX_BOT_PURPOSE_CHARS} karakter).` }, 400);
-    }
-    const name = value.name.trim();
-    const purpose = value.purpose.trim();
-    try {
-      const systemPrompt = await createBotIdentity(name, purpose, c.req.raw.signal);
-      bot = { name, color: value.color as BotColor, purpose, systemPrompt };
-    } catch (error) {
-      if (error instanceof BotIdentityError) return c.json({ error: error.message }, error.status);
-      throw error;
-    }
-  }
+  const created = await readNewSession(c);
+  if (!created.ok) return c.json({ error: created.error }, created.status);
   const session = await createSession(
-    profile,
-    effort || undefined,
-    tier || undefined,
-    agentId || undefined,
-    policyId,
-    projectId,
-    bot,
+    created.profile,
+    created.reasoningEffort,
+    created.serviceTier,
+    created.agentId,
+    created.policyId,
+    created.projectId,
+    created.bot,
   );
   return c.json(session, 201);
 });
@@ -121,11 +56,9 @@ sessionRoutes.put('/api/sessions/:id/policy', async (c) => {
   const body = await readBody(c);
   const policyId = body && typeof body.policyId === 'string' ? body.policyId : '';
   if (!isSessionPolicyId(policyId)) return c.json({ error: 'Policy must be a policy id' }, 400);
-  const existing = await readSession(id);
-  if (!existing) return c.json({ error: 'Session not found' }, 404);
-  if (existing.botConversation) return c.json({ error: 'Bot conversations are managed by XeckBots' }, 403);
-  if (existing.origin?.by === 'agent') return c.json({ error: 'Subagent sessions are read-only' }, 403);
-  const workspace = existing.workspace ? WORKSPACE_BY_REF[existing.workspace] : undefined;
+  const loaded = await loadEditableSession(id);
+  if (!loaded.ok) return c.json({ error: loaded.error }, loaded.status);
+  const workspace = loaded.session.workspace ? WORKSPACE_BY_REF[loaded.session.workspace] : undefined;
   if (!workspace?.policies.includes(policyId)) {
     return c.json({ error: 'Policy is not available for this agent' }, 400);
   }
@@ -133,7 +66,6 @@ sessionRoutes.put('/api/sessions/:id/policy', async (c) => {
   if (!session) return c.json({ error: 'Session not found' }, 404);
   return c.json({ policyId, session });
 });
-
 
 sessionRoutes.get('/api/sessions/:id/context', async (c) => {
   const id = c.req.param('id');
@@ -183,71 +115,13 @@ async function fillContextParts(session: StoredSession): Promise<void> {
 
 sessionRoutes.patch('/api/sessions/:id', async (c) => {
   const id = c.req.param('id');
-  if (!isSessionId(id)) return c.json({ error: 'Session not found' }, 404);
-  const existing = await readSession(id);
-  if (!existing) return c.json({ error: 'Session not found' }, 404);
-  if (existing.botConversation) return c.json({ error: 'Bot conversations are managed by XeckBots' }, 403);
-  if (existing.origin?.by === 'agent') return c.json({ error: 'Subagent sessions are read-only' }, 403);
+  const loaded = await loadEditableSession(id);
+  if (!loaded.ok) return c.json({ error: loaded.error }, loaded.status);
   const body = await readBody(c);
   if (!body) return c.json({ error: 'Invalid JSON' }, 400);
-
-  let profile = undefined;
-  if ('profile' in body) {
-    const parsed = readProfileBody(body.profile);
-    if (!parsed || !parsed.model) return c.json({ error: 'Invalid model' }, 400);
-    if (!(await providerIsEnabled(parsed.provider))) return c.json({ error: 'Provider is disabled' }, 400);
-    profile = await alignProfile(parsed);
-  }
-
-  const title = typeof body.title === 'string' ? body.title : undefined;
-  let reasoningEffort: ReasoningEffort | null | undefined;
-  if ('reasoningEffort' in body) {
-    const effort = readEffort(body.reasoningEffort);
-    if (effort === false) return c.json({ error: 'Invalid reasoning effort' }, 400);
-    reasoningEffort = effort;
-  }
-  let serviceTier: ServiceTier | null | undefined;
-  if ('serviceTier' in body) {
-    const tier = readServiceTier(body.serviceTier);
-    if (tier === false) return c.json({ error: 'Invalid service tier' }, 400);
-    serviceTier = tier;
-  }
-  let projectId: string | null | undefined;
-  if ('projectId' in body) {
-    const existing = await readSession(id);
-    if (existing?.bot && body.projectId !== null) return c.json({ error: 'XeckBots cannot belong to a project' }, 400);
-    if (body.projectId === null) projectId = null;
-    else if (typeof body.projectId !== 'string' || !(await getProject(body.projectId))) {
-      return c.json({ error: 'Unknown project' }, 400);
-    } else {
-      projectId = body.projectId;
-    }
-  }
-  let botSystemPrompt: string | undefined;
-  let botBadges: string[] | undefined;
-  if ('botSystemPrompt' in body) {
-    if (!existing.bot) return c.json({ error: 'Only a XeckBot instruction can be edited here' }, 400);
-    if (typeof body.botSystemPrompt !== 'string' || !body.botSystemPrompt.trim() || body.botSystemPrompt.trim().length > MAX_BOT_SYSTEM_PROMPT_CHARS) {
-      return c.json({ error: `Bot instruction must contain 1–${MAX_BOT_SYSTEM_PROMPT_CHARS} characters` }, 400);
-    }
-    botSystemPrompt = body.botSystemPrompt.trim();
-  }
-  if ('botBadges' in body) {
-    if (!existing.bot) return c.json({ error: 'Only a XeckBot profile can have badges' }, 400);
-    if (!Array.isArray(body.botBadges) || body.botBadges.length > MAX_XECKBOT_BADGES || body.botBadges.some((badge) => typeof badge !== 'string' || !badge.trim() || badge.trim().length > MAX_XECKBOT_BADGE_LENGTH)) {
-      return c.json({ error: `Use up to ${MAX_XECKBOT_BADGES} badges, each 1–${MAX_XECKBOT_BADGE_LENGTH} characters` }, 400);
-    }
-    botBadges = [...new Set((body.botBadges as string[]).map((badge) => badge.trim()))];
-  }
-  for (const key of ['pinned', 'archived']) {
-    if (key in body && typeof body[key] !== 'boolean') return c.json({ error: 'Invalid organization flag' }, 400);
-  }
-  if ('botColor' in body && (!existing.bot || !BOT_COLORS.includes(body.botColor as typeof BOT_COLORS[number]))) return c.json({ error: 'Invalid bot color' }, 400);
-  if ('botPurpose' in body && (!existing.bot || typeof body.botPurpose !== 'string' || !body.botPurpose.trim() || body.botPurpose.trim().length > MAX_BOT_PURPOSE_CHARS)) return c.json({ error: 'Invalid bot purpose' }, 400);
-  const session = await patchSession(id, { title, profile, reasoningEffort, serviceTier, projectId, botSystemPrompt, botBadges,
-    pinned: body.pinned as boolean | undefined, archived: body.archived as boolean | undefined,
-    botColor: body.botColor as typeof BOT_COLORS[number] | undefined, botPurpose: typeof body.botPurpose === 'string' ? body.botPurpose.trim() : undefined,
-  });
+  const parsed = await readSessionPatch(id, body, loaded.session);
+  if (!parsed.ok) return c.json({ error: parsed.error }, parsed.status);
+  const session = await patchSession(id, parsed.patch);
   if (!session) return c.json({ error: 'Session not found' }, 404);
   return c.json(session);
 });
@@ -310,6 +184,5 @@ sessionRoutes.get('/api/sessions/:id/stream', (c) => {
   // 404 tells the client "nothing is running", so it can fall back to the
   // persisted transcript instead of waiting on an empty stream.
   if (!liveChat) return c.json({ error: 'No active chat' }, 404);
-
   return streamSessionTurn(c, liveChat);
 });

@@ -96,12 +96,10 @@ function ModeSwitch() {
   );
 }
 export function Composer({ modelMenu }: { modelMenu: ReactNode }) {
-  const { draft, setDraft, send, stop, streaming, settings, queuedMessages, enqueueMessage, removeQueuedMessage, active, agents, draftAgentId } = useAppState();
+  const { draft, setDraft, send, stop, streaming, settings, queuedMessages, enqueueMessage, removeQueuedMessage, active, agents } = useAppState();
   const inputRef = useRef<HTMLTextAreaElement>(null);
   const [optionsOpen, setOptionsOpen] = useState(false);
-  const selectedAgent = agents.find((agent) => agent.id === (active?.agentId || draftAgentId));
   const canChooseAssistant = !active && agents.filter((agent) => !agent.botOnly).length > 1;
-  const hasPolicyOptions = (selectedAgent?.policies.length ?? 0) > 1;
   useEffect(() => { setOptionsOpen(false); }, [active?.id]);
   const [skills, setSkills] = useState<SkillRecord[] | null>(null);
   const [closedPrefix, setClosedPrefix] = useState<string | null>(null);
@@ -250,7 +248,8 @@ export function Composer({ modelMenu }: { modelMenu: ReactNode }) {
             }}
           />
           <div className="composer-foot">
-            {(canChooseAssistant || hasPolicyOptions) && <button type="button" className={ICON_BUTTON} aria-label={t('Chat options')} title={t('Chat options')} onClick={() => setOptionsOpen(true)}><IconSliders /></button>}
+            {canChooseAssistant && <button type="button" className={ICON_BUTTON} aria-label={t('Chat options')} title={t('Chat options')} onClick={() => setOptionsOpen(true)}><IconSliders /></button>}
+            <ModeSwitch />
             {modelMenu}
           </div>
         </div>
@@ -275,7 +274,6 @@ export function Composer({ modelMenu }: { modelMenu: ReactNode }) {
       {optionsOpen && <Dialog title={t('Chat options')} onClose={() => setOptionsOpen(false)}>
         <div className="flex flex-col gap-4 p-gutter">
           {canChooseAssistant && <div className="flex flex-wrap items-center justify-between gap-2"><span className="text-ui">{t('Assistant')}</span><AssistantPicker /></div>}
-          {hasPolicyOptions && <div className="flex flex-wrap items-center justify-between gap-2"><span className="text-ui">{t('Policy')}</span><ModeSwitch /></div>}
         </div>
       </Dialog>}
     </form>

@@ -1,5 +1,6 @@
 import { randomUUID } from 'node:crypto';
 import type { DialogResolution, DialogType, UserDialog } from '../../../../../shared/types.ts';
+import { hooksRegistered, permissionDecision } from '../hooks.ts';
 
 interface PendingEntry {
   dialog: UserDialog;
@@ -102,11 +103,30 @@ export function requestUserApproval(input: {
   title: string;
   prompt: string;
   details?: Record<string, unknown>;
+  toolName?: string;
+}): Promise<boolean> {
+  if (!hooksRegistered('PermissionRequest')) return presentApproval(input);
+  return approvalDecision(input).then((approved) => approved ?? presentApproval(input));
+}
+
+function presentApproval(input: {
+  sessionId: string;
+  signal?: AbortSignal;
+  title: string;
+  prompt: string;
+  details?: Record<string, unknown>;
 }): Promise<boolean> {
   return requestDialog({
     sessionId: input.sessionId, type: 'approval', title: input.title,
     prompt: input.prompt, details: input.details,
   }, input.signal).then((resolution) => resolution.approved === true);
+}
+
+async function approvalDecision(input: { sessionId: string; signal?: AbortSignal; toolName?: string }): Promise<boolean | undefined> {
+  const permission = await permissionDecision(input.sessionId, input.toolName, input.signal);
+  if (permission.kind === 'allow') return true;
+  if (permission.kind === 'deny') return false;
+  return undefined;
 }
 
 export function requestUserInput(input: {

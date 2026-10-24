@@ -30,6 +30,7 @@ import { CODING_WORKSPACE, WORKSPACE_BY_REF } from '../../catalog/workspaces.ts'
 import { HOST_MCP_TOOL_PREFIX, isBuiltinHostTool, serverSideName } from '../../tools/builtin/identity.ts';
 import { POLICY_BY_ID } from '../../catalog/policies.ts';
 import { policyForId, maxToolRoundsForPolicy } from '../../workspaces/library-policy.ts';
+import { hostHooks } from '../hooks.ts';
 
 /** All session kinds resolve the same workspace, instructions, policy and model setup. */
 export interface AgentSetupInput {
@@ -95,6 +96,7 @@ export async function prepareSessionAgent(sessionId: string, input: AgentSetupIn
   const create = async (): Promise<SessionAgent> => {
     const continuedReplies: string[] = [];
     let builder = new AgentBuilder()
+      .Hooks(hostHooks)
       .Name(storedSession?.bot ? storedSession.botConversation?.responderTitle ?? storedSession.title : AGENT_NAME)
       .WithModelProfile(libraryProfile)
       .Provider(createLLMProvider(libraryProfile, apiKey))

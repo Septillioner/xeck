@@ -176,9 +176,13 @@
 .context-block { display: block; width: 100%; max-width: 100%; min-width: 0; margin: 0; overflow: auto; white-space: pre-wrap; overflow-wrap: anywhere; word-break: break-word; border-radius: var(--radius-control); background: var(--color-code); padding: 8px 10px; font-family: ui-monospace, SFMono-Regular, Menlo, Consolas, monospace; font-size: var(--text-small); line-height: 1.45; color: var(--color-ink); }
 .context-empty { margin: 0 8px 12px; font-size: var(--text-ui); color: var(--color-muted); }
 .center-stage { flex: 1; min-height: 0; display: flex; align-items: safe center; justify-content: center; overflow-y: auto; padding: 16px; }
-.hero-stage { max-width: 38rem; margin: 0 auto 20px; text-align: center; }
-.hero-stage h2 { max-width: 24ch; margin-inline: auto; font-size: var(--text-heading); font-weight: 600; line-height: 1.25; letter-spacing: -0.02em; text-wrap: balance; }
-.hero-stage p { max-width: 40ch; margin: 6px auto 0; font-size: var(--text-ui); line-height: 1.5; color: var(--color-muted); text-wrap: balance; }
+.display-title { margin: 0; max-width: 18ch; font-size: var(--text-display); font-weight: 600; line-height: 1.15; letter-spacing: -0.03em; text-wrap: balance; }
+.hero-stage { display: flex; align-items: flex-start; gap: 16px; max-width: 38rem; margin: 0 0 28px; text-align: left; }
+.hero-mark { flex: none; margin-top: 0.22em; color: var(--color-accent); }
+.starter-list { display: flex; flex-direction: column; margin: 0 0 28px; }
+.starter-row { display: block; width: 100%; padding: 8px 0; text-align: left; font-size: var(--text-lead); line-height: 1.45; color: var(--color-muted); }
+.starter-row:hover { color: var(--color-ink); }
+.bot-purpose { display: -webkit-box; -webkit-line-clamp: 2; -webkit-box-orient: vertical; overflow: hidden; }
 /* Debug pane identity: agent + workspace@version, monospace reads as tech. */
 .context-identity { margin: 0 12px 8px; font-family: ui-monospace, SFMono-Regular, Menlo, Consolas, monospace; font-size: var(--text-micro); color: var(--color-muted); }
 .column { width: 100%; max-width: var(--spacing-transcript-max); margin: 0 auto; }
