@@ -28,6 +28,8 @@ jobs:
     steps:
       - uses: actions/checkout@v4
         with:
+          # Same reason as CI: shallow submodule checkout cannot fetch a pinned SHA.
+          fetch-depth: 0
           submodules: recursive
       - uses: actions/setup-node@v4
         with:

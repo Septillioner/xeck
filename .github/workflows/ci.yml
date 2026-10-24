@@ -17,6 +17,10 @@ jobs:
       - name: Check out repository and submodules
         uses: actions/checkout@v4
         with:
+          # A depth-1 submodule fetch only has the remote tip, then Git asks
+          # GitHub for the pinned SHA. GitHub answers "not our ref" unless that
+          # SHA is a branch or tag tip.
+          fetch-depth: 0
           submodules: recursive
 
       - name: Set up Node.js
