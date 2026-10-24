@@ -6,6 +6,7 @@ import { readBody } from './request.ts';
 import { streamSessionTurn } from './session-stream.ts';
 import type { MessageEdit } from '../../../shared/types.ts';
 import { MessageEditConflict } from '../agent/runtime/sessions/edit-message.ts';
+import { readImageAttachments } from '../../../shared/images.ts';
 
 /** HTTP starts the same session turn used by delegation and subscribes to it. */
 export async function postMessage(c: Context) {
@@ -22,7 +23,10 @@ export async function postMessage(c: Context) {
     edit = { messageId: value.messageId, expectedContent: value.expectedContent, lastMessageId: value.lastMessageId };
   }
   try {
-    const { liveChat } = await startSessionTurn(session, content, undefined, undefined, edit);
+    let images;
+    try { images = readImageAttachments(body?.images); }
+    catch (error) { return c.json({ error: error instanceof Error ? error.message : 'Invalid photo attachment.' }, 400); }
+    const { liveChat } = await startSessionTurn(session, content, undefined, undefined, edit, images);
     return streamSessionTurn(c, liveChat);
   } catch (error) {
     if (error instanceof SessionTurnInputError) return c.json({ error: error.message }, 400);

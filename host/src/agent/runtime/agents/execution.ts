@@ -1,5 +1,6 @@
 import { ChatAbortedError, isToolUseUnsupportedError, type Agent, type TokenUsage, type ContinuationOutcome, type CompiledRequest, type ContextEstimate } from 'poyraz';
 import type { ContextParts, LibraryMessage, ModelProfile } from '../../../../../shared/types.ts';
+import type { ImageAttachment } from '../../../../../shared/images.ts';
 import { messagesFromAgent } from '../../../stores/sessions.ts';
 import { withContextParts, type HostStreamEvent } from '../../../domain/stream-events.ts';
 import { prepareSessionAgent, type AgentSetupInput, type SessionAgent } from './setup.ts';
@@ -40,7 +41,7 @@ export async function summarizeChat(input: AgentTurnInput): Promise<{ aborted: b
   };
 }
 
-export async function runChat(input: AgentTurnInput & { content: string }): Promise<ChatTurnResult> {
+export async function runChat(input: AgentTurnInput & { content: string; images?: ImageAttachment[] }): Promise<ChatTurnResult> {
   const includeTools = !modelsWithoutToolUse.has(modelKey(input.profile));
   const entry = await input.turn.getAgent(input, includeTools);
   try {
@@ -55,11 +56,12 @@ export async function runChat(input: AgentTurnInput & { content: string }): Prom
 
 async function finishChat(
   entry: SessionAgent,
-  input: AgentTurnInput & { content: string },
+  input: AgentTurnInput & { content: string; images?: ImageAttachment[] },
 ): Promise<ChatTurnResult> {
   const { agent, continuedReplies: replies } = entry;
   try {
     const result = await agent.chat(input.content, {
+      images: input.images,
       signal: input.turn.signal,
       onEvent: (event) => {
         if (event.type !== 'context.usage') {

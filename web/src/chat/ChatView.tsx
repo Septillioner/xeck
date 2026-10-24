@@ -1,4 +1,5 @@
 import { t } from '../i18n/index.ts';
+import { sameImages, type ImageAttachment } from '../../../shared/images.ts';
 import { useEffect, useMemo, useRef, useState, type ComponentType } from 'react';
 import type { ContextTree, Project, ProviderKind, StoredSession, TranscriptMessage } from '../../../shared/types.ts';
 import { maxContextThreshold } from '../../../shared/model-context.ts';
@@ -96,7 +97,7 @@ export function ChatView() {
   // No turn means nothing to reveal: the hook then gets an empty target and
   // shows every text in full.
   const revealedChars = useStreamRevealLength(live?.content ?? '');
-  const messages = visibleMessages(active?.messages ?? [], live ? streaming?.userContent ?? '' : null);
+  const messages = visibleMessages(active?.messages ?? [], live ? streaming?.userContent ?? '' : null, live ? streaming?.userImages : undefined);
   const liveBlocksKey = live ? live.blocks.map((block) => block.kind === 'tool' ? `t:${block.callId}:${block.pending ? '1' : '0'}:${block.label}` : block.kind === 'dialog' ? `d:${block.dialogId}:${block.resolved ? '1' : '0'}` : block.kind === 'subagent' ? `s:${block.sessionId}:${block.status}:${block.activity}` : `${block.kind}:${block.text.length}`).join('|') : '';
 
   const followBottom = useRef(true);
@@ -340,16 +341,17 @@ function selectedCall(
   return null;
 }
 
-function visibleMessages(messages: TranscriptMessage[], pendingUser: string | null) {
-  if (!pendingUser) return messages;
+function visibleMessages(messages: TranscriptMessage[], pendingUser: string | null, images: ImageAttachment[] = []) {
+  if (pendingUser === null || (!pendingUser && !images.length)) return messages;
   const last = messages.at(-1);
-  if (last?.role === 'user' && last.content === pendingUser) return messages;
+  if (last?.role === 'user' && last.content === pendingUser && sameImages(last.images, images)) return messages;
   return [
     ...messages,
     {
       id: 'pending-user',
       role: 'user' as const,
       content: pendingUser,
+      ...(images.length ? { images } : {}),
       createdAt: new Date().toISOString(),
     },
   ];

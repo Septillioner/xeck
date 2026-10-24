@@ -1,4 +1,5 @@
 import type { MessageEdit } from '../../../shared/types.ts';
+import type { ImageAttachment } from '../../../shared/images.ts';
 import { useCallback, useRef, type Dispatch, type MutableRefObject, type SetStateAction } from 'react';
 import type {
   AgentPublic,
@@ -41,6 +42,7 @@ export function useMessageSender({
   };
   draftRefs: {
     content: MutableRefObject<string>;
+    images: MutableRefObject<ImageAttachment[]>;
     profile: MutableRefObject<ModelProfile | null>;
     effort: MutableRefObject<ReasoningEffort | null>;
     serviceTier: MutableRefObject<ServiceTier | null>;
@@ -58,6 +60,7 @@ export function useMessageSender({
   };
   setters: {
     setDraft: StateSetter<string>;
+    setDraftImages: StateSetter<ImageAttachment[]>;
     setDraftProjectId: StateSetter<string | null>;
     setDraftProfile: StateSetter<ModelProfile | null>;
     setDraftEffort: StateSetter<ReasoningEffort | null>;
@@ -71,12 +74,13 @@ export function useMessageSender({
   reloadAfterAbort: (sessionId: string) => Promise<void>;
 }) {
   const creating = useRef(false);
-  const runSend = useCallback(async (content: string, clearDraft = true, feedback?: { onAccepted?: () => void; onError?: (message: string) => void; edit?: MessageEdit }) => {
+  const runSend = useCallback(async (content: string, clearDraft = true, feedback?: { images?: ImageAttachment[]; onAccepted?: () => void; onError?: (message: string) => void; edit?: MessageEdit }) => {
     if (creating.current || (active && sessionRefs.activeId.current !== active.id)) { feedback?.onError?.(t('Wait for the current reply to finish')); return; }
     const version = sessionRefs.navigationVersion.current;
     let draftCleared = false;
     const trimmed = content.trim();
-    if (!trimmed || active?.botConversation) return;
+    const images = feedback?.edit ? [] : (feedback?.images ?? (clearDraft ? draftRefs.images.current : []));
+    if ((!trimmed && !images.length) || active?.botConversation) return;
     if (active && streamRuntime.streams.current[active.id]) { feedback?.onError?.(t('Wait for the current reply to finish')); return; }
     setters.setError(null);
 
@@ -112,7 +116,7 @@ export function useMessageSender({
         creating.current = false;
         setters.setSessions((current) => [toSummary(session as StoredSession), ...current]);
         if (sessionRefs.navigationVersion.current !== version || sessionRefs.activeId.current !== null) return;
-        if (clearDraft) { setters.setDraft(''); draftCleared = true; }
+        if (clearDraft) { setters.setDraft(''); setters.setDraftImages([]); draftCleared = true; }
         setters.setDraftProjectId(null);
         setters.setDraftProfile(null);
         setters.setDraftEffort(null);
@@ -144,12 +148,13 @@ export function useMessageSender({
     const controller = new AbortController();
     streamRuntime.aborts.current.set(sessionId, controller);
     streamRuntime.clearTerminal(sessionId);
-    if (clearDraft && !draftCleared) setters.setDraft('');
+    if (clearDraft && !draftCleared) { setters.setDraft(''); setters.setDraftImages([]); }
     setters.setStreams((current) => ({
       ...current,
       [sessionId]: {
         sessionId,
         userContent: contextSummary || feedback?.edit ? '' : trimmed,
+        userImages: contextSummary || feedback?.edit ? [] : images,
         content: '',
         reasoning: '',
         phase: contextSummary ? 'summarizing' : null,
@@ -167,9 +172,15 @@ export function useMessageSender({
         if (!accepted) { accepted = true; feedback?.onAccepted?.(); }
         if (event.event === 'done' && event.data.aborted) stoppedByUser = true;
         streamRuntime.applyEvent(sessionId, startedAt, event);
-      }, feedback?.edit);
+      }, feedback?.edit, images);
     } catch (cause) {
-      if (!accepted) feedback?.onError?.(cause instanceof Error ? cause.message : t('Request failed'));
+      if (!accepted) {
+        feedback?.onError?.(cause instanceof Error ? cause.message : t('Request failed'));
+        if (clearDraft && !feedback?.edit && sessionRefs.activeId.current === sessionId) {
+          setters.setDraft((current) => current || trimmed);
+          setters.setDraftImages((current) => current.length ? current : images);
+        }
+      }
       if (controller.signal.aborted) {
         streamRuntime.markTerminal(sessionId, 'cancelled');
         try {
@@ -221,7 +232,7 @@ export function useMessageSender({
     reloadAfterAbort,
   ]);
 
-  const send = useCallback(async (content?: string, options?: { preserveDraft?: boolean; onAccepted?: () => void; onError?: (message: string) => void; edit?: MessageEdit }) => {
+  const send = useCallback(async (content?: string, options?: { images?: ImageAttachment[]; preserveDraft?: boolean; onAccepted?: () => void; onError?: (message: string) => void; edit?: MessageEdit }) => {
     await runSend(typeof content === 'string' ? content : draftRefs.content.current, !options?.preserveDraft, options);
   }, [runSend, draftRefs]);
 

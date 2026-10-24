@@ -192,6 +192,7 @@ export interface AgentMessageSource {
 }
 
 export interface TranscriptMessage {
+  images?: import('./images.ts').ImageAttachment[];
   /** Verified model-history prefix immediately before this user turn. */
   replayBoundary?: { length: number; digest: string };
   id: string;
@@ -294,6 +295,7 @@ export interface ChangedFile {
 
 /** Model replay record. providerMeta is opaque and must round-trip. */
 export interface LibraryMessage {
+  images?: Pick<import('./images.ts').ImageAttachment, 'mimeType' | 'data'>[];
   role: string;
   content: string;
   tool_calls?: unknown;

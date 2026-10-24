@@ -1,4 +1,5 @@
 import { isContextSummary } from '../../../../../shared/commands.ts';
+import { readImageAttachments, type ImageAttachment } from '../../../../../shared/images.ts';
 import { activityLabel } from '../../../../../shared/activity.ts';
 import { isLocalProvider, type StoredSession, type SubagentUpdate, type LibraryMessage } from '../../../../../shared/types.ts';
 import type { HostStreamEvent } from '../../../domain/stream-events.ts';
@@ -37,13 +38,16 @@ export interface SessionTurnOutcome {
 }
 
 /** Every session uses this lifecycle; HTTP and delegation only start and observe it. */
-export async function startSessionTurn(session: StoredSession, content: string, parentSignal?: AbortSignal, messageSource?: AgentMessageSource, edit?: MessageEdit): Promise<{
+export async function startSessionTurn(session: StoredSession, content: string, parentSignal?: AbortSignal, messageSource?: AgentMessageSource, edit?: MessageEdit, images: ImageAttachment[] = []): Promise<{
   liveChat: LiveChat;
   completion: Promise<SessionTurnOutcome>;
 }> {
   const childOrigin = session.origin?.by === 'agent' ? session.origin : undefined;
   if (session.botConversation && !messageSource) throw new SessionTurnInputError('Bot conversations are managed by XeckBots.');
-  if (!content.trim()) throw new SessionTurnInputError('Message is empty');
+  try { images = readImageAttachments(images); }
+  catch (error) { throw new SessionTurnInputError(error instanceof Error ? error.message : 'Invalid photo attachment.'); }
+  if (!content.trim() && !images.length) throw new SessionTurnInputError('Message is empty');
+  if (images.length && isContextSummary(content)) throw new SessionTurnInputError('Send photos separately from the summary command.');
   if (content.length > MAX_MESSAGE_CHARS) throw new SessionTurnInputError('Message is too long');
   if (session.agentId && !AGENT_BY_ID[session.agentId]) throw new SessionTurnInputError('This session uses an unavailable agent. Start a new chat.');
   if (!session.profile.model.trim()) throw new SessionTurnInputError('Choose a model for this chat');
@@ -78,6 +82,7 @@ export async function startSessionTurn(session: StoredSession, content: string, 
       if (edit) {
         const previousMessages = session.messages;
         editMessage(session, edit, content);
+        images = session.messages.at(-1)?.images ?? [];
         // Children of discarded turns must not publish into the regenerated turn.
         for (const message of previousMessages.slice(session.messages.length - 1)) {
           for (const block of messageBlocks(message)) {
@@ -88,11 +93,11 @@ export async function startSessionTurn(session: StoredSession, content: string, 
         }
       }
       else {
-        const message = applyUserTurn(session, content, messageSource);
-        message.replayBoundary ??= replayBoundary(libraryForReplay(session, modelContent));
+        const message = applyUserTurn(session, content, messageSource, images);
+        message.replayBoundary ??= replayBoundary(libraryForReplay(session, modelContent, images));
       }
       if (childOrigin) { session.subagentStatus = 'running'; delete session.subagentError; }
-      libraryMessages = edit ? session.libraryMessages : libraryForReplay(session, modelContent);
+      libraryMessages = edit ? session.libraryMessages : libraryForReplay(session, modelContent, images);
       // Persist aligned profile before a tool can create children from this session.
       await saveSession(session);
     }
@@ -159,7 +164,7 @@ export async function startSessionTurn(session: StoredSession, content: string, 
     try {
       emit('meta', { id: session.id, title: session.title, ...(edit ? { session: structuredClone(session) } : {}) });
       publishChild('Thinking');
-      if (firstTurn && !session.bot && !contextSummary && !childOrigin && !messageSource) startChatTitle({
+      if (firstTurn && content.trim() && !session.bot && !contextSummary && !childOrigin && !messageSource) startChatTitle({
         sessionId: session.id, question: content,
         onTitle: (title) => { if (!liveChat.closed) emit('meta', { id: session.id, title }); },
       });
@@ -204,7 +209,7 @@ export async function startSessionTurn(session: StoredSession, content: string, 
         emit(event.type, event);
       };
       const result = await runChat({
-        ...agentInput, content: modelContent,
+        ...agentInput, content: modelContent, images,
         onEvent,
       });
       if (result.continuation?.reason === OPEN_STEPS_HANDOFF) {

@@ -10,6 +10,7 @@ import { SubagentCard } from './SubagentCard.tsx';
 import { revealedBlockText } from './reveal-text.ts';
 import { CompactToolUsage, ToolUsage, type ToolInspectionProps } from './ToolUsage.tsx';
 import { MessageActions } from './MessageActions.tsx';
+import { PhotoAttachments } from '../PhotoAttachments.tsx';
 
 export interface ToolViewProps {
   hideToolUsages?: boolean;
@@ -47,7 +48,8 @@ export function MessageView({
               {t("From")} {source.title}
             </button>
           )}
-          <p>{message.content}</p>
+          {message.images?.length ? <PhotoAttachments images={message.images} /> : null}
+          {message.content && <p>{message.content}</p>}
         </div><MessageActions message={message} /></div>
       </article>
     );

@@ -29,6 +29,7 @@ export interface RateLimitWaitState {
 }
 
 export interface StreamingState {
+  userImages?: import('../../../shared/images.ts').ImageAttachment[];
   sessionId: string;
   userContent: string;
   content: string;

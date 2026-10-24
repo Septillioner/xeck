@@ -1,4 +1,5 @@
 import { Hono } from 'hono';
+import { bodyLimit } from 'hono/body-limit';
 import { scaleCategoriesToTotal } from 'poyraz';
 import { isSessionPolicyId, type ContextParts, type StoredSession } from '../../../../shared/types.ts';
 import { abortChat, dropAgent } from '../../agent/runtime/agents/pool.ts';
@@ -175,7 +176,7 @@ sessionRoutes.post('/api/sessions/:id/dialogs/:dialogId/respond', async (c) => {
   return c.json({ ok: true });
 });
 
-sessionRoutes.post('/api/sessions/:id/messages', postMessage);
+sessionRoutes.post('/api/sessions/:id/messages', bodyLimit({ maxSize: 16 * 1024 * 1024, onError: (c) => c.json({ error: 'Photo upload is too large.' }, 413) }), postMessage);
 
 sessionRoutes.get('/api/sessions/:id/stream', (c) => {
   const id = c.req.param('id');

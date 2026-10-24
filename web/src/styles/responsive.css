@@ -12,6 +12,7 @@
    buttons would be unreachable. The sidebar shows them for the whole row
    instead; the title already reserves room for them (padding-right: 4.25rem). */
 @media (hover: none), (pointer: coarse) {
+  .photo-remove { width: 36px; height: 36px; }
   .sidebar-workspaces button { min-height: 44px; }
   .mode-combobox > .menu > .mode-trigger, .model-pill { min-height: 36px; }
   .send-orb { width: 36px; height: 36px; }

@@ -21,6 +21,8 @@ A local-first desktop app with personal XeckBots, connected tools, and your choi
 
 ## Features
 
+- **Photos in chat:** attach PNG, JPEG, or WebP images using the photo button, clipboard paste, or drag and drop. Preview and remove photos before sending; sent photos stay in the local conversation history. Use a vision-capable model. Up to four photos per message, 5 MB each and 10 MB total.
+
 - **Chat with your preferred models.** Configure model providers and organize conversations by project.
 - **Create your own XeckBots.** Give each bot a name, color, and purpose, with its own generated instructions.
 - **Let bots collaborate.** XeckBots exchange messages in dedicated bot conversations.

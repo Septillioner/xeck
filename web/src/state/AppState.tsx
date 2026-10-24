@@ -95,7 +95,7 @@ export function AppStateProvider({ children }: { children: ReactNode }) {
   const [sidebarOpen, setSidebarOpen] = useState(false);
   const [debugOpen, setDebugOpenState] = useState(false);
   const [draftProjectId, setDraftProjectId] = useState<string | null>(null);
-  const [draft, setDraft, removeDraft] = useChatDrafts(active?.id ?? `new:${draftProjectId ?? 'chat'}`);
+  const [draft, setDraft, removeDraft, draftImages, setDraftImages] = useChatDrafts(active?.id ?? `new:${draftProjectId ?? 'chat'}`);
   const [draftProfile, setDraftProfile] = useState<ModelProfile | null>(null);
   const [draftEffort, setDraftEffort] = useState<ReasoningEffort | null>(null);
   const [draftServiceTier, setDraftServiceTier] = useState<ServiceTier | null>(null);
@@ -144,6 +144,8 @@ export function AppStateProvider({ children }: { children: ReactNode }) {
   const projectsRef = useRef(projects);
   const sessionsRef = useRef(sessions);
   const draftRef = useRef(draft);
+  const draftImagesRef = useRef(draftImages);
+  draftImagesRef.current = draftImages;
   const draftProfileRef = useRef(draftProfile);
   const draftEffortRef = useRef(draftEffort);
   const draftServiceTierRef = useRef(draftServiceTier);
@@ -161,6 +163,7 @@ export function AppStateProvider({ children }: { children: ReactNode }) {
   }), []);
   const senderDraftRefs = useMemo(() => ({
     content: draftRef,
+    images: draftImagesRef,
     profile: draftProfileRef,
     effort: draftEffortRef,
     serviceTier: draftServiceTierRef,
@@ -170,6 +173,7 @@ export function AppStateProvider({ children }: { children: ReactNode }) {
   }), []);
   const senderSetters = useMemo(() => ({
     setDraft,
+    setDraftImages,
     setDraftProjectId,
     setDraftProfile,
     setDraftEffort,
@@ -517,14 +521,15 @@ export function AppStateProvider({ children }: { children: ReactNode }) {
     rememberSummary,
     reloadAfterAbort,
   });
-  const enqueueMessage = useCallback((content: string) => {
+  const enqueueMessage = useCallback((content: string, images: import('../../../shared/images.ts').ImageAttachment[] = []) => {
     const sessionId = activeId.current;
     const trimmed = content.trim();
-    if (!sessionId || !trimmed) return;
+    if (!sessionId || (!trimmed && !images.length)) return;
 
     const message: QueuedMessage = {
       id: String(nextQueuedMessageId.current),
       content: trimmed,
+      ...(images.length ? { images } : {}),
     };
     nextQueuedMessageId.current += 1;
     setQueuedMessagesBySession((current) => ({
@@ -577,7 +582,7 @@ export function AppStateProvider({ children }: { children: ReactNode }) {
       return next;
     });
 
-    void runSend(nextMessage.content, false).finally(() => {
+    void runSend(nextMessage.content, false, { images: nextMessage.images }).finally(() => {
       setDrainingQueuedSessions((current) => {
         const next = { ...current };
         delete next[sessionId];
@@ -621,9 +626,10 @@ export function AppStateProvider({ children }: { children: ReactNode }) {
   const retry = useCallback(async () => {
     const last = active?.messages.at(-1);
     const content = last?.role === 'user' ? last.content : streaming?.userContent;
-    if (!content) return;
+    const images = last?.role === 'user' ? last.images : streaming?.userImages;
+    if (!content && !images?.length) return;
     setError(null);
-    await runSend(content);
+    await runSend(content ?? '', true, { images });
   }, [active, runSend, streaming]);
 
   const stop = useCallback(() => {
@@ -740,6 +746,8 @@ export function AppStateProvider({ children }: { children: ReactNode }) {
   );
 
   const value: AppStateValue = {
+    draftImages,
+    setDraftImages,
     ready,
     loadError,
     sessions,

@@ -1,4 +1,5 @@
 import type { MessageEdit } from '../../../shared/types.ts';
+import type { ImageAttachment } from '../../../shared/images.ts';
 import type { BotGroup } from '../../../shared/bot-groups.ts';
 import type {
   AgentPublic,
@@ -358,11 +359,12 @@ export async function streamMessage(
   signal: AbortSignal,
   onEvent: (event: StreamEvent) => void,
   edit?: MessageEdit,
+  images?: ImageAttachment[],
 ): Promise<void> {
   const response = await fetch(`${API_BASE_URL}/api/sessions/${sessionId}/messages`, {
     method: 'POST',
     headers: { 'Content-Type': 'application/json' },
-    body: JSON.stringify({ content, ...(edit ? { edit } : {}) }),
+    body: JSON.stringify({ content, ...(edit ? { edit } : {}), ...(images?.length ? { images } : {}) }),
     signal,
   });
 

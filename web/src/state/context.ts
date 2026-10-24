@@ -1,4 +1,5 @@
 import type { MessageEdit } from '../../../shared/types.ts';
+import type { ImageAttachment } from '../../../shared/images.ts';
 import type { BotGroup } from '../../../shared/bot-groups.ts';
 import { createContext, useContext } from 'react';
 import { ApiError } from '../api/client.ts';
@@ -29,6 +30,7 @@ import type { StreamingState } from './live-types.ts';
 export type ArtifactTab = 'plans' | 'changes';
 
 export interface QueuedMessage {
+  images?: ImageAttachment[];
   id: string;
   content: string;
 }
@@ -73,6 +75,8 @@ export interface AppStateValue {
   openSettings: (tab?: SettingsTab) => void;
   closeSettings: () => void;
   draft: string;
+  draftImages: ImageAttachment[];
+  setDraftImages: (value: ImageAttachment[] | ((current: ImageAttachment[]) => ImageAttachment[])) => void;
   setDraft: (value: string) => void;
   /** Catalog behind the empty-state agent picker. */
   agents: AgentPublic[];
@@ -137,9 +141,9 @@ export interface AppStateValue {
   setSessionEffort: (effort: ReasoningEffort | null) => Promise<void>;
   setSessionServiceTier: (tier: ServiceTier | null) => Promise<void>;
   queuedMessages: QueuedMessage[];
-  enqueueMessage: (content: string) => void;
+  enqueueMessage: (content: string, images?: ImageAttachment[]) => void;
   removeQueuedMessage: (id: string) => void;
-  send: (content?: string, options?: { preserveDraft?: boolean; onAccepted?: () => void; onError?: (message: string) => void; edit?: MessageEdit }) => Promise<void>;
+  send: (content?: string, options?: { images?: ImageAttachment[]; preserveDraft?: boolean; onAccepted?: () => void; onError?: (message: string) => void; edit?: MessageEdit }) => Promise<void>;
   retry: () => Promise<void>;
   stop: () => void;
   respondDialog: (dialogId: string, response: { approved?: boolean; response?: string; selections?: string[]; other?: string }) => Promise<void>;

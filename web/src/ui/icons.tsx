@@ -1,5 +1,6 @@
 import {
   ArrowRight,
+  ImagePlus,
   Bookmark,
   Check,
   ChevronRight,
@@ -92,6 +93,7 @@ export function IconSpinner({ className }: IconProps) {
 }
 
 export const IconMenu = icon(Menu);
+export const IconAddPhoto = icon(ImagePlus);
 export const IconMoreVertical = icon(EllipsisVertical);
 export const IconChat = icon(MessageSquare);
 export const IconStar = icon(Star);

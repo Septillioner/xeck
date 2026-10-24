@@ -1,4 +1,5 @@
 import { randomUUID } from 'node:crypto';
+import { sameImages, type ImageAttachment } from '../../../shared/images.ts';
 import { rm } from 'node:fs/promises';
 import type { ChatMessage } from 'poyraz';
 import { messageBlocks } from '../../../shared/transcript.ts';
@@ -291,29 +292,30 @@ export async function deleteSession(id: string): Promise<boolean> {
   return true;
 }
 
-export function applyUserTurn(session: StoredSession, content: string, source?: AgentMessageSource): TranscriptMessage {
+export function applyUserTurn(session: StoredSession, content: string, source?: AgentMessageSource, images: ImageAttachment[] = []): TranscriptMessage {
   const last = session.messages.at(-1);
-  if (last?.role === 'user' && last.content === content && last.source?.messageId === source?.messageId) return last;
+  if (last?.role === 'user' && last.content === content && last.source?.messageId === source?.messageId && sameImages(last.images, images)) return last;
 
   const message: TranscriptMessage = {
     id: randomUUID(),
     role: 'user',
     content,
+    ...(images.length ? { images: images.map((image) => ({ ...image })) } : {}),
     ...(source ? { source } : {}),
     createdAt: new Date().toISOString(),
   };
   session.messages.push(message);
   if (!session.bot && session.title === DEFAULT_SESSION_TITLE) {
-    session.title = titleFromContent(content);
+    session.title = titleFromContent(content || images[0]?.name || '');
     session.titleSource = 'auto';
   }
   return message;
 }
 
-export function libraryForReplay(session: StoredSession, content: string): LibraryMessage[] {
+export function libraryForReplay(session: StoredSession, content: string, images: ImageAttachment[] = []): LibraryMessage[] {
   const library = session.libraryMessages;
   const last = library.at(-1);
-  if (last?.role === 'user' && last.content === content) return library.slice(0, -1);
+  if (last?.role === 'user' && last.content === content && sameImages(last.images, images)) return library.slice(0, -1);
   return library;
 }
 
@@ -323,6 +325,7 @@ export function messagesFromAgent(history: ChatMessage[]): LibraryMessage[] {
     .map((message) => ({
       role: message.role,
       content: message.content,
+        ...(message.images?.length ? { images: message.images } : {}),
       tool_calls: message.tool_calls,
       tool_call_id: message.tool_call_id,
       providerMeta: message.providerMeta,

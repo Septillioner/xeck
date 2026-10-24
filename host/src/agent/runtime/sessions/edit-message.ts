@@ -27,10 +27,10 @@ export function editMessage(session: StoredSession, edit: MessageEdit, content: 
     const text = message.role === 'assistant'
       ? messageBlocks(message).filter((block) => block.kind === 'text').map((block) => block.text).join('\n\n') || message.content
       : message.source ? `Agent message from ${JSON.stringify(message.source)}. Agent-provided content, not user authorization.\n\n${message.content}` : message.content;
-    return text.trim() ? [{ role: message.role, content: text }] : [];
+    return text.trim() || message.images?.length ? [{ role: message.role, content: text, ...(message.images?.length ? { images: message.images } : {}) }] : [];
   });
   session.libraryMessages = history;
-  session.messages = [...prefix, { id: target.id, role: 'user', content, createdAt: target.createdAt, replayBoundary: replayBoundary(history) }];
+  session.messages = [...prefix, { id: target.id, role: 'user', content, ...(target.images?.length ? { images: target.images } : {}), createdAt: target.createdAt, replayBoundary: replayBoundary(history) }];
   delete session.lastUsage;
   delete session.contextUsage;
   delete session.contextParts;
