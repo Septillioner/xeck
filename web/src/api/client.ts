@@ -222,13 +222,25 @@ export async function putRules(rules: RuleRecord[]): Promise<RuleRecord[]> {
   return body.rules;
 }
 
-export async function listMemories(): Promise<MemoryRecord[]> {
-  const body = await request<{ memories: MemoryRecord[] }>('/api/memories');
+export interface MemoryScopes { bots: { id: string; name: string }[]; projects: { id: string; name: string }[] }
+
+export async function listMemoryScopes(): Promise<MemoryScopes> {
+  return request<MemoryScopes>('/api/memory-scopes');
+}
+
+function memoryScopeQuery(scope: string): string {
+  if (scope === 'user') return '';
+  const [kind, id] = scope.split(':', 2);
+  return `?scope=${encodeURIComponent(kind)}&id=${encodeURIComponent(id ?? '')}`;
+}
+
+export async function listMemories(scope = 'user'): Promise<MemoryRecord[]> {
+  const body = await request<{ memories: MemoryRecord[] }>(`/api/memories${memoryScopeQuery(scope)}`);
   return body.memories;
 }
 
-export async function putMemories(memories: MemoryWrite[]): Promise<MemoryRecord[]> {
-  const body = await request<{ memories: MemoryRecord[] }>('/api/memories', { method: 'PUT', body: { memories } });
+export async function putMemories(memories: MemoryWrite[], scope = 'user'): Promise<MemoryRecord[]> {
+  const body = await request<{ memories: MemoryRecord[] }>(`/api/memories${memoryScopeQuery(scope)}`, { method: 'PUT', body: { memories } });
   return body.memories;
 }
 

@@ -15,7 +15,7 @@ import {
   MAX_MEMORY_TITLE_LENGTH,
   MEMORY_SNIPPET_CHARS,
 } from '../infra/limits.ts';
-import { memoriesPath } from '../infra/data-dir.ts';
+import { memoriesPath, scopedMemoriesPath } from '../infra/data-dir.ts';
 import { readJson, writeJson } from '../infra/json-file.ts';
 import { createMutex } from '../infra/mutex.ts';
 
@@ -50,6 +50,9 @@ export interface MemoryWriteResult {
   status: 'created' | 'updated' | 'deleted';
 }
 
+/** Memory visibility boundary. IDs come from trusted session/project records, never model arguments. */
+export type MemoryScope = { kind: 'user' } | { kind: 'bot' | 'project'; id: string };
+
 interface MemoryDraft {
   id?: string;
   title: string;
@@ -59,22 +62,22 @@ interface MemoryDraft {
   source?: string;
 }
 
-export async function readMemories(): Promise<MemoryRecord[]> {
-  return exclusive(() => loadMemories());
+export async function readMemories(scope: MemoryScope = { kind: 'user' }): Promise<MemoryRecord[]> {
+  return exclusive(() => loadMemories(scope));
 }
 
-export async function writeMemories(value: unknown): Promise<MemoryRecord[]> {
+export async function writeMemories(value: unknown, scope: MemoryScope = { kind: 'user' }): Promise<MemoryRecord[]> {
   return exclusive(async () => {
-    const current = await loadMemories();
+    const current = await loadMemories(scope);
     const next = reconcileMemories(value, current, Date.now());
-    await saveMemories(next);
+    await saveMemories(next, scope);
     return next;
   });
 }
 
-export async function upsertMemory(input: MemoryDraft): Promise<MemoryWriteResult> {
+export async function upsertMemory(input: MemoryDraft, scope: MemoryScope = { kind: 'user' }): Promise<MemoryWriteResult> {
   return exclusive(async () => {
-    const current = await loadMemories();
+    const current = await loadMemories(scope);
     const byId = new Map(current.map((memory) => [memory.id, memory]));
     const applied = applyDraft(input, byId, Date.now());
     if (applied.status === 'created' && current.length >= MAX_MEMORY_COUNT) {
@@ -82,27 +85,27 @@ export async function upsertMemory(input: MemoryDraft): Promise<MemoryWriteResul
     }
     const next = current.filter((memory) => memory.id !== applied.record.id);
     next.push(applied.record);
-    await saveMemories(next);
+    await saveMemories(next, scope);
     return { id: applied.record.id, status: applied.status };
   });
 }
 
-export async function deleteMemory(id: string): Promise<MemoryWriteResult> {
+export async function deleteMemory(id: string, scope: MemoryScope = { kind: 'user' }): Promise<MemoryWriteResult> {
   return exclusive(async () => {
     const memoryId = requireId(id);
-    const current = await loadMemories();
+    const current = await loadMemories(scope);
     if (!current.some((memory) => memory.id === memoryId)) {
       throw new MemoryRejected(`Memory ${memoryId} not found`);
     }
-    await saveMemories(current.filter((memory) => memory.id !== memoryId));
+    await saveMemories(current.filter((memory) => memory.id !== memoryId), scope);
     return { id: memoryId, status: 'deleted' };
   });
 }
 
-export async function getMemory(id: string): Promise<MemoryRecord> {
+export async function getMemory(id: string, scope: MemoryScope = { kind: 'user' }): Promise<MemoryRecord> {
   return exclusive(async () => {
     const memoryId = requireId(id);
-    const memory = (await loadMemories()).find((item) => item.id === memoryId);
+    const memory = (await loadMemories(scope)).find((item) => item.id === memoryId);
     if (!memory) throw new MemoryRejected(`Memory ${memoryId} not found`);
     return memory;
   });
@@ -112,12 +115,12 @@ export async function listMemories(options: {
   type?: string;
   tag?: string;
   limit?: number;
-} = {}): Promise<{ memories: MemoryListItem[]; truncated?: true }> {
+} = {}, scope: MemoryScope = { kind: 'user' }): Promise<{ memories: MemoryListItem[]; truncated?: true }> {
   return exclusive(async () => {
     const type = options.type === undefined ? undefined : requireType(options.type);
     const tag = options.tag === undefined ? undefined : requireTag(options.tag);
     const limit = boundedLimit(options.limit, DEFAULT_MEMORY_LIST_LIMIT, MAX_MEMORY_LIST_LIMIT);
-    const matches = (await loadMemories()).filter((memory) => matchesList(memory, type, tag));
+    const matches = (await loadMemories(scope)).filter((memory) => matchesList(memory, type, tag));
     const memories = matches.slice(0, limit).map(toListItem);
     return matches.length > memories.length ? { memories, truncated: true } : { memories };
   });
@@ -126,27 +129,40 @@ export async function listMemories(options: {
 export async function searchMemories(
   query: string,
   limit?: number,
+  scope: MemoryScope = { kind: 'user' },
+  type?: string,
 ): Promise<{ results: MemorySearchHit[]; truncated?: true }> {
   return exclusive(async () => {
     const needle = requireQuery(query);
     const maximum = boundedLimit(limit, DEFAULT_MEMORY_SEARCH_LIMIT, MAX_MEMORY_SEARCH_LIMIT);
-    const matches = (await loadMemories()).filter((memory) => matchesQuery(memory, needle));
-    const results = matches.slice(0, maximum).map((memory) => ({
+    const filterType = type === undefined ? undefined : requireType(type);
+    const ranked = (await loadMemories(scope))
+      .filter((memory) => !filterType || memory.type === filterType)
+      .map((memory) => ({ memory, score: scoreMemory(memory, needle) }))
+      .filter((item) => item.score > 0)
+      .sort((left, right) => right.score - left.score || right.memory.updatedAt - left.memory.updatedAt);
+    const results = ranked.slice(0, maximum).map(({ memory }) => ({
       id: memory.id,
       title: memory.title,
-      snippet: snippetFor(memory),
+      snippet: snippetForQuery(memory.content, needle),
     }));
-    return matches.length > results.length ? { results, truncated: true } : { results };
+    return ranked.length > results.length ? { results, truncated: true } : { results };
   });
 }
 
-async function loadMemories(): Promise<MemoryRecord[]> {
-  const data = await readJson<unknown>(memoriesPath(), { memories: [] });
+async function loadMemories(scope: MemoryScope): Promise<MemoryRecord[]> {
+  const data = await readJson<unknown>(memoryPath(scope), { memories: [] });
   return sanitizeStored(data);
 }
 
-async function saveMemories(memories: MemoryRecord[]): Promise<void> {
-  await writeJson(memoriesPath(), { memories: [...memories].sort(compareMemories) });
+async function saveMemories(memories: MemoryRecord[], scope: MemoryScope): Promise<void> {
+  await writeJson(memoryPath(scope), { memories: [...memories].sort(compareMemories) });
+}
+
+function memoryPath(scope: MemoryScope): string {
+  if (scope.kind === 'user') return memoriesPath();
+  if (!/^[A-Za-z0-9][A-Za-z0-9_-]{0,127}$/.test(scope.id)) throw new MemoryRejected('Invalid memory scope');
+  return scopedMemoriesPath(scope.kind, scope.id);
 }
 
 function reconcileMemories(value: unknown, current: MemoryRecord[], now: number): MemoryRecord[] {
@@ -272,11 +288,56 @@ function matchesList(memory: MemoryRecord, type: MemoryType | undefined, tag: st
   return true;
 }
 
-function matchesQuery(memory: MemoryRecord, query: string): boolean {
-  const needle = query.toLowerCase();
-  return memory.id.toLowerCase().includes(needle)
-    || memory.title.toLowerCase().includes(needle)
-    || memory.tags.some((tag) => tag.toLowerCase().includes(needle));
+function scoreMemory(memory: MemoryRecord, query: string): number {
+  const phrase = normalizeSearchText(query);
+  const terms = [...new Set(searchTerms(phrase))];
+  if (terms.length === 0) return 0;
+  const fields = [
+    { text: normalizeSearchText(memory.title), weight: 8 },
+    { text: normalizeSearchText(memory.tags.join(' ')), weight: 7 },
+    { text: normalizeSearchText(memory.id), weight: 6 },
+    { text: normalizeSearchText(memory.content), weight: 3 },
+  ];
+  let score = 0;
+  let matchedTerms = 0;
+  for (const { text, weight } of fields) {
+    if (text.includes(phrase)) score += weight * 2;
+  }
+  for (const term of terms) {
+    let best = 0;
+    for (const { text, weight } of fields) {
+      if (searchTerms(text).includes(term)) best = Math.max(best, weight);
+      else if (term.length >= 4 && text.includes(term)) best = Math.max(best, weight * 0.45);
+    }
+    if (best > 0) {
+      matchedTerms++;
+      score += best;
+    }
+  }
+  // Reward records that cover more of a multiword query, while retaining useful
+  // partial matches when the user's wording differs from the saved note.
+  return matchedTerms === 0 ? 0 : score * (0.5 + matchedTerms / (2 * terms.length));
+}
+
+function normalizeSearchText(value: string): string {
+  return value.toLocaleLowerCase('tr').replace(/ı/g, 'i').normalize('NFKD').replace(/\p{M}/gu, '');
+}
+
+function searchTerms(value: string): string[] {
+  return value.match(/[\p{L}\p{N}_-]+/gu) ?? [];
+}
+
+function snippetForQuery(content: string, query: string): string {
+  const flat = content.replace(/\s+/g, ' ').trim();
+  if (flat.length <= MEMORY_SNIPPET_CHARS) return flat;
+  const normalized = normalizeSearchText(flat);
+  const term = searchTerms(normalizeSearchText(query))
+    .sort((left, right) => right.length - left.length)
+    .find((item) => item.length >= 3 && normalized.indexOf(item) >= 0);
+  if (!term) return `${flat.slice(0, MEMORY_SNIPPET_CHARS)}...`;
+  const position = normalized.indexOf(term);
+  const start = Math.max(0, Math.min(position - 48, flat.length - MEMORY_SNIPPET_CHARS));
+  return `${start > 0 ? '...' : ''}${flat.slice(start, start + MEMORY_SNIPPET_CHARS)}${start + MEMORY_SNIPPET_CHARS < flat.length ? '...' : ''}`;
 }
 
 function snippetFor(memory: MemoryRecord): string {

@@ -1,7 +1,7 @@
 import { t, getLocale } from '../i18n/index.ts';
 import { useEffect, useState } from 'react';
 import { MEMORY_TYPES, type MemoryRecord, type MemoryType, type MemoryWrite } from '../../../shared/types.ts';
-import { listMemories, putMemories } from '../api/client.ts';
+import { listMemories, listMemoryScopes, putMemories, type MemoryScopes } from '../api/client.ts';
 import { IconEdit, IconPlus, IconSpinner, IconTrash } from '../ui/icons.tsx';
 import { Menu } from '../ui/Menu.tsx';
 import { Dialog } from '../ui/Dialog.tsx';
@@ -29,6 +29,8 @@ interface MemoryDraft {
 
 export function MemoriesSettings() {
   const [memories, setMemories] = useState<MemoryRecord[]>([]);
+  const [scopes, setScopes] = useState<MemoryScopes>({ bots: [], projects: [] });
+  const [scope, setScope] = useState('user');
   const [draft, setDraft] = useState<MemoryDraft>(emptyDraft());
   const [editorOpen, setEditorOpen] = useState(false);
   const [expanded, setExpanded] = useState<Set<string>>(() => new Set());
@@ -36,15 +38,20 @@ export function MemoriesSettings() {
   const [notice, setNotice] = useState<string | null>(null);
 
   useEffect(() => {
-    void listMemories()
+    void listMemoryScopes().then(setScopes).catch(() => undefined);
+  }, []);
+
+  useEffect(() => {
+    setLoading(true);
+    void listMemories(scope)
       .then(setMemories)
       .catch((error: unknown) => setNotice(error instanceof Error ? error.message : t("Could not load memories")))
       .finally(() => setLoading(false));
-  }, []);
+  }, [scope]);
 
   const save = (next: MemoryWrite[]) => {
     setNotice(null);
-    void putMemories(next)
+    void putMemories(next, scope)
       .then(setMemories)
       .catch((error: unknown) => setNotice(error instanceof Error ? error.message : t("Could not save memories")));
   };
@@ -65,6 +72,28 @@ export function MemoriesSettings() {
           <IconPlus />
           {t("New memory")}</button>
       </div>
+      <SettingRow label={t("Memory scope")}>
+        <Menu
+          label="Memory scope"
+          value={scope}
+          searchable
+          searchPlaceholder="Search"
+          options={[
+            { value: 'user', label: 'Classic chats', group: 'General' },
+            ...scopes.bots.map((bot) => ({
+              value: `bot:${bot.id}`,
+              label: `${t('XeckBot')}: ${bot.name}`,
+              group: 'XeckBots',
+            })),
+            ...scopes.projects.map((project) => ({
+              value: `project:${project.id}`,
+              label: `${t('Project')}: ${project.name}`,
+              group: 'Projects',
+            })),
+          ]}
+          onChange={setScope}
+        />
+      </SettingRow>
       <SettingCard>
         {loading ? (
           <div className="flex min-h-20 items-center justify-center gap-2 py-4 text-ui text-muted" role="status" aria-live="polite">

@@ -67,6 +67,10 @@ export function memoriesPath(): string {
   return path.join(resolveDataDir(), 'memories.json');
 }
 
+export function scopedMemoriesPath(kind: 'bot' | 'project', id: string): string {
+  return path.join(resolveDataDir(), 'memories', kind === 'bot' ? 'bots' : 'projects', `${id}.json`);
+}
+
 export function sessionIndexPath(): string {
   return path.join(resolveDataDir(), 'sessions', 'index.json');
 }
