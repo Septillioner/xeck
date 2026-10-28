@@ -201,7 +201,7 @@
 /* Debug pane identity: agent + workspace@version, monospace reads as tech. */
 .context-identity { margin: 0 12px 8px; font-family: ui-monospace, SFMono-Regular, Menlo, Consolas, monospace; font-size: var(--text-micro); color: var(--color-muted); }
 .column { width: 100%; max-width: var(--spacing-transcript-max); margin: 0 auto; }
-.transcript-area { position: relative; flex: 1; min-height: 0; }
+.transcript-area { position: relative; flex: 1; min-height: 0; overflow: clip; }
 .transcript-scroll { position: absolute; inset: 0; overflow: auto; scrollbar-gutter: stable both-edges; padding: 24px 16px; }
 .chat-stage[data-agent-header='true'] .transcript-scroll { padding-top: calc(var(--spacing) * 20); }
 .composer-dock { flex: none; padding: 0 16px 20px; }

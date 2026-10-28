@@ -1,5 +1,5 @@
-import { t } from '../i18n/index.ts';
-import { useEffect, useRef, useState, type ComponentProps, type ReactNode } from 'react';
+import { t, useI18n } from '../i18n/index.ts';
+import { memo, useEffect, useRef, useState, type ComponentProps, type ReactNode } from 'react';
 import ReactMarkdown from 'react-markdown';
 import remarkGfm from 'remark-gfm';
 
@@ -8,7 +8,7 @@ const COPY_LABEL = 'Copy';
 const COPIED_LABEL = 'Copied';
 const COPIED_HOLD_MS = 2000;
 
-export function Markdown({ content }: { content: string }) {
+export const Markdown = memo(function Markdown({ content }: { content: string }) {
   return (
     <div className="transcript">
       <ReactMarkdown remarkPlugins={[remarkGfm]} components={{ pre: CodeBlock, a: ExternalAnchor }}>
@@ -16,7 +16,7 @@ export function Markdown({ content }: { content: string }) {
       </ReactMarkdown>
     </div>
   );
-}
+});
 
 /**
  * Transcript links leave the app: a new browser tab in the browser build, and
@@ -32,6 +32,7 @@ function ExternalAnchor({ href, children }: ComponentProps<'a'>) {
 }
 
 function CodeBlock({ children }: { children?: ReactNode }) {
+  useI18n();
   const text = nodeText(children).replace(/\n$/, '');
   const language = readLanguage(children) || 'text';
   const lines = text.length > 0 ? text.split('\n') : [''];

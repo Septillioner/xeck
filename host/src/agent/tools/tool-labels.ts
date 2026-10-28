@@ -20,6 +20,7 @@ export interface ToolLabel extends ToolLabelShape {
 const REQUIRES_OF: Record<string, ('user' | 'plan-owner')[]> = {
   list_message_targets: ['user'],
   send_chat_message: ['user'],
+  create_xeckbot: ['user'],
   delete_file: ['user'],
   ask_question: ['user'],
   enable_mcp: ['user'],

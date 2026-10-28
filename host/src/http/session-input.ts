@@ -193,6 +193,13 @@ async function readCreatedBot(
   const value = namedBot(body.bot);
   if (!value) return failure(400, BOT_NAME_ERROR);
   if (projectId) return failure(400, BOT_PROJECT_ERROR);
+  const suppliedPrompt = (body.bot as { systemPrompt?: unknown }).systemPrompt;
+  if (suppliedPrompt !== undefined) {
+    if (typeof suppliedPrompt !== 'string' || !suppliedPrompt.trim() || suppliedPrompt.trim().length > MAX_BOT_SYSTEM_PROMPT_CHARS) {
+      return failure(400, `Bot instruction must contain 1–${MAX_BOT_SYSTEM_PROMPT_CHARS} characters`);
+    }
+    return { ok: true, value: { name: value.name, color: value.color, purpose: '', systemPrompt: suppliedPrompt.trim() } };
+  }
   if (typeof value.purpose !== 'string' || !value.purpose.trim() || value.purpose.trim().length > MAX_BOT_PURPOSE_CHARS) {
     return failure(400, BOT_PURPOSE_ERROR);
   }

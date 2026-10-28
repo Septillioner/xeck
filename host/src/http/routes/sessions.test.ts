@@ -17,6 +17,27 @@ import { XECKBOT_AGENT } from '../../agent/catalog/agents.ts';
 import { XECKBOT_WORKSPACE } from '../../agent/catalog/workspaces.ts';
 import type { StoredSession, SessionSummary } from '../../../../shared/types.ts';
 
+test('direct bot instructions are saved without an identity-generation model', async () => {
+  const previous = process.env.APPDATA;
+  const directory = await mkdtemp(path.join(os.tmpdir(), 'xeck-direct-instructions-'));
+  process.env.APPDATA = directory;
+  try {
+    const systemPrompt = 'XeckBot yönetim asistanısın. Türkçe yanıt ver.';
+    const response = await sessionRoutes.request('/api/sessions', { method: 'POST', headers: { 'content-type': 'application/json' }, body: JSON.stringify({ bot: { name: 'Yönetici', color: 'blue', systemPrompt } }) });
+    assert.equal(response.status, 201);
+    const bot = await response.json() as StoredSession;
+    assert.equal((await readSession(bot.id))?.bot?.systemPrompt, systemPrompt);
+    const invalid = await sessionRoutes.request('/api/sessions', { method: 'POST', headers: { 'content-type': 'application/json' }, body: JSON.stringify({ bot: { name: 'Yönetici', color: 'blue', systemPrompt: '' } }) });
+    assert.equal(invalid.status, 400);
+    const improve = await sessionRoutes.request('/api/bots/improve-prompt', { method: 'POST', headers: { 'content-type': 'application/json' }, body: JSON.stringify({ name: 'Yönetici', systemPrompt: '' }) });
+    assert.equal(improve.status, 400);
+  } finally {
+    if (previous === undefined) delete process.env.APPDATA;
+    else process.env.APPDATA = previous;
+    await rm(directory, { recursive: true, force: true });
+  }
+});
+
 test('XeckBot creation generates and persists an identity using the default model, then applies it to chat', async () => {
   const previousAppData = process.env.APPDATA;
   const directory = await mkdtemp(path.join(os.tmpdir(), 'xeck-bot-api-'));
@@ -100,6 +121,12 @@ test('XeckBot creation generates and persists an identity using the default mode
       assert.equal((await post({ bot: input })).status, 502);
       assert.equal((await listSessions()).length, 1, 'generation failures never leave incomplete bots');
     }
+    mode = 'identity';
+    const improved = await sessionRoutes.request('/api/bots/improve-prompt', { method: 'POST', headers: { 'content-type': 'application/json' }, body: JSON.stringify({ name: 'Atlas', systemPrompt: 'Coach English conversation.' }) });
+    assert.equal(improved.status, 200);
+    assert.deepEqual(await improved.json(), { systemPrompt: identity });
+    assert.equal((await listSessions()).length, 1, 'improvement only returns a draft and never creates a bot');
+    assert.equal((await readSession(bot.id))?.bot?.systemPrompt, revisedPrompt, 'improvement does not save over existing instructions');
     const project = await createProject('Project');
     assert.equal((await post({ projectId: project.id, bot: input })).status, 400);
     assert.equal((await sessionRoutes.request('/api/sessions/' + bot.id, { method: 'PATCH', headers: { 'content-type': 'application/json' }, body: JSON.stringify({ projectId: project.id }) })).status, 400);

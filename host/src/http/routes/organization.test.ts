@@ -40,7 +40,8 @@ test('organization and bot profile edits survive a stale running-turn save', asy
       assert.equal((await patch(bot.id, invalid)).status, 400);
     }
     const prompt = await buildHostSystemPrompt(restored.agentId, { name: restored.title, ...restored.bot });
-    assert.match(prompt, /Your current purpose is "Help with writing"/);
+    assert.match(prompt, /Updated instructions/);
+    assert.doesNotMatch(prompt, /Your current purpose is/, 'legacy purpose must not override the edited instructions');
 
     const project = await createProject('Work');
     const response = await projectRoutes.request(`/api/projects/${project.id}`, { method: 'PATCH', headers: { 'content-type': 'application/json' }, body: JSON.stringify({ pinned: true }) });

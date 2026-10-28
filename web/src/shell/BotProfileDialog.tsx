@@ -1,10 +1,10 @@
 import { getSession } from '../api/client.ts';
 import { t } from '../i18n/index.ts';
 import { useEffect, useState, type FormEvent } from 'react';
-import { BOT_COLORS, MAX_BOT_PURPOSE_CHARS, MAX_BOT_SYSTEM_PROMPT_CHARS, MAX_XECKBOT_BADGE_LENGTH, MAX_XECKBOT_BADGES, type BotColor } from '../../../shared/types.ts';
+import { BOT_COLORS, MAX_XECKBOT_BADGE_LENGTH, MAX_XECKBOT_BADGES, type BotColor } from '../../../shared/types.ts';
 import { useAppState } from '../state/AppState.tsx';
 import { Dialog } from '../ui/Dialog.tsx';
-import { Textarea } from '../ui/Textarea.tsx';
+import { BotInstructionEditor } from './BotInstructionEditor.tsx';
 import { TextField } from '../ui/TextField.tsx';
 import { BUTTON } from '../ui/button-styles.ts';
 import { IconCheck, IconClose, IconPlus, IconSpinner } from '../ui/icons.tsx';
@@ -16,9 +16,10 @@ export function BotProfileDialog({ id }: { id: string }) {
   const { updateBotProfile, setBotProfileId } = useAppState();
   const [editingBot, setEditingBot] = useState({ id, name: '' });
   const [instructionDraft, setInstructionDraft] = useState('');
-  const [profileDetails, setProfileDetails] = useState<{ title: string; botPurpose: string; botColor: BotColor }>({ title: '', botPurpose: '', botColor: 'blue' });
+  const [profileDetails, setProfileDetails] = useState<{ title: string; botColor: BotColor }>({ title: '', botColor: 'blue' });
   const [badgeDraft, setBadgeDraft] = useState<string[]>([]);
   const [newBadge, setNewBadge] = useState('');
+  const [improving, setImproving] = useState(false);
   const [savingProfile, setSavingProfile] = useState(false);
   const [profileError, setProfileError] = useState<string | null>(null);
   const [loading, setLoading] = useState(true);
@@ -30,17 +31,17 @@ export function BotProfileDialog({ id }: { id: string }) {
       if (cancelled) return;
       if (!session.bot || session.botConversation) throw new Error(t('XeckBot not found'));
       setEditingBot({ id, name: session.title });
-      setInstructionDraft(session.bot.systemPrompt ?? '');
-      setProfileDetails({ title: session.title, botPurpose: session.bot.purpose ?? '', botColor: session.bot.color });
+      setInstructionDraft(session.bot.systemPrompt || session.bot.purpose || '');
+      setProfileDetails({ title: session.title, botColor: session.bot.color });
       setBadgeDraft(session.bot.badges ?? []);
     }).catch((cause) => { if (!cancelled) setProfileError(cause instanceof Error ? cause.message : t('Talimat yüklenemedi')); })
       .finally(() => { if (!cancelled) setLoading(false); });
     return () => { cancelled = true; };
   }, [id, attempt]);
   const saveProfile = async (event: FormEvent) => {
-    event.preventDefault(); if (savingProfile) return;
+    event.preventDefault(); if (savingProfile || improving) return;
     setSavingProfile(true); setProfileError(null);
-    try { await updateBotProfile(id, instructionDraft, badgeDraft, profileDetails); setBotProfileId(null); }
+    try { await updateBotProfile(id, instructionDraft, badgeDraft, { title: profileDetails.title, botColor: profileDetails.botColor }); setBotProfileId(null); }
     catch (cause) { setProfileError(cause instanceof Error ? cause.message : t('Profil kaydedilemedi')); }
     finally { setSavingProfile(false); }
   };
@@ -49,13 +50,13 @@ export function BotProfileDialog({ id }: { id: string }) {
     if (!badge || badgeDraft.length >= MAX_XECKBOT_BADGES || badgeDraft.some((item) => item.toLocaleLowerCase() === badge.toLocaleLowerCase())) return;
     setBadgeDraft((current) => [...current, badge]); setNewBadge('');
   };
-  return <Dialog title={editingBot.name ? t('{0} profilini düzenle', { 0: editingBot.name }) : t('Profili düzenle')} onClose={() => { if (!savingProfile) setBotProfileId(null); }}>
+  return <Dialog title={editingBot.name ? t('{0} profilini düzenle', { 0: editingBot.name }) : t('Profili düzenle')} onClose={() => { if (!savingProfile && !improving) setBotProfileId(null); }}>
     {loading ? <p role="status" className="flex items-center gap-2 p-gutter text-ui text-muted"><IconSpinner />{t('Loading')}</p>
       : !editingBot.name ? <div className="flex flex-col gap-3 p-gutter"><p role="alert" className="text-ui text-danger">{profileError}</p><button type="button" className={BUTTON.secondary} onClick={() => setAttempt((value) => value + 1)}>{t('Retry')}</button></div>
       : (
         <form className="bot-profile-form flex flex-col gap-4 px-gutter pb-gutter pt-3" onSubmit={(event) => void saveProfile(event)}>
           <label className="flex flex-col gap-2 text-ui">{t('Name')}<TextField autoFocus width="block" required maxLength={80} disabled={savingProfile} value={profileDetails.title} onChange={(event) => setProfileDetails({ ...profileDetails, title: event.target.value })} /></label>
-          <label className="flex flex-col gap-2 text-ui">{t('Purpose')}<Textarea minRows={2} maxRows={5} required maxLength={MAX_BOT_PURPOSE_CHARS} disabled={savingProfile} value={profileDetails.botPurpose} onChange={(event) => setProfileDetails({ ...profileDetails, botPurpose: event.target.value })} /></label>
+          <BotInstructionEditor name={profileDetails.title} value={instructionDraft} onChange={setInstructionDraft} disabled={savingProfile} onBusyChange={setImproving} />
           <fieldset disabled={savingProfile}><legend className="mb-2 text-ui">{t('Renk')}</legend><div className="flex flex-wrap gap-1">{BOT_COLORS.map((option) => <button key={option} type="button" aria-pressed={profileDetails.botColor === option} className={cn(BUTTON.ghost, profileDetails.botColor === option && 'bg-chat-active text-ink')} onClick={() => setProfileDetails({ ...profileDetails, botColor: option })}>{t(COLOR_NAMES[option])}</button>)}</div></fieldset>
           <details>
             <summary className="cursor-pointer text-ui text-muted">{t("Advanced profile settings")}</summary>
@@ -75,17 +76,11 @@ export function BotProfileDialog({ id }: { id: string }) {
             </div>
             <p className="mt-1 text-right text-micro text-muted">{badgeDraft.length} / {MAX_XECKBOT_BADGES}</p>
           </section>
-          <section className="mt-4">
-            <h4 className="text-ui font-medium">{t("System prompt")}</h4>
-            <p className="my-2 text-small text-muted">{t("Bu XeckBot'un sistem talimatları. Değişiklikler sonraki yanıtlarında kullanılır.")}</p>
-            <Textarea aria-label={t("System prompt")} required minRows={8} maxRows={18} maxLength={MAX_BOT_SYSTEM_PROMPT_CHARS} value={instructionDraft} disabled={savingProfile} className="font-normal" onChange={(event) => setInstructionDraft(event.target.value)} />
-            <p className="mt-1 text-right text-micro text-muted">{instructionDraft.length.toLocaleString()} / {MAX_BOT_SYSTEM_PROMPT_CHARS.toLocaleString()}</p>
-          </section>
           </details>
           {profileError && <p role="alert" className="rounded-control bg-field px-3 py-2 text-small text-danger">{t(profileError)}</p>}
           <div className="flex items-center justify-end gap-2 pt-1">
-            <button type="button" className={BUTTON.ghost} disabled={savingProfile} onClick={() => setBotProfileId(null)}>{t("İptal")}</button>
-            <button type="submit" className={BUTTON.primary} disabled={savingProfile || !instructionDraft.trim() || !profileDetails.title.trim() || !profileDetails.botPurpose.trim()}>{savingProfile ? <IconSpinner /> : <IconCheck />}{savingProfile ? t("Kaydediliyor") : t("Save")}</button>
+            <button type="button" className={BUTTON.ghost} disabled={savingProfile || improving} onClick={() => setBotProfileId(null)}>{t("İptal")}</button>
+            <button type="submit" className={BUTTON.primary} disabled={savingProfile || improving || !instructionDraft.trim() || !profileDetails.title.trim()}>{savingProfile ? <IconSpinner /> : <IconCheck />}{savingProfile ? t("Kaydediliyor") : t("Save")}</button>
           </div>
         </form>
       )}

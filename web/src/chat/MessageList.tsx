@@ -2,6 +2,8 @@ import type { ToolUsageViewMode, TranscriptBlock, TranscriptMessage } from '../.
 import { MessageView, TimelineBlocks } from './messages/MessageView.tsx';
 import type { ActivityCall } from './activity-calls.ts';
 import type { ActivityLine, RateLimitWait } from './messages/types.ts';
+import type { ComponentProps } from 'react';
+import { useStreamRevealLength } from '../ui/use-typed-text.ts';
 
 export function MessageList({
   messages,
@@ -58,8 +60,8 @@ export function MessageList({
         />
       ))}
       {streaming && (
-        <article className={streaming.content ? 'assistant streaming' : 'assistant'}>
-          <TimelineBlocks
+          <StreamingResponse
+            content={streaming.content}
             blocks={streaming.blocks}
             showReasoning={showReasoning}
             streaming
@@ -73,8 +75,17 @@ export function MessageList({
             toolUsageViewMode={toolUsageViewMode}
             toolCalls={streaming.toolCalls}
           />
-        </article>
       )}
     </div>
+  );
+}
+
+/** Reveal ticks only redraw the live response, leaving the chat shell alone. */
+function StreamingResponse({ content, revealChars, ...props }: ComponentProps<typeof TimelineBlocks> & { content: string }) {
+  const revealed = useStreamRevealLength(content);
+  return (
+    <article className={content ? 'assistant streaming' : 'assistant'}>
+      <TimelineBlocks {...props} revealChars={revealChars ?? revealed} />
+    </article>
   );
 }

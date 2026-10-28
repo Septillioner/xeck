@@ -5,7 +5,6 @@
 import { PolicyDefSchema, type PolicyDef } from '@@core/definitions/policy.ts';
 import { ASK_QUESTION_TOOL } from '../tools/builtin/dialog.ts';
 import {
-  GET_FILE_INFO_TOOL,
   LIST_DIRECTORY_TOOL,
   READ_FILE_TOOL,
   SEARCH_FILES_TOOL,
@@ -40,7 +39,6 @@ const POLICY_ROWS = [
         READ_FILE_TOOL,
         LIST_DIRECTORY_TOOL,
         SEARCH_FILES_TOOL,
-        GET_FILE_INFO_TOOL,
       ],
       mcp: '*',
     },
@@ -75,7 +73,6 @@ const POLICY_ROWS = [
         READ_FILE_TOOL,
         LIST_DIRECTORY_TOOL,
         SEARCH_FILES_TOOL,
-        GET_FILE_INFO_TOOL,
       ],
       mcp: '*',
     },

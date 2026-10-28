@@ -1,12 +1,9 @@
 import { z } from 'zod';
 import { requestUserApproval } from '../../runtime/events/dialogs.ts';
 import {
-  createDirectoryTool,
   deleteFileTool,
   FileToolRejected,
-  getFileInfoTool,
   listDirectoryTool,
-  moveFileTool,
   readFileTool,
   replaceFileLines,
   searchFilesTool,
@@ -19,11 +16,8 @@ export const READ_FILE_TOOL = 'read_file';
 export const REPLACE_LINES_TOOL = 'replace_lines';
 export const WRITE_FILE_TOOL = 'write_file';
 export const DELETE_FILE_TOOL = 'delete_file';
-export const CREATE_DIRECTORY_TOOL = 'create_directory';
 export const LIST_DIRECTORY_TOOL = 'list_directory';
-export const MOVE_FILE_TOOL = 'move_file';
 export const SEARCH_FILES_TOOL = 'search_files';
-export const GET_FILE_INFO_TOOL = 'get_file_info';
 
 export const FILE_TOOLS: BuiltinToolDef[] = [
   {
@@ -69,15 +63,6 @@ export const FILE_TOOLS: BuiltinToolDef[] = [
     hostMessage: 'Deletion requires approval in the chat.',
     execute: executeDeleteWithApproval,
   },
-  {
-    name: CREATE_DIRECTORY_TOOL,
-    description: 'Create a directory. Missing parents are created by default.',
-    inputSchema: {
-      path: z.string().describe('Directory path'),
-      recursive: z.boolean().optional().describe('Create missing parent directories'),
-    },
-    handler: async ({ path, recursive }) => runTool(() => createDirectoryTool(path, recursive)),
-  },
 
 
   {
@@ -92,16 +77,6 @@ export const FILE_TOOLS: BuiltinToolDef[] = [
     handler: async ({ path, depth, includeSize, maxEntries }) => runTool(() => listDirectoryTool(path, includeSize, depth, maxEntries)),
   },
   {
-    name: MOVE_FILE_TOOL,
-    description: 'Move or rename a regular file. Overwriting is disabled unless explicitly requested.',
-    inputSchema: {
-      source: z.string().describe('Source file path'),
-      destination: z.string().describe('Destination file path'),
-      overwrite: z.boolean().optional().describe('Replace an existing destination file'),
-    },
-    handler: async ({ source, destination, overwrite }) => runTool(() => moveFileTool(source, destination, overwrite)),
-  },
-  {
     name: SEARCH_FILES_TOOL,
     description: 'Search file and directory names recursively with bounded depth and result count.',
     inputSchema: {
@@ -113,12 +88,6 @@ export const FILE_TOOLS: BuiltinToolDef[] = [
     },
     handler: async ({ query, path, recursive, maxResults, maxDepth }) =>
       runTool(() => searchFilesTool({ query, path, recursive, maxResults, maxDepth })),
-  },
-  {
-    name: GET_FILE_INFO_TOOL,
-    description: 'Get filesystem metadata without reading file content.',
-    inputSchema: { path: z.string().describe('File or directory path') },
-    handler: async ({ path }) => runTool(() => getFileInfoTool(path)),
   },
 ];
 

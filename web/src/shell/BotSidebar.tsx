@@ -5,7 +5,7 @@ import { useAppState } from '../state/AppState.tsx';
 import { t, useI18n } from '../i18n/index.ts';
 import { cn } from '../lib/cn.ts';
 import { BotAvatar } from '../ui/BotAvatar.tsx';
-import { IconChat, IconChevron, IconMoreVertical, IconPlus } from '../ui/icons.tsx';
+import { IconChat, IconChevron, IconMoreVertical, IconFolderPlus } from '../ui/icons.tsx';
 import { BUTTON, ICON_BUTTON } from '../ui/button-styles.ts';
 import { Dialog } from '../ui/Dialog.tsx';
 import { TextField } from '../ui/TextField.tsx';
@@ -41,7 +41,7 @@ export function BotSidebar() {
   const conversations = sessions.filter((session) => session.botConversation && !session.archived);
   const ungrouped = bots.filter((bot) => !botGroups.some((group) => group.botIds.includes(bot.id)));
   return <>
-    <div className="mb-2 flex items-center justify-between px-3"><h2 className="text-small font-medium text-muted">{t('My bots')}</h2><button type="button" className={ICON_BUTTON} aria-label={t('New bot group')} disabled={botGroupsLoading || Boolean(botGroupsError)} onClick={() => edit()}><IconPlus /></button></div>
+    <div className="mb-2 flex flex-wrap items-center justify-between gap-2 px-3"><h2 className="text-small font-medium text-muted">{t('My bots')}</h2><button type="button" className={BUTTON.ghost} title={t('New bot group')} disabled={botGroupsLoading || Boolean(botGroupsError)} onClick={() => edit()}><IconFolderPlus />{t('New bot group')}</button></div>
     {botGroupsLoading && <p role="status" className="px-3 text-small text-muted">{t('Loading')}</p>}
     {botGroupsError && <div role="alert" className="px-3 text-small text-danger">{t(botGroupsError)}<button type="button" className={BUTTON.ghost} onClick={() => void refreshBotGroups()}>{t('Retry')}</button></div>}
     {botGroups.map((group) => {

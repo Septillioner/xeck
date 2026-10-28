@@ -121,7 +121,7 @@ export function useProjectChatActions({
     }
   }, [rememberSummary, setError]);
 
-  const updateBotProfile = useCallback(async (id: string, systemPrompt: string, badges: string[], details?: { title: string; botColor: import('../../../shared/types.ts').BotColor; botPurpose: string }) => {
+  const updateBotProfile = useCallback(async (id: string, systemPrompt: string, badges: string[], details?: { title: string; botColor: import('../../../shared/types.ts').BotColor; botPurpose?: string }) => {
     const session = await patchSession(id, { botSystemPrompt: systemPrompt, botBadges: badges, ...details });
     rememberSummary(session);
   }, [rememberSummary]);

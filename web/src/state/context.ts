@@ -134,7 +134,7 @@ export interface AppStateValue {
   assignChatToProject: (sessionId: string, projectId: string | null) => Promise<void>;
   openChat: (id: string) => Promise<void>;
   renameChat: (id: string, title: string) => Promise<void>;
-  updateBotProfile: (id: string, systemPrompt: string, badges: string[], details?: { title: string; botColor: import('../../../shared/types.ts').BotColor; botPurpose: string }) => Promise<void>;
+  updateBotProfile: (id: string, systemPrompt: string, badges: string[], details?: { title: string; botColor: import('../../../shared/types.ts').BotColor; botPurpose?: string }) => Promise<void>;
   updateChatOrganization: (id: string, patch: { pinned?: boolean; archived?: boolean }) => Promise<void>;
   deleteChat: (id: string) => Promise<void>;
   setSessionModel: (provider: ProviderKind, model: string) => Promise<void>;

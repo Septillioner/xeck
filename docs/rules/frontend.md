@@ -2,7 +2,7 @@
 
 This is the canonical frontend rulebook for Xeck. Keep documentation in English. Product copy may remain localized through the translation catalogs.
 
-The visual direction is a calm, neutral workspace: a quiet sidebar rail, a continuous reading surface, and distinct input and menu boundaries. Light mode uses warm paper neutrals; dark mode uses restrained neutral surfaces. The user chooses one of eight curated accents (olive, clay, ochre, forest, azure, violet, rose, or teal); give each accent a matched light/dark pair and keep it out of large surfaces. Use component anatomy, alignment, spacing, and typography to establish hierarchy.
+The visual direction is a calm, neutral workspace: a quiet sidebar rail, a continuous reading surface, and distinct input and menu boundaries. Light mode uses neutral paper whites and grays; dark mode uses near-black obsidian neutrals with subtly lighter sidebar and input surfaces. Keep yellow and green undertones out of shared surfaces, text, and borders. The user chooses one of eight curated accents (olive, clay, ochre, forest, azure, violet, rose, or teal); give each accent a matched light/dark pair and keep it out of large surfaces. Use component anatomy, alignment, spacing, and typography to establish hierarchy.
 
 ## Design tokens and Tailwind
 

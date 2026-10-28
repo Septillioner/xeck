@@ -224,17 +224,14 @@ test('create, move, and delete enforce safe file semantics', async () => {
 test('builtin MCP lists the simplified file tool surface', async () => {
   const tools = await listBuiltinMcpTools();
   const names = new Set(tools.map((tool) => tool.name));
-  for (const retired of ['directory_tree', 'list_directory_with_size', 'list_allowed_directories']) assert.equal(names.has(retired), false);
+  for (const retired of ['directory_tree', 'list_directory_with_size', 'list_allowed_directories', 'create_directory', 'move_file', 'get_file_info']) assert.equal(names.has(retired), false);
   for (const name of [
     'read_file',
     'replace_lines',
     'write_file',
     'delete_file',
-    'create_directory',
     'list_directory',
-    'move_file',
     'search_files',
-    'get_file_info',
   ]) {
     assert.equal(names.has(name), true, `missing ${name}`);
   }

@@ -768,5 +768,10 @@
   "Send photos separately from the summary command.": "Send photos separately from the summary command.",
   "Invalid message edit": "Invalid message edit",
   "Edit message": "Edit message",
-  "The conversation changed. Reopen the chat and try again.": "The conversation changed. Reopen the chat and try again."
+  "The conversation changed. Reopen the chat and try again.": "The conversation changed. Reopen the chat and try again.",
+  "Improve prompt": "Improve prompt",
+  "Improving prompt…": "Improving prompt…",
+  "Could not improve prompt": "Could not improve prompt",
+  "These instructions are used directly as the bot’s system prompt.": "These instructions are used directly as the bot’s system prompt.",
+  "Undo": "Undo"
 }

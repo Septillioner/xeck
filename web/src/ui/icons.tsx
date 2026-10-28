@@ -11,6 +11,7 @@ import {
   EyeOff,
   FileText,
   Folder,
+  FolderPlus,
   LoaderCircle,
   MessageSquare,
   Menu,
@@ -120,6 +121,7 @@ export const IconPalette = icon(Palette);
 export const IconWand = icon(WandSparkles);
 export const IconPlus = icon(Plus);
 export const IconFolder = icon(Folder);
+export const IconFolderPlus = icon(FolderPlus);
 export const IconMinimize = icon(Minus);
 export const IconMaximize = icon(Square);
 export const IconClose = icon(X);

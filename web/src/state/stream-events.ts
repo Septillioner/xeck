@@ -25,6 +25,10 @@ export interface StreamEventDeps {
 export function createStreamEventApplier(deps: StreamEventDeps) {
   const { setSessions, setActive, setStreams, setError, rememberSummary, markTerminal } = deps;
   return function applyStreamEvent(sessionId: string, startedAt: number, event: StreamEvent): void {
+    if (event.event === 'session.created') {
+      rememberSummary(event.data.session);
+      return;
+    }
     if (event.event === 'meta') {
       if (event.data.session) rememberSummary(event.data.session);
       setSessions((current) =>

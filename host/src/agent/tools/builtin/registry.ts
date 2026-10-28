@@ -1,4 +1,5 @@
 import { DIALOG_TOOLS } from './dialog.ts';
+import { BOT_TOOLS } from './bots.ts';
 import { FILE_TOOLS } from './file.ts';
 import { GREP_TOOLS } from './grep.ts';
 import { MEMORY_TOOLS } from './memory.ts';
@@ -19,6 +20,7 @@ import type { BuiltinToolDef } from './types.ts';
 export const BUILTIN_TOOLS: readonly BuiltinToolDef[] = [
   ...SUBAGENT_TOOLS,
   ...MESSAGING_TOOLS,
+  ...BOT_TOOLS,
   ...RULE_TOOLS,
   ...SKILL_TOOLS,
   ...MCP_TOOLS,

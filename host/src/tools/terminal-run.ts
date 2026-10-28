@@ -10,6 +10,7 @@ import {
 } from '../infra/limits.ts';
 import { FileToolRejected } from './file-access.ts';
 import { readSettings } from '../stores/settings-store.ts';
+import { shellInvocation, terminalShell } from './terminal-shell.ts';
 
 const UTF8 = 'utf8';
 
@@ -17,6 +18,8 @@ export interface TerminalResult {
   ok: boolean;
   command: string;
   cwd: string;
+  shell: string;
+  platform: string;
   exitCode: number | null;
   signal: string | null;
   stdout: string;
@@ -26,12 +29,43 @@ export interface TerminalResult {
   durationMs: number;
 }
 
+export interface TerminalInput {
+  env?: Record<string, string | null>;
+  stdin?: string;
+  outputEncoding?: string;
+}
+
+const MAX_INPUT_BYTES = 1_000_000;
+
+function commandEnvironment(overrides: TerminalInput['env']): NodeJS.ProcessEnv {
+  const env = { ...process.env };
+  if (overrides === undefined) return env;
+  if (!overrides || typeof overrides !== 'object' || Array.isArray(overrides)) {
+    throw new FileToolRejected('env must be an object of string values or null to remove a variable.');
+  }
+  let bytes = 0;
+  for (const [key, value] of Object.entries(overrides)) {
+    if (!/^[A-Za-z_][A-Za-z0-9_]*$/.test(key) || (value !== null && (typeof value !== 'string' || value.includes('\0')))) {
+      throw new FileToolRejected('Invalid environment variable name or value.');
+    }
+    bytes += Buffer.byteLength(key) + Buffer.byteLength(value ?? '');
+    if (bytes > 64_000) throw new FileToolRejected('Environment overrides exceed 64000 bytes.');
+    // Windows names are case insensitive, including PATH/Path. Never pass both.
+    const previous = process.platform === 'win32' ? Object.keys(env).find((name) => name.toLowerCase() === key.toLowerCase()) : key;
+    if (previous) delete env[previous];
+    if (value !== null) env[key] = value;
+  }
+  return env;
+}
+
 export async function runCommandTool(
   command: string,
   requestedCwd: string | undefined,
   requestedTimeoutMs: number | undefined,
   requestedOutputBytes: number | undefined,
   signal?: AbortSignal,
+  requestedShell?: string,
+  input: TerminalInput = {},
 ): Promise<TerminalResult> {
   const settings = await readSettings();
   if (!settings.fullFileAccess) {
@@ -47,7 +81,13 @@ export async function runCommandTool(
     DEFAULT_TERMINAL_OUTPUT_BYTES,
     'maxOutputBytes',
   );
-  return executeCommand(normalizedCommand, cwd, timeoutMs, maxOutputBytes, signal);
+  if (input.stdin !== undefined && (typeof input.stdin !== 'string' || Buffer.byteLength(input.stdin) > MAX_INPUT_BYTES)) {
+    throw new FileToolRejected('stdin must be a string of at most 1000000 UTF-8 bytes.');
+  }
+  const env = commandEnvironment(input.env);
+  const encoding = input.outputEncoding ?? 'utf-8';
+  try { new TextDecoder(encoding); } catch { throw new FileToolRejected(`Unsupported output encoding: ${encoding}`); }
+  return executeCommand(normalizedCommand, cwd, timeoutMs, maxOutputBytes, signal, terminalShell(requestedShell), env, input.stdin, encoding);
 }
 
 function executeCommand(
@@ -56,6 +96,10 @@ function executeCommand(
   timeoutMs: number,
   maxOutputBytes: number,
   signal?: AbortSignal,
+  selectedShell = terminalShell(),
+  env = process.env,
+  stdin?: string,
+  outputEncoding = 'utf-8',
 ): Promise<TerminalResult> {
   return new Promise((resolve, reject) => {
     if (signal?.aborted) {
@@ -63,13 +107,15 @@ function executeCommand(
       return;
     }
     const startedAt = Date.now();
-    const child = spawn(command, {
+    const invocation = shellInvocation(command, selectedShell);
+    const child = spawn(invocation.executable, invocation.args, {
       cwd,
-      shell: true,
+      env,
+      shell: invocation.shell,
       windowsHide: true,
       detached: process.platform !== 'win32',
     });
-    const output = new BoundedOutput(maxOutputBytes);
+    const output = new BoundedOutput(maxOutputBytes, outputEncoding);
     let timedOut = false;
     let settled = false;
     let terminationRequested = false;
@@ -125,13 +171,19 @@ function executeCommand(
     signal?.addEventListener('abort', onAbort, { once: true });
     child.stdout?.on('data', (chunk: Buffer | string) => output.append('stdout', chunk));
     child.stderr?.on('data', (chunk: Buffer | string) => output.append('stderr', chunk));
+    // Always close the pipe: programs reading until EOF must not hang. EPIPE is
+    // expected when a command exits without consuming its input.
+    child.stdin?.on('error', (error: NodeJS.ErrnoException) => {
+      if (error.code !== 'EPIPE' && error.code !== 'ERR_STREAM_DESTROYED') terminate();
+    });
+    child.stdin?.end(stdin ?? '', UTF8);
     child.once('error', (error) => {
       if (settled) return;
       settled = true;
       clearTimeout(timeout);
       clearForceKillTimer();
       signal?.removeEventListener('abort', onAbort);
-      reject(error);
+      reject(new FileToolRejected(`Could not run ${selectedShell.name} (${selectedShell.executable}): ${error.message}`));
     });
     child.once('close', (exitCode, exitSignal) => {
       if (settled) return;
@@ -144,6 +196,8 @@ function executeCommand(
         ok: !cancelled && !timedOut && exitCode === 0,
         command,
         cwd,
+        shell: selectedShell.name,
+        platform: selectedShell.platform,
         exitCode,
         signal: exitSignal,
         stdout: output.stdout(),
@@ -184,11 +238,11 @@ function boundedNumber(
 }
 
 class BoundedOutput {
-  private readonly values: { stdout: string[]; stderr: string[] } = { stdout: [], stderr: [] };
+  private readonly values: { stdout: Buffer[]; stderr: Buffer[] } = { stdout: [], stderr: [] };
   private usedBytes = 0;
   truncated = false;
 
-  constructor(private readonly maximumBytes: number) {}
+  constructor(private readonly maximumBytes: number, private readonly encoding: string) {}
 
   append(stream: 'stdout' | 'stderr', chunk: Buffer | string): void {
     const remaining = this.maximumBytes - this.usedBytes;
@@ -198,16 +252,22 @@ class BoundedOutput {
     }
     const buffer = Buffer.isBuffer(chunk) ? chunk : Buffer.from(chunk, UTF8);
     const accepted = buffer.subarray(0, remaining);
-    this.values[stream].push(accepted.toString(UTF8));
+    this.values[stream].push(accepted);
     this.usedBytes += accepted.byteLength;
     if (accepted.byteLength < buffer.byteLength) this.truncated = true;
   }
 
   stdout(): string {
-    return this.values.stdout.join('');
+    return this.decode('stdout');
   }
 
   stderr(): string {
-    return this.values.stderr.join('');
+    return this.decode('stderr');
+  }
+
+  private decode(stream: 'stdout' | 'stderr'): string {
+    // Decode only after combining chunks: a UTF-8 character can span events.
+    // A byte-limited result may end midway through a character; omit that tail.
+    return new TextDecoder(this.encoding).decode(Buffer.concat(this.values[stream]), { stream: this.truncated });
   }
 }

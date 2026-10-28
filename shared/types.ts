@@ -97,7 +97,7 @@ export const MAX_BOT_PURPOSE_CHARS = 4000;
 export const MAX_BOT_SYSTEM_PROMPT_CHARS = 16_000;
 export const MAX_XECKBOT_BADGES = 12;
 export const MAX_XECKBOT_BADGE_LENGTH = 32;
-export interface XeckBotCreateInput { name: string; color: BotColor; purpose: string }
+export interface XeckBotCreateInput { name: string; color: BotColor; systemPrompt: string; purpose?: string }
 export interface XeckBotProfile {
   color: BotColor;
   /** Optional on XeckBots created before custom identities were supported. */

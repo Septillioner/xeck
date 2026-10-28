@@ -6,7 +6,6 @@ import { maxContextThreshold } from '../../../shared/model-context.ts';
 import { getSessionContext } from '../api/client.ts';
 import { useAppState } from '../state/AppState.tsx';
 import { IconChat, IconCode, IconFolder, IconStar, IconXeck } from '../ui/icons.tsx';
-import { useStreamRevealLength } from '../ui/use-typed-text.ts';
 import { callsForMessages, type ActivityCall } from './activity-calls.ts';
 import { Composer } from './Composer.tsx';
 import { ContextSidebar } from './ContextSidebar.tsx';
@@ -94,10 +93,8 @@ export function ChatView() {
         }
       : null;
 
-  // No turn means nothing to reveal: the hook then gets an empty target and
-  // shows every text in full.
-  const revealedChars = useStreamRevealLength(live?.content ?? '');
   const messages = visibleMessages(active?.messages ?? [], live ? streaming?.userContent ?? '' : null, live ? streaming?.userImages : undefined);
+  const empty = messages.length === 0 && !live;
   const liveBlocksKey = live ? live.blocks.map((block) => block.kind === 'tool' ? `t:${block.callId}:${block.pending ? '1' : '0'}:${block.label}` : block.kind === 'dialog' ? `d:${block.dialogId}:${block.resolved ? '1' : '0'}` : block.kind === 'subagent' ? `s:${block.sessionId}:${block.status}:${block.activity}` : `${block.kind}:${block.text.length}`).join('|') : '';
 
   const followBottom = useRef(true);
@@ -108,7 +105,20 @@ export function ChatView() {
     const node = scrollRef.current;
     if (!node || !followBottom.current) return;
     node.scrollTop = node.scrollHeight;
-  }, [messages, live?.content, live?.reasoning, liveBlocksKey, revealedChars]);
+  }, [messages, live?.content, live?.reasoning, liveBlocksKey]);
+  useEffect(() => {
+    const node = scrollRef.current;
+    const content = node?.firstElementChild;
+    if (!node || !content) return;
+    // Status rows mount after the turn starts; composer resizing also changes
+    // the viewport without adding any response text.
+    const observer = new ResizeObserver(() => {
+      if (followBottom.current) node.scrollTop = node.scrollHeight;
+    });
+    observer.observe(node);
+    observer.observe(content);
+    return () => observer.disconnect();
+  }, [active?.id, empty]);
 
   const [contextTree, setContextTree] = useState<ContextTree | null>(null);
   const [contextError, setContextError] = useState<string | null>(null);
@@ -149,7 +159,6 @@ export function ChatView() {
     };
   }, [settings.debugMode, active?.id, active?.updatedAt]);
 
-  const empty = messages.length === 0 && !live;
   // A draft has no session yet, so the project header reads the draft state.
   const draftProject = draftProjectId ? projects.find((project) => project.id === draftProjectId) ?? null : null;
   const profile = active?.profile.model
@@ -204,7 +213,6 @@ export function ChatView() {
       toolUsageViewMode={settings.toolUsageViewMode}
       calls={calls}
       streaming={live}
-      revealChars={live ? revealedChars : undefined}
       debug={settings.debugMode}
       selectedCallId={selectedCallId}
       onSelectCall={(id) => { setSelectedCallId(id); setDebugOpen(true); }}

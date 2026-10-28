@@ -38,29 +38,29 @@
   --radius-row: 6px;
   --radius-card: 8px;
 
-  /* Warm stone surfaces: rail is the sidebar and window, desk is the working pane, sheet is a composer, menu, or user bubble. */
-  --color-bg: #ecece6;
-  --color-sidebar: #ecece6;
-  --color-main: #f5f4f0;
-  --color-ink: #242621;
-  --color-muted: #5b6056;
-  --color-subtle: #5c6157;
-  --color-icon: #5b6056;
-  --color-border: #d3d5cb;
-  --color-composer: #fbfbf8;
+  /* Neutral paper and obsidian surfaces: rail is the sidebar and window, desk is the working pane, sheet is a composer, menu, or user bubble. */
+  --color-bg: #ededee;
+  --color-sidebar: #ededee;
+  --color-main: #f7f7f8;
+  --color-ink: #252528;
+  --color-muted: #606067;
+  --color-subtle: #626269;
+  --color-icon: #606067;
+  --color-border: #d5d5d9;
+  --color-composer: #ffffff;
   /* Fixed brand blue from public/logo.svg, independent of the selected accent. */
   --color-logo: #4f7bce;
-  --color-track: #d6d2c8;
+  --color-track: #d8d8dd;
   --color-hover: color-mix(in srgb, var(--color-ink) 5%, transparent);
-  --color-chip: #fbfbf8;
+  --color-chip: #ffffff;
   --color-popover: var(--color-chip);
-  --color-control: #716e64;
-  --color-field: #eeece6;
-  --color-field-hover: #e7e4dc;
-  --color-field-border: #cbc7bd;
+  --color-control: #707078;
+  --color-field: #efeff1;
+  --color-field-hover: #e7e7eb;
+  --color-field-border: #c9c9d0;
   --color-focus: #35628a;
-  --color-code: #eeece6;
-  --color-user: #ecece6;
+  --color-code: #efeff1;
+  --color-user: #ededee;
 
   /* The user-selected accent. docs/rules/frontend.md lists where it may appear.
      `--accent` is the switchable variable the `data-accent` rules write, and
@@ -72,8 +72,8 @@
   --color-on-accent: #ffffff;
 
   /* Primary action: a solid ink fill, never the accent (see docs/rules/frontend.md). Buttons read these through `bg-primary`. */
-  --color-primary: #242621;
-  --color-primary-hover: #3a3933;
+  --color-primary: #252528;
+  --color-primary-hover: #3b3b40;
   --color-on-primary: #ffffff;
   --color-swatch-coral: #a94e3c;
   --color-swatch-default: #59683b;
@@ -90,13 +90,13 @@
   --color-danger-hover: #941d14;
   --color-danger-bg: #fff0ed;
   --color-on-danger: #ffffff;
-  --color-scrim: rgba(28, 27, 22, 0.36);
+  --color-scrim: rgba(24, 24, 27, 0.36);
   --color-pressure-warn: #805a16;
   --color-pressure-alert: #b42318;
   /* Chat row and meter surfaces. */
   --color-chat-hover: color-mix(in srgb, var(--color-ink) 5%, transparent);
   --color-chat-active: color-mix(in srgb, var(--color-ink) 7%, transparent);
-  --color-mood: #cbc8bf;
+  --color-mood: #cacad0;
 
   /* Fixed-purpose palettes. These do not follow the theme: a terminal, a diff
      and a context-meter segment read the same on both. */
@@ -148,8 +148,8 @@
 
   /* Nav icon tints. Soft chips behind settings nav icons: the icon itself
      stays text-colored; the chip carries the hue. Both themes readable. */
-  --color-tint-general-bg: #e2e0d9;
-  --color-tint-general-ink: #55534b;
+  --color-tint-general-bg: #e4e4e8;
+  --color-tint-general-ink: #55555e;
   --color-tint-customize-bg: #e6e0e3;
   --color-tint-customize-ink: #704753;
   --color-tint-remote-bg: #e0e5d7;
@@ -185,24 +185,24 @@
 /* Dark palette. Same variable names, so every light-palette utility follows. */
 .dark {
   color-scheme: dark;
-  --color-bg: #242622;
-  --color-sidebar: #242622;
-  --color-main: #1d1f1c;
-  --color-ink: #e8eae3;
-  --color-muted: #a6ada0;
-  --color-subtle: #9aa292;
-  --color-icon: #a6ada0;
-  --color-border: #3c4437;
-  --color-composer: #292d26;
+  --color-bg: #151517;
+  --color-sidebar: #151517;
+  --color-main: #101012;
+  --color-ink: #ebebee;
+  --color-muted: #adadb5;
+  --color-subtle: #a2a2ac;
+  --color-icon: #adadb5;
+  --color-border: #303036;
+  --color-composer: #1c1c20;
   --color-logo: #4f7bce;
-  --color-track: #393831;
-  --color-chip: #292d26;
-  --color-field: #1d1c19;
-  --color-control: #777469;
-  --color-knob: #1c1b18;
-  --color-code: #1d1c19;
-  --color-field-hover: #302f29;
-  --color-field-border: #444239;
+  --color-track: #2d2d33;
+  --color-chip: #1c1c20;
+  --color-field: #18181b;
+  --color-control: #787881;
+  --color-knob: #141416;
+  --color-code: #18181b;
+  --color-field-hover: #25252b;
+  --color-field-border: #3d3d45;
   --color-focus: #91b9dc;
   --color-swatch-coral: #e0957c;
   --color-swatch-default: #c4d29a;
@@ -213,7 +213,7 @@
   --color-swatch-rose: #e4a2b8;
   --color-swatch-teal: #86c8bb;
 
-  --color-user: #292d26;
+  --color-user: #1c1c20;
   --color-diff-add-ink: #9be5b7;
   --color-diff-del-ink: #f2aaaa;
   --color-syntax-comment: #8b949e;
@@ -222,9 +222,9 @@
   --color-syntax-number: #f2cc60;
   --color-syntax-title: #79c0ff;
   --color-syntax-variable: #ffa657;
-  --color-primary: #eeece4;
-  --color-primary-hover: #dddacf;
-  --color-on-primary: #25241f;
+  --color-primary: #ededf0;
+  --color-primary-hover: #dcdce2;
+  --color-on-primary: #252528;
   --color-danger: #ff929a;
   --color-danger-bg: #351b25;
   --color-danger-hover: #ffadb2;
@@ -233,10 +233,10 @@
 
   --color-pressure-warn: #e0bc70;
   --color-pressure-alert: #ff929a;
-  --color-scrollbar: #393831;
-  --color-scrollbar-hover: #5a584e;
-  --color-tint-general-bg: #302f29;
-  --color-tint-general-ink: #d0cec5;
+  --color-scrollbar: #2d2d33;
+  --color-scrollbar-hover: #50505a;
+  --color-tint-general-bg: #25252b;
+  --color-tint-general-ink: #cfcfd6;
   --color-tint-customize-bg: #393033;
   --color-tint-customize-ink: #e1bdc8;
   --color-tint-remote-bg: #30372c;
@@ -248,7 +248,7 @@
   --color-brand-ollama: #f2f2f2;
   --color-brand-gemini: #a58bcf;
   --color-brand-openrouter: #4cc26a;
-  --color-mood: #918f84;
+  --color-mood: #92929c;
 }
 
 /* Accent selection. Applied after the dark palette so a dark theme does not keep

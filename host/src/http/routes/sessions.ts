@@ -27,9 +27,26 @@ import { postMessage } from '../chat-turn.ts';
 import { streamSessionTurn } from '../session-stream.ts';
 import { readBody } from '../request.ts';
 import { loadEditableSession, readNewSession, readSessionPatch } from '../session-input.ts';
+import { BotIdentityError, createBotIdentity } from '../../agent/runtime/agents/create-bot-identity.ts';
+import { MAX_BOT_NAME_CHARS, MAX_BOT_SYSTEM_PROMPT_CHARS } from '../../../../shared/types.ts';
 
 /** Session lifecycle plus the SSE endpoints a turn streams through. */
 export const sessionRoutes = new Hono();
+
+sessionRoutes.post('/api/bots/improve-prompt', async (c) => {
+  const body = await readBody(c);
+  if (typeof body?.name !== 'string' || !body.name.trim() || body.name.trim().length > MAX_BOT_NAME_CHARS ||
+      typeof body?.systemPrompt !== 'string' || !body.systemPrompt.trim() || body.systemPrompt.trim().length > MAX_BOT_SYSTEM_PROMPT_CHARS) {
+    return c.json({ error: 'Instructions are required' }, 400);
+  }
+  try {
+    const systemPrompt = await createBotIdentity(body.name.trim(), body.systemPrompt.trim(), c.req.raw.signal);
+    return c.json({ systemPrompt });
+  } catch (error) {
+    if (error instanceof BotIdentityError) return c.json({ error: error.message }, error.status);
+    throw error;
+  }
+});
 
 sessionRoutes.get('/api/sessions', async (c) => {
   const includeBotConversations = c.req.query('includeBotConversations') === 'true';

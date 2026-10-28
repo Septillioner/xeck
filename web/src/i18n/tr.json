@@ -768,5 +768,10 @@
   "Send photos separately from the summary command.": "Fotoğrafları özetleme komutundan ayrı gönder.",
   "Invalid message edit": "Geçersiz mesaj düzenlemesi",
   "Edit message": "Mesajı düzenle",
-  "The conversation changed. Reopen the chat and try again.": "Konuşma değişti. Sohbeti yeniden açıp tekrar dene."
+  "The conversation changed. Reopen the chat and try again.": "Konuşma değişti. Sohbeti yeniden açıp tekrar dene.",
+  "Improve prompt": "Promptu iyileştir",
+  "Improving prompt…": "Prompt iyileştiriliyor…",
+  "Could not improve prompt": "Prompt iyileştirilemedi",
+  "These instructions are used directly as the bot’s system prompt.": "Bu talimatlar doğrudan botun sistem promptu olarak kullanılır.",
+  "Undo": "Geri al"
 }

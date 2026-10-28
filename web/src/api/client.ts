@@ -54,7 +54,10 @@ export class ApiError extends Error {
 
 const API_BASE_URL = readApiBaseUrl();
 
+export const improveBotPrompt = (name: string, systemPrompt: string) => request<{ systemPrompt: string }>('/api/bots/improve-prompt', { method: 'POST', body: { name, systemPrompt } });
+
 export type StreamEvent =
+  | { event: 'session.created'; data: { session: StoredSession } }
   | { event: 'meta'; data: { id: string; title: string; session?: StoredSession } }
   | { event: 'text.delta'; data: { delta: string } }
   | { event: 'reasoning.delta'; data: { delta: string } }

@@ -3,7 +3,9 @@
   "private": true,
   "type": "module",
   "scripts": {
+    "predev": "npm run build --prefix ../poyraz",
     "dev": "node --watch-path=src --watch-path=../shared --import tsx src/index.ts",
+    "prestart": "npm run build --prefix ../poyraz",
     "start": "tsx src/index.ts",
     "build": "tsup",
     "typecheck": "node --max-old-space-size=8192 node_modules/typescript/bin/tsc -p tsconfig.json",
