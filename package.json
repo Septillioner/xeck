@@ -35,6 +35,7 @@
     "asar": true,
     "compression": "normal",
     "npmRebuild": false,
+    "afterPack": "./scripts/sign-mac.cjs",
     "files": [
       "build/dist-electron/**/*",
       "package.json"
